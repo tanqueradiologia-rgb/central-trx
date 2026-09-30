@@ -122,7 +122,7 @@ function getDados(frente) {
 function salvar(pedido) {
   const cfg = FRENTES[pedido.frente || 'clinicas'];
   if (!cfg) throw new Error('Frente desconhecida.');
-  const lock = LockService.getDocumentLock();
+  const lock = LockService.getScriptLock();   // projeto separado: getDocumentLock() devolve null fora da planilha
   if (!lock.tryLock(20000)) throw new Error('A planilha está ocupada. Tente de novo em alguns segundos.');
   try {
     const ss = planilha_();
