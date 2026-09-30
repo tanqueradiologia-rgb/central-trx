@@ -151,12 +151,22 @@ def main():
                 risco.append((p, n, str(r.get("Orgao") or "")[:60], str(r.get("UF") or ""), str(r.get("Faixa") or ""),
                               str(r.get("Responsavel") or ""), str(r.get("Modalidade") or "")[:30]))
     risco.sort()
+    grupos = {}
+    for n, r in lic:
+        if r.get("Trilha") in ("ARQUIVADO", "DESCARTADOS", "ENCERRADO"):
+            continue
+        nums = re.findall(r"\d+", str(r.get("Edital") or ""))
+        org = re.sub(r"[^a-z]", "", str(r.get("Orgao") or "").lower())[:25]
+        if nums and org:
+            k = (org, str(int(nums[0])), str(r.get("UF") or ""))
+            grupos.setdefault(k, []).append(n)
+    dup_proc = [f"{k[0]} ed.{k[1]} {k[2]}: linhas {'/'.join(map(str, v))}" for k, v in grupos.items() if len(v) > 1]
     abertos = sum(1 for _, r in lic if r.get("Trilha") in ("CREDENCIAMENTO", "PREGAO"))
     nuvem = sum(1 for _, r in lic if r.get("Origem") in ORIGENS_NUVEM and r.get("Trilha") in ("CREDENCIAMENTO", "PREGAO"))
     info["licitacoes"] = {"linhas": len(lic), "abertos": abertos, "do_radar_nuvem": nuvem,
                           "ids_repetidos": len(rep), "trilha_divergente": len(trilha_errada),
                           "score_divergente": len(score_errado), "sem_prazo": len(sem_prazo),
-                          "prazo_7_dias_parados": len(risco)}
+                          "prazo_7_dias_parados": len(risco), "processo_repetido": len(dup_proc)}
     if rep:
         alertas.append(f"{len(rep)} IDs repetidos na planilha de licitações ({', '.join(list(rep)[:5])}).")
     if len(trilha_errada) > 5:
@@ -166,6 +176,8 @@ def main():
     if risco:
         alertas.append(f"{len(risco)} processos abertos vencem em até 7 dias e ainda estão parados em fase inicial: " +
                        "; ".join(f"{p.strftime('%d/%m')} {o} ({uf})" for p, _, o, uf, *_ in risco[:8]) + ".")
+    if dup_proc:
+        avisos.append(f"{len(dup_proc)} processos parecem estar em duas linhas (mesmo órgão e número de edital).")
     if sem_prazo:
         avisos.append(f"{len(sem_prazo)} processos abertos sem prazo na planilha.")
 
@@ -181,10 +193,15 @@ def main():
         print(f"::warning title=Central TRX::{a}")
     for a in avisos:
         print(f"::notice title=Central TRX::{a}")
-    for p, n, o, uf, fx, rp, md in risco:
-        print(f"::notice title=Prazo em risco::linha {n} | {p.strftime('%d/%m/%Y')} | {o} ({uf}) | {md} | {fx or 'sem faixa'} | resp: {rp or 'ninguém'}")
+    # O GitHub mostra no máximo 10 avisos de cada tipo por passo: listas vão numa linha só.
+    if risco:
+        print("::notice title=Prazos em risco::" + " || ".join(
+            f"L{n} {p.strftime('%d/%m')} {o} ({uf}) {md} {fx or 'sem faixa'} resp:{rp or 'ninguém'}"
+            for p, n, o, uf, fx, rp, md in risco))
     if sem_prazo:
         print(f"::notice title=Sem prazo::linhas {', '.join(map(str, sem_prazo))}")
+    if dup_proc:
+        print("::notice title=Processo repetido::" + " || ".join(dup_proc))
     print("Verificação:", status, json.dumps(info, ensure_ascii=False))
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
