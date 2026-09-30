@@ -128,7 +128,7 @@ def abas_da_planilha(path):
     pv = json.load(open(path, encoding="utf-8"))
     rows = pv["values"] if isinstance(pv, dict) else pv
     H = [str(h).strip() for h in rows[0]]
-    res = {k: [] for k in ("CREDENCIAMENTO", "PREGAO", "SEM PROCESSO", "DESCARTADOS")}
+    res = {k: [] for k in ("CREDENCIAMENTO", "PREGAO", "SEM PROCESSO", "DESCARTADOS", "ENCERRADO")}
     for n, r in enumerate(rows[1:], start=2):
         d = dict(zip(H, r + [""] * (len(H) - len(r))))
         t = str(d.get("Trilha") or "").strip()
@@ -163,6 +163,10 @@ def licitacao(linha, d, aba):
         "led": txt(d.get("Link edital")) if str(d.get("Link edital") or "").startswith("http") else "",
         "lpn": txt(d.get("Link PNCP")) if str(d.get("Link PNCP") or "").startswith("http") else "",
         "at": data_iso(d.get("Atualizado em")),
+        "jan": num(d.get("Eixo Janela")), "sjan": txt(d.get("Sinal de compra"), 200),
+        "nec": num(d.get("Eixo Necessidade")), "snec": txt(d.get("Sinal operacional"), 200),
+        "dorx": num(d.get("Eixo Dor")), "oq": txt(d.get("O que reclamam"), 240),
+        "cob": txt(d.get("Cobertura")), "med": data_iso(d.get("Medido em")),
     }
 
 
@@ -184,6 +188,10 @@ def quadro(linha, d):
         "resp": txt(d.get("Responsavel")),
         "notas": txt(d.get("Notas da Carla"), 300),
         "at": data_iso(d.get("Atualizado em")),
+        "jan": num(d.get("Eixo Janela")), "sjan": txt(d.get("Sinal de compra"), 200),
+        "nec": num(d.get("Eixo Necessidade")), "snec": txt(d.get("Sinal operacional"), 200),
+        "dorx": num(d.get("Eixo Dor")), "oq": txt(d.get("O que reclamam"), 240),
+        "cob": txt(d.get("Cobertura")), "med": data_iso(d.get("Medido em")),
     }
 
 
@@ -217,7 +225,8 @@ def main():
             "licitacoes": {"nome": "Pipeline Licitações TRX (fonte da verdade)" if da_planilha else "Pipeline_Licitacoes.xlsx",
                             "id": LICIT_SHEET if da_planilha else LICIT_ID, "gid": LICIT_GID if da_planilha else None,
                             "sheet": da_planilha, "mod": a.mod_licitacoes,
-                            "linhas": len(lic), "quadro": len(qd), "descartados": len(ab["DESCARTADOS"])},
+                            "linhas": len(lic), "quadro": len(qd), "descartados": len(ab["DESCARTADOS"]),
+                            "encerrados": len(ab.get("ENCERRADO", []))},
         },
         "clinicas": cl,
         "licitacoes": lic,

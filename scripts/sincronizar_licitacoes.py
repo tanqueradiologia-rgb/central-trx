@@ -34,6 +34,12 @@ HUMANAS = ["Fase", "Situacao do envio", "Proxima acao", "Quando", "Responsavel",
 ENVIO_DO_ROBO = {"", "Aguardando envio", "Sem e-mail (achar contato)", "Rascunho gerado"}
 ABAS_XLSX = ["CREDENCIAMENTO", "PREGAO", "SEM PROCESSO", "DESCARTADOS"]
 CONTROLE = ["Trilha", "ID", "Sincronizado em"]
+# Medição da Dor feita direto na planilha Google (tarefa na nuvem ou pesquisa manual).
+# Quando existe, ela manda no Score e na Faixa da linha, e o xlsx do robô não mexe neles.
+MEDICAO = ["Eixo Janela", "Sinal de compra", "Eixo Necessidade", "Sinal operacional", "Eixo Dor",
+           "O que reclamam", "Cobertura", "Medido em", "Fonte da medicao"]
+CALCULADAS = ["Score", "Faixa"]
+FASES_INICIAIS = {"", "mapeado", "lendo edital", "montando habilitacao", "em aberto"}
 
 
 def slug(t):
@@ -62,8 +68,60 @@ def igual(a, b):
     return str(norm(a)) == str(norm(b))
 
 
+def prazo_passou(r):
+    if str(r.get("Dias") or "").strip().lower() == "encerrado":
+        return True
+    m = re.match(r"(\d{2})/(\d{2})/(\d{4})", str(r.get("Prazo") or ""))
+    if not m:
+        return False
+    d = dt.date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+    return d < dt.datetime.now(TZ).date()
+
+
 def trilha_de(r):
-    """Mesma regra do abastecer_licitacoes.py."""
+    """Regra do abastecer_licitacoes.py, mais ENCERRADO: processo com prazo vencido em que a
+    equipe não avançou (fase inicial) sai da fila de trabalho. Se a Carla já enviou
+    documentos ou proposta, a linha continua na trilha do processo."""
+    t = _trilha_base(r)
+    if t in ("CREDENCIAMENTO", "PREGAO") and prazo_passou(r) and \
+            str(r.get("Fase") or "").strip().lower() in FASES_INICIAIS:
+        return "ENCERRADO"
+    return t
+
+
+def _num(v):
+    try:
+        s = str(v).strip().replace(",", ".")
+        return float(s) if s != "" else None
+    except ValueError:
+        return None
+
+
+def classificar_publico(r, trilha):
+    """Regra da Planilha da Dor para instituição PÚBLICA (build_dor.py):
+    SCORE = 50% JANELA + 30% NECESSIDADE + 20% DOR, média só dos eixos medidos,
+    tetos: sem JANELA 60; só DOR 45; só JANELA 75. Processo aberto = JANELA 100."""
+    w, n, d = _num(r.get("Eixo Janela")), _num(r.get("Eixo Necessidade")), _num(r.get("Eixo Dor"))
+    if w is None and trilha in ("CREDENCIAMENTO", "PREGAO") and not prazo_passou(r):
+        w = 100.0
+    pares = [(0.50, w), (0.30, n), (0.20, d)]
+    med = [(p, v) for p, v in pares if v is not None]
+    if not med:
+        return None, "SEM MEDICAO", "0/3"
+    sc = sum(p * v for p, v in med) / sum(p for p, _ in med)
+    if w is None: sc = min(sc, 60)
+    if w is None and n is None: sc = min(sc, 45)
+    if w is not None and n is None and d is None: sc = min(sc, 75)
+    sc = int(round(sc))
+    fx = "ATACAR AGORA" if sc >= 70 else "QUENTE" if sc >= 50 else "MORNO" if sc >= 30 else "FRIO"
+    return sc, fx, "%d/3" % len(med)
+
+
+def medido(r):
+    return any(str(r.get(c) or "").strip() for c in ("Eixo Janela", "Eixo Necessidade", "Eixo Dor"))
+
+
+def _trilha_base(r):
     fase = str(r.get("Fase") or "").strip().lower()
     if fase.startswith(("descartad", "perdid", "sem interesse")):
         return "DESCARTADOS"
@@ -138,15 +196,18 @@ def main():
     agora = dt.datetime.now(TZ).strftime("%d/%m/%Y %H:%M")
     mudancas, novas = [], []
     cont = {"atualizadas": 0, "novas": 0, "arquivadas": 0, "celulas": 0}
-    dados_cols = [h for h in H if h not in CONTROLE]
+    dados_cols = [h for h in H if h not in CONTROLE and h not in MEDICAO]
 
     for rid, d in robo.items():
         if rid in por_id:
             n, cur = por_id[rid]
             merged = dict(cur)
             alt = {}
+            ja_medido = medido(cur)
             for c in dados_cols:
                 if c not in d:
+                    continue
+                if ja_medido and c in CALCULADAS:
                     continue
                 novo, velho = norm(d.get(c)), norm(cur.get(c))
                 if c in HUMANAS:
@@ -162,6 +223,11 @@ def main():
             t = trilha_de(merged)
             if t != str(cur.get("Trilha") or ""):
                 alt["Trilha"] = t
+            if ja_medido:
+                sc, fx, cob = classificar_publico(merged, t)
+                for c, v in (("Score", "" if sc is None else sc), ("Faixa", fx), ("Cobertura", cob)):
+                    if c in ix and not igual(v, cur.get(c)):
+                        alt[c] = v
             if alt:
                 alt["Sincronizado em"] = agora
                 cont["atualizadas"] += 1

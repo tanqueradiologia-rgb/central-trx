@@ -250,7 +250,7 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
   const el=$("#fresh");
   $("#freshTxt").innerHTML = "Dados das planilhas de <b>"+esc(fData(D.gerado,true))+"</b>" + (h>8 ? " · <b>desatualizado há "+Math.floor(h)+"h</b>" : " · atualiza ao longo do dia");
   if(h>8) el.classList.add("stale");
-  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados).</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. A página reflete a mudança na próxima atualização (a cada 15 minutos).</div>";
+  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. A página reflete a mudança na próxima atualização (a cada 15 minutos).</div>";
 })();
 
 /* ---------- motor genérico de lista ---------- */
@@ -466,7 +466,7 @@ const lPr = makeList({
       '<td class="hide-sm">'+esc(p.fase||"—")+'</td>'+
       '<td class="mono">'+(p.dt? (p.prazo? fData(p.dt,true)+'<div>'+fDiasP(p.dt)+'</div>' : (late?'<span class="d-bad">'+fData(p.dt)+' · atrasado</span>':fData(p.dt))) : '—')+'</td>'+
       '<td class="clip meta hide-sm">'+esc(p.acao||"")+'</td>'; },
-  detail:p=>'<div class="det-grid">'+field("Frente",p.tp)+field("Responsável",p.resp)+field("Objeto ou gancho",p.r.obj||p.r.g)+field("Trava",p.r.bloq)+field("Notas",p.r.notas)+'</div>'+
+  detail:p=>(p.src!=="clinicas" && (p.r.jan!=null||p.r.nec!=null||p.r.dorx!=null) ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dorx,p.r.oq)+'</div>' : p.src==="clinicas" ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dor,p.r.ra)+'</div>' : '')+'<div class="det-grid" style="margin-top:14px">'+field("Frente",p.tp)+field("Responsável",p.resp)+field("Objeto ou gancho",p.r.obj||p.r.g)+field("Trava",p.r.bloq)+field("Notas",p.r.notas)+'</div>'+
     '<div class="links">'+(p.r.lpn?'<a href="'+esc(p.r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+'<a href="'+p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+p.src+'">Ver na aba da frente</a></div>'
 });
 (function(){
