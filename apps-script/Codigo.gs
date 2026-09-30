@@ -8,12 +8,32 @@
  * "Executar como: usuário que acessa o app"). Quem não tem acesso de edição
  * à planilha não consegue gravar.
  *
- * Cada frente (clínicas hoje; licitações e quadro depois) é uma entrada em FRENTES.
+ * Cada frente é uma entrada em FRENTES: clínicas (Pipeline TRX), licitações e quadro de
+ * credenciamento (Pipeline Licitações TRX, aba Licitacoes, separadas pela coluna Trilha).
+ * Historico e Equipe ficam sempre na Pipeline TRX, para todas as frentes.
  */
+
+const PLANILHA_ID = '1rdhgZ_ps8Ih-wwj1dF4WuQhVsz_CnCLJI8JJwTyK9u0';  // Pipeline TRX — Prospecção (fonte da verdade): clínicas, Historico e Equipe
+const LICIT_ID = '1ReCnYKNThynTD6-xxvyuDKQ33pakPrZBDqg_1U0PPe8';    // Pipeline Licitações TRX (fonte da verdade)
+
+const FASES_PROCESSO = ['Mapeado', 'Lendo edital', 'Montando habilitacao', 'Documentos enviados', 'Proposta enviada',
+  'Em analise', 'Em julgamento', 'Habilitado', 'Credenciado', 'Ganho', 'Perdido', 'Descartado'];
+const FASES_SEM_PROCESSO = ['Em aberto', 'E-mail enviado', 'Documentos enviados', 'Respondeu', 'Reuniao marcada',
+  'Sem interesse', 'Descartado'];
+const ENVIO = ['Aguardando envio', 'Sem e-mail (achar contato)', 'Rascunho gerado', 'E-mail enviado',
+  'Documentos enviados', 'Respondeu', 'Reenviar'];
+
+const LEITURA_LIC = ['ID', 'Trilha', 'Fase', 'Situacao do envio', 'Encaixe', 'Score', 'Faixa', 'Dor', 'Prazo', 'Dias',
+  'Orgao', 'Cidade', 'UF', 'Modalidade', 'Edital', 'Objeto', 'Valor estimado', 'Onde disputa', 'Bloqueio', 'Contato',
+  'Cargo', 'Telefone', 'WhatsApp', 'E-mail', 'Proxima acao', 'Quando', 'Responsavel', 'Notas da Carla', 'Resultado',
+  'Link edital', 'Link PNCP', 'Origem', 'Atualizado em'];
+
+function doQuadro_(r) { return r.Origem === 'Quadro Nacional' && !String(r.Edital || '').trim(); }
 
 const FRENTES = {
   clinicas: {
     titulo: 'Clínicas particulares',
+    planilha: PLANILHA_ID,
     aba: 'Pipeline',
     chave: 'Clinica',            // coluna que identifica a linha
     chave2: 'Cidade',            // desempate quando há nomes repetidos
@@ -35,10 +55,46 @@ const FRENTES = {
       Cargo: { tipo: 'texto' }
     },
     carimbo: 'Ultima_atualizacao'   // gravado com a data de hoje a cada edição
+  },
+  licitacoes: {
+    titulo: 'Licitações e credenciamentos',
+    planilha: LICIT_ID,
+    aba: 'Licitacoes',
+    chave: 'ID',
+    filtro: function (r) {
+      if (r.Trilha === 'CREDENCIAMENTO' || r.Trilha === 'PREGAO') return true;
+      return r.Trilha === 'DESCARTADOS' && !doQuadro_(r);
+    },
+    leitura: LEITURA_LIC,
+    edicao: {
+      Fase: { tipo: 'lista', opcoes: FASES_PROCESSO },
+      Responsavel: { tipo: 'equipe' },
+      'Proxima acao': { tipo: 'texto' },
+      Quando: { tipo: 'data' },
+      Resultado: { tipo: 'texto' }
+    }
+  },
+  quadro: {
+    titulo: 'Quadro de credenciamento (municípios sem processo aberto)',
+    planilha: LICIT_ID,
+    aba: 'Licitacoes',
+    chave: 'ID',
+    filtro: function (r) {
+      if (r.Trilha === 'SEM PROCESSO') return true;
+      return r.Trilha === 'DESCARTADOS' && doQuadro_(r);
+    },
+    leitura: LEITURA_LIC,
+    edicao: {
+      Fase: { tipo: 'lista', opcoes: FASES_SEM_PROCESSO },
+      'Situacao do envio': { tipo: 'lista', opcoes: ENVIO },
+      Responsavel: { tipo: 'equipe' },
+      'Proxima acao': { tipo: 'texto' },
+      Quando: { tipo: 'data' },
+      Resultado: { tipo: 'texto' }
+    }
   }
 };
 
-const PLANILHA_ID = '1rdhgZ_ps8Ih-wwj1dF4WuQhVsz_CnCLJI8JJwTyK9u0';  // Pipeline TRX — Prospecção (fonte da verdade)
 const ABA_HIST = 'Historico';
 const ABA_EQUIPE = 'Equipe';
 const TZ = 'America/Sao_Paulo';
@@ -51,7 +107,7 @@ function doGet() {
 
 /* ---------------- leitura ---------------- */
 
-function planilha_() { return SpreadsheetApp.openById(PLANILHA_ID); }
+function planilha_(id) { return SpreadsheetApp.openById(id || PLANILHA_ID); }
 
 function cabecalho_(sh) {
   const h = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0];
@@ -86,7 +142,9 @@ function historico_(frente) {
 function getDados(frente) {
   frente = frente || 'clinicas';
   const cfg = FRENTES[frente];
-  const sh = planilha_().getSheetByName(cfg.aba);
+  if (!cfg) throw new Error('Frente desconhecida: ' + frente);
+  const ss = planilha_(cfg.planilha);
+  const sh = ss.getSheetByName(cfg.aba);
   const idx = cabecalho_(sh);
   const n = sh.getLastRow() - 1;
   const vals = n > 0 ? sh.getRange(2, 1, n, sh.getLastColumn()).getDisplayValues() : [];
@@ -96,6 +154,7 @@ function getDados(frente) {
     if (!String(r[idx[cfg.chave]] || '').trim()) return;
     const o = { _l: i + 2, _k: r[idx[cfg.chave]] + (cfg.chave2 ? ' · ' + r[idx[cfg.chave2]] : '') };
     cols.forEach(function (c) { o[c] = r[idx[c]]; });
+    if (cfg.filtro && !cfg.filtro(o)) return;
     linhas.push(o);
   });
   const hist = historico_(frente);
@@ -108,7 +167,8 @@ function getDados(frente) {
     equipe: equipe_(),
     linhas: linhas,
     historico: hist,
-    planilha: planilha_().getUrl(),
+    frentes: Object.keys(FRENTES).map(function (k) { return { id: k, titulo: FRENTES[k].titulo }; }),
+    planilha: ss.getUrl(),
     gid: sh.getSheetId()
   };
 }
@@ -120,12 +180,13 @@ function getDados(frente) {
  * Confere se a linha ainda é a mesma clínica antes de gravar.
  */
 function salvar(pedido) {
-  const cfg = FRENTES[pedido.frente || 'clinicas'];
+  pedido.frente = pedido.frente || 'clinicas';
+  const cfg = FRENTES[pedido.frente];
   if (!cfg) throw new Error('Frente desconhecida.');
   const lock = LockService.getScriptLock();   // projeto separado: getDocumentLock() devolve null fora da planilha
   if (!lock.tryLock(20000)) throw new Error('A planilha está ocupada. Tente de novo em alguns segundos.');
   try {
-    const ss = planilha_();
+    const ss = planilha_(cfg.planilha);
     const sh = ss.getSheetByName(cfg.aba);
     const idx = cabecalho_(sh);
     let linha = localizar_(sh, idx, cfg, pedido);
@@ -161,7 +222,7 @@ function salvar(pedido) {
     if (cfg.carimbo && idx[cfg.carimbo] !== undefined)
       sh.getRange(linha, idx[cfg.carimbo] + 1).setValue(Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'));
 
-    const hs = ss.getSheetByName(ABA_HIST);
+    const hs = planilha_().getSheetByName(ABA_HIST);
     hs.getRange(hs.getLastRow() + 1, 1, hist.length, 10).setValues(hist);
     SpreadsheetApp.flush();
 
@@ -198,7 +259,7 @@ function avisar_(emails, autor, nome, nota, linha, cfg) {
         subject: 'Central TRX: nota em ' + nome,
         htmlBody: '<p><b>' + autor + '</b> marcou você numa nota sobre <b>' + nome + '</b>:</p>' +
           '<blockquote>' + nota.replace(/</g, '&lt;') + '</blockquote>' +
-          '<p><a href="' + url + '">Abrir a Central TRX · Edição</a> (linha ' + linha + ' da aba ' + cfg.aba + ').</p>'
+          '<p><a href="' + url + '">Abrir a Central TRX · Edição</a> (' + cfg.titulo + ', linha ' + linha + ' da aba ' + cfg.aba + ').</p>'
       });
     } catch (err) { console.warn('Aviso não enviado para ' + e + ': ' + err); }
   });

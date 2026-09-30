@@ -83,6 +83,7 @@ textarea{min-height:84px;resize:vertical;width:100%}
 .tl .it{display:flex;flex-direction:column;gap:2px}
 .tl .it .when{font-size:12px;color:var(--muted)}
 .tl .it.nota .txt{background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;white-space:pre-wrap;overflow-wrap:anywhere}
+.abas{display:flex;gap:4px;flex-wrap:wrap}.abas button{border:1px solid var(--line);background:var(--surface2);color:inherit;border-radius:6px;padding:6px 10px;cursor:pointer;font:inherit;font-size:13px}.abas button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 .loading{padding:40px;text-align:center;color:var(--muted)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,tr.row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
@@ -90,20 +91,21 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <body>
 <header>
   <h1>Central <span>TRX</span> · Edição</h1>
+  <nav class="abas" id="abas" aria-label="Frentes"></nav>
   <div class="who"><span id="quem">Carregando…</span><a id="lkPlan" href="#" target="_blank" rel="noopener">Abrir a planilha ↗</a><button class="btn" id="recarregar" type="button">Recarregar dados</button></div>
 </header>
 <main>
   <div class="filters">
-    <label>Buscar<input type="search" id="q" placeholder="clínica, cidade, nota…"></label>
+    <label>Buscar<input type="search" id="q" placeholder="nome, cidade, nota…"></label>
     <label>Fase<select id="fFase"><option value="">Todas</option></select></label>
     <label>Responsável<select id="fResp"><option value="">Todos</option></select></label>
     <label>UF<select id="fUf"><option value="">Todas</option></select></label>
     <label class="chk"><input type="checkbox" id="fAtivas" checked> só ativas</label>
-    <label class="chk"><input type="checkbox" id="fAtraso"> só toques vencidos</label>
+    <label class="chk"><input type="checkbox" id="fAtraso"> <span id="lbAtraso">só toques vencidos</span></label>
     <span class="count" id="cont"></span>
   </div>
   <div class="tbl"><table>
-    <thead><tr><th>Clínica</th><th>Fase</th><th class="hide-sm">Score</th><th class="hide-sm">Resp.</th><th>Próximo toque</th><th class="hide-sm">Próxima ação</th></tr></thead>
+    <thead><tr><th id="thNome">Clínica</th><th>Fase</th><th class="hide-sm">Score</th><th class="hide-sm">Resp.</th><th id="thData">Próximo toque</th><th class="hide-sm">Próxima ação</th></tr></thead>
     <tbody id="tb"><tr><td colspan="6"><div class="loading">Lendo a planilha…</div></td></tr></tbody>
   </table></div>
   <div class="more" id="mais"></div>
@@ -123,22 +125,54 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </section>
     <div class="save"><button class="btn pri" id="salvar" type="button">Salvar na planilha</button><span class="msg" id="msg" role="status"></span></div>
     <section class="sec"><h3>Histórico</h3><div class="tl" id="tl"></div></section>
-    <section class="sec"><h3>Dados da clínica</h3><div class="info" id="info"></div></section>
+    <section class="sec"><h3 id="hInfo">Dados da clínica</h3><div class="info" id="info"></div></section>
   </div>
 </aside>
 
 <script>
 (function(){
 "use strict";
-var D=null, sel=null, limite=150;
-var INAT={"Descartado":1,"Sem retorno":1,"Fechado":1};
+var D=null, sel=null, limite=150, FRENTE="clinicas";
+function num(v){ var n=parseFloat(String(v==null?"":v).replace(/\./g,"").replace(",",".")); return isNaN(n)?null:n; }
+function diasPara(v){ var i=iso(v); if(!i) return null; return Math.round((new Date(i+"T12:00:00")-new Date(hoje()+"T12:00:00"))/864e5); }
+var VISTAS={
+  clinicas:{ nome:"Clínica", item:"clínica", info:"Dados da clínica", dataTit:"Próximo toque", atraso:"só toques vencidos",
+    inat:{"Descartado":1,"Sem retorno":1,"Fechado":1},
+    titulo:function(r){return r.Clinica;}, sub:function(r){return [r.Cidade,r.UF].filter(Boolean).join(" · ");},
+    subPainel:function(r){return [r.Cidade,r.UF,r.Prioridade?"prioridade "+r.Prioridade.toLowerCase():""].filter(Boolean).join(" · ");},
+    data:function(r){return r.Proximo_toque;}, acao:function(r){return r.Proxima_Acao;},
+    atrasado:function(r){ var d=diasPara(r.Proximo_toque); return d!==null && d<0; }, marca:"vencido",
+    busca:function(r){return [r.Clinica,r.Cidade,r.Gancho,r.Notas,r.Proxima_Acao,r.Decisor];},
+    pedido:function(r){return {chave:r.Clinica, chave2:r.Cidade};},
+    detalhes:function(r){ return info("Gancho",r.Gancho)+info("Modalidades",r.Modalidades)+info("Notas (coluna da planilha)",r.Notas)+info("Score",r.Score?r.Score+" · "+r.Faixa+" · "+r.Cobertura+" eixos":"")+info("Sinal de compra",r.Sinal_de_compra)+info("Sinal operacional",r.Sinal_operacional)+info("Reclame Aqui",r.Nota_RA)+info("O que os pacientes reclamam",r.O_que_reclamam)+info("Última atualização",br(r.Ultima_atualizacao))+info("Linha na planilha",String(r._l)); } },
+  licitacoes:{ nome:"Órgão e edital", item:"processo", info:"Dados do processo", dataTit:"Prazo", atraso:"só prazo em até 7 dias",
+    inat:{"Descartado":1,"Perdido":1,"Credenciado":1,"Ganho":1},
+    titulo:function(r){return r.Orgao||r.ID;}, sub:function(r){return [r.Cidade,r.UF,r.Edital||r.Modalidade].filter(Boolean).join(" · ");},
+    subPainel:function(r){return [r.Cidade,r.UF,r.Modalidade,r.Edital].filter(Boolean).join(" · ");},
+    data:function(r){return r.Prazo;}, acao:function(r){return r["Proxima acao"];},
+    atrasado:function(r){ var d=diasPara(r.Prazo); return d!==null && d>=0 && d<=7; }, marca:"prazo curto",
+    busca:function(r){return [r.Orgao,r.Cidade,r.Edital,r.Objeto,r["Proxima acao"],r["Notas da Carla"],r.Bloqueio];},
+    pedido:function(r){return {chave:r.ID};},
+    detalhes:function(r){ return info("Objeto",r.Objeto)+info("Valor estimado",r["Valor estimado"])+info("Onde disputa",r["Onde disputa"])+info("Bloqueio",r.Bloqueio)+info("Prazo",r.Prazo+(r.Dias!==""?" ("+r.Dias+(r.Dias==="encerrado"?"":" dias")+")":""))+info("Score",r.Score?r.Score+" · "+r.Faixa:"")+info("Contato",[r.Contato,r.Cargo,r.Telefone,r["E-mail"]].filter(Boolean).join(" · "))+info("Notas da Carla (coluna da planilha)",r["Notas da Carla"])+links(r)+info("Origem",r.Origem)+info("Linha na planilha",String(r._l)); } },
+  quadro:{ nome:"Município", item:"município", info:"Dados do município", dataTit:"Quando", atraso:"só ações vencidas",
+    inat:{"Descartado":1,"Sem interesse":1},
+    titulo:function(r){return r.Cidade+(r.UF?" · "+r.UF:"");}, sub:function(r){return r["Situacao do envio"]||"";},
+    subPainel:function(r){return [r.Orgao,r["Situacao do envio"]].filter(Boolean).join(" · ");},
+    data:function(r){return r.Quando;}, acao:function(r){return r["Proxima acao"];},
+    atrasado:function(r){ var d=diasPara(r.Quando); return d!==null && d<0; }, marca:"vencido",
+    busca:function(r){return [r.Cidade,r.UF,r.Orgao,r.Contato,r.Objeto,r["Proxima acao"],r["Notas da Carla"]];},
+    pedido:function(r){return {chave:r.ID};},
+    detalhes:function(r){ return info("Contato",[r.Contato,r.Cargo].filter(Boolean).join(" · "))+info("Telefone",r.Telefone)+info("WhatsApp",r.WhatsApp)+info("E-mail",r["E-mail"])+info("Bloqueio",r.Bloqueio)+info("Estrutura pública",r.Objeto)+info("Score",r.Score?r.Score+" · "+r.Faixa:"")+info("Notas da Carla (coluna da planilha)",r["Notas da Carla"])+info("Linha na planilha",String(r._l)); } }
+};
+function V(){ return VISTAS[FRENTE]; }
+function links(r){ var l=[]; if(/^http/.test(r["Link edital"]||"")) l.push('<a href="'+esc(r["Link edital"])+'" target="_blank" rel="noopener">Edital ↗</a>'); if(/^http/.test(r["Link PNCP"]||"")) l.push('<a href="'+esc(r["Link PNCP"])+'" target="_blank" rel="noopener">PNCP ↗</a>'); return l.length?'<div><h4>Links</h4><p>'+l.join(" · ")+'</p></div>':""; }
 function $(s){return document.querySelector(s);}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function norm(s){return String(s==null?"":s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();}
 function iso(v){ if(!v) return ""; var m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[0]; m=String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})/); return m? m[3]+"-"+m[2]+"-"+m[1] : ""; }
 function br(v){ var i=iso(v); return i? i.slice(8,10)+"/"+i.slice(5,7)+"/"+i.slice(2,4) : (v||"—"); }
 function hoje(){ return (D&&D.agora||new Date().toISOString()).slice(0,10); }
-function vencido(r){ var i=iso(r.Proximo_toque); return i && i<hoje() && !INAT[r.Fase]; }
+function vencido(r){ return V().atrasado(r) && !V().inat[r.Fase]; }
 function fx(f,s){ f=f||"SEM MEDICAO"; var k={ATACAR:"ATACAR",QUENTE:"QUENTE",MORNO:"MORNO",FRIO:"FRIO"}[f.split(" ")[0]]||"SEM"; var t=f==="ATACAR AGORA"?"Atacar agora":f==="SEM MEDICAO"?"Sem medição":f.charAt(0)+f.slice(1).toLowerCase(); return '<span class="pill fx fx-'+k+'">'+(s?Math.round(parseFloat(String(s).replace(",",".")))+" · ":"")+esc(t)+'</span>'; }
 function nomeEq(email){ var e=(D.equipe||[]).filter(function(x){return x.email.toLowerCase()===String(email).toLowerCase();})[0]; return e?e.nome:email; }
 
@@ -146,11 +180,13 @@ function carregar(){
   $("#tb").innerHTML='<tr><td colspan="6"><div class="loading">Lendo a planilha…</div></td></tr>';
   google.script.run.withSuccessHandler(function(d){ D=d; iniciar(); }).withFailureHandler(function(e){
     $("#tb").innerHTML='<tr><td colspan="6"><div class="empty">Não consegui ler a planilha: '+esc(e.message)+'. Confira se você tem acesso a ela e recarregue.</div></td></tr>';
-  }).getDados("clinicas");
+  }).getDados(FRENTE);
 }
 function opcoes(id, vals, primeira){ var s=$(id), v=s.value; s.innerHTML='<option value="">'+primeira+'</option>'; Array.from(new Set(vals.filter(Boolean))).sort(function(a,b){return a.localeCompare(b,"pt");}).forEach(function(x){ var o=document.createElement("option"); o.value=o.textContent=x; s.appendChild(o); }); s.value=v; }
 function iniciar(){
   $("#quem").textContent = D.usuario ? "Conectado como "+nomeEq(D.usuario) : "Conectado";
+  $("#abas").innerHTML=(D.frentes||[]).map(function(f){ return '<button type="button" data-f="'+f.id+'" aria-current="'+(f.id===FRENTE)+'">'+esc({clinicas:"Clínicas",licitacoes:"Licitações",quadro:"Quadro de credenciamento"}[f.id]||f.titulo)+'</button>'; }).join("");
+  $("#thNome").textContent=V().nome; $("#thData").textContent=V().dataTit; $("#lbAtraso").textContent=V().atraso; $("#hInfo").textContent=V().info;
   $("#lkPlan").href = D.planilha+"#gid="+D.gid;
   opcoes("#fFase", D.edicao.Fase.opcoes.concat(D.linhas.map(function(r){return r.Fase;})), "Todas");
   opcoes("#fResp", D.linhas.map(function(r){return r.Responsavel;}), "Todos");
@@ -161,29 +197,31 @@ function iniciar(){
 function filtrar(){
   var q=norm($("#q").value.trim()), fa=$("#fFase").value, fr=$("#fResp").value, fu=$("#fUf").value, at=$("#fAtivas").checked, ve=$("#fAtraso").checked;
   return D.linhas.filter(function(r){
-    if(at && INAT[r.Fase] && !fa) return false;
+    if(at && V().inat[r.Fase] && !fa) return false;
     if(fa && r.Fase!==fa) return false;
     if(fr && r.Responsavel!==fr) return false;
     if(fu && r.UF!==fu) return false;
     if(ve && !vencido(r)) return false;
-    if(q){ var notas=(D.historico[r._k]||[]).map(function(h){return h.msg;}).join(" "); if(norm([r.Clinica,r.Cidade,r.Gancho,r.Notas,r.Proxima_Acao,r.Decisor,notas].join(" ")).indexOf(q)<0) return false; }
+    if(q){ var notas=(D.historico[r._k]||[]).map(function(h){return h.msg;}).join(" "); if(norm(V().busca(r).concat([notas]).join(" ")).indexOf(q)<0) return false; }
     return true;
-  }).sort(function(a,b){ var va=vencido(a)?0:1, vb=vencido(b)?0:1; if(va!==vb) return va-vb; return (parseFloat(b.Score)||-1)-(parseFloat(a.Score)||-1); });
+  }).sort(function(a,b){ var va=vencido(a)?0:1, vb=vencido(b)?0:1; if(va!==vb) return va-vb;
+    if(FRENTE==="licitacoes"){ var da=diasPara(a.Prazo), db=diasPara(b.Prazo); da=(da===null||da<0)?9999:da; db=(db===null||db<0)?9999:db; if(da!==db) return da-db; }
+    return (num(b.Score)||-1)-(num(a.Score)||-1); });
 }
 function render(){
   var rows=filtrar(); $("#cont").textContent=rows.length+" de "+D.linhas.length;
-  if(!rows.length){ $("#tb").innerHTML='<tr><td colspan="6"><div class="empty">Nenhuma clínica com esses filtros.</div></td></tr>'; $("#mais").innerHTML=""; return; }
+  if(!rows.length){ $("#tb").innerHTML='<tr><td colspan="6"><div class="empty">Nada com esses filtros.</div></td></tr>'; $("#mais").innerHTML=""; return; }
   $("#tb").innerHTML=rows.slice(0,limite).map(function(r){
     var n=(D.historico[r._k]||[]).length;
-    return '<tr class="row'+(r._k===sel?' sel':'')+'" tabindex="0" data-k="'+esc(r._k)+'"><td><div class="nm">'+esc(r.Clinica)+(n?'<span class="badge" title="registros no histórico">'+n+'</span>':'')+'</div><div class="meta">'+esc(r.Cidade)+(r.UF?' · '+esc(r.UF):'')+'</div></td>'+
+    return '<tr class="row'+(r._k===sel?' sel':'')+'" tabindex="0" data-k="'+esc(r._k)+'"><td><div class="nm">'+esc(V().titulo(r))+(n?'<span class="badge" title="registros no histórico">'+n+'</span>':'')+'</div><div class="meta">'+esc(V().sub(r))+'</div></td>'+
       '<td>'+esc(r.Fase||"—")+'</td><td class="hide-sm">'+fx(r.Faixa,r.Score)+'</td><td class="hide-sm">'+esc(r.Responsavel||"—")+'</td>'+
-      '<td class="mono'+(vencido(r)?' late':'')+'">'+br(r.Proximo_toque)+(vencido(r)?' · vencido':'')+'</td><td class="hide-sm meta">'+esc(r.Proxima_Acao&&r.Proxima_Acao!=="-"?r.Proxima_Acao:"")+'</td></tr>';
+      '<td class="mono'+(vencido(r)?' late':'')+'">'+br(V().data(r))+(vencido(r)?' · '+V().marca:'')+'</td><td class="hide-sm meta">'+esc(V().acao(r)&&V().acao(r)!=="-"?V().acao(r):"")+'</td></tr>';
   }).join("");
   $("#mais").innerHTML = rows.length>limite ? '<button class="btn" type="button">Mostrar mais</button>' : "";
 }
 function campo(nome, cfg, valor){
-  var lbl=nome.replace(/_/g," ").replace("Proxima Acao","Próxima ação").replace("Proximo toque","Próximo toque").replace("Responsavel","Responsável");
-  var full = (nome==="Proxima_Acao"||nome==="Resultado") ? ' class="full"' : '';
+  var lbl=nome.replace(/_/g," ").replace(/Proxima [Aa]cao/,"Próxima ação").replace("Proximo toque","Próximo toque").replace("Responsavel","Responsável").replace("Situacao do envio","Situação do envio");
+  var full = (/^Proxima.[Aa]cao$/.test(nome)||nome==="Resultado") ? ' class="full"' : '';
   if(cfg.tipo==="lista"){ var ops=cfg.opcoes.slice(); if(valor && ops.indexOf(valor)<0) ops.unshift(valor); return '<label'+full+'>'+lbl+'<select name="'+nome+'">'+ops.map(function(o){return '<option'+(o===valor?' selected':'')+'>'+esc(o)+'</option>';}).join("")+'</select></label>'; }
   if(cfg.tipo==="equipe"){ var ns=(D.equipe||[]).map(function(e){return e.nome;}); if(valor && ns.indexOf(valor)<0) ns.unshift(valor); return '<label'+full+'>'+lbl+'<select name="'+nome+'"><option value="">—</option>'+ns.map(function(o){return '<option'+(o===valor?' selected':'')+'>'+esc(o)+'</option>';}).join("")+'</select></label>'; }
   if(cfg.tipo==="data") return '<label'+full+'>'+lbl+'<input type="date" name="'+nome+'" value="'+esc(iso(valor))+'"></label>';
@@ -192,7 +230,7 @@ function campo(nome, cfg, valor){
 function info(t,v){ return v? '<div><h4>'+t+'</h4><p>'+esc(v)+'</p></div>' : ""; }
 function abrir(r){
   sel=r._k; render();
-  $("#pTit").textContent=r.Clinica; $("#pSub").textContent=[r.Cidade,r.UF,r.Prioridade?"prioridade "+r.Prioridade.toLowerCase():""].filter(Boolean).join(" · ");
+  $("#pTit").textContent=V().titulo(r); $("#pSub").textContent=V().subPainel(r);
   $("#form").innerHTML=Object.keys(D.edicao).map(function(k){ return campo(k,D.edicao[k],r[k]); }).join("");
   $("#nota").value=""; $("#msg").textContent=""; $("#msg").className="msg";
   $("#menc").innerHTML=(D.equipe||[]).filter(function(e){return e.email && e.email.toLowerCase()!==String(D.usuario).toLowerCase();}).map(function(e){ return '<label><input type="checkbox" value="'+esc(e.email)+'"> @'+esc(e.apelido)+'</label>'; }).join("") || '<span class="meta">Cadastre a equipe na aba Equipe da planilha para poder marcar pessoas.</span>';
@@ -200,8 +238,8 @@ function abrir(r){
   $("#tl").innerHTML = h.length ? h.map(function(x){
     return x.tipo==="nota" ? '<div class="it nota"><span class="when">'+esc(x.quando)+' · '+esc(nomeEq(x.autor))+(x.menc?' → '+esc(x.menc.split(",").map(function(m){return nomeEq(m.trim());}).join(", ")):'')+'</span><span class="txt">'+esc(x.msg)+'</span></div>'
       : '<div class="it"><span class="when">'+esc(x.quando)+' · '+esc(nomeEq(x.autor))+'</span><span>'+esc(x.campo.replace(/_/g," "))+': '+esc(x.de||"vazio")+' → <b>'+esc(x.para||"vazio")+'</b></span></div>';
-  }).join("") : '<span class="meta">Nenhum registro ainda. As notas antigas estão em "Notas", abaixo.</span>';
-  $("#info").innerHTML=info("Gancho",r.Gancho)+info("Modalidades",r.Modalidades)+info("Notas (coluna da planilha)",r.Notas)+info("Score",r.Score?r.Score+" · "+r.Faixa+" · "+r.Cobertura+" eixos":"")+info("Sinal de compra",r.Sinal_de_compra)+info("Sinal operacional",r.Sinal_operacional)+info("Reclame Aqui",r.Nota_RA)+info("O que os pacientes reclamam",r.O_que_reclamam)+info("Última atualização",br(r.Ultima_atualizacao))+info("Linha na planilha",String(r._l));
+  }).join("") : '<span class="meta">Nenhum registro ainda. As notas antigas estão nos dados, abaixo.</span>';
+  $("#info").innerHTML=V().detalhes(r);
   $("#scrim").hidden=false; $("#painel").hidden=false; $("#pTit").focus && $("#fechar").focus();
 }
 function fechar(){ $("#scrim").hidden=true; $("#painel").hidden=true; sel=null; render(); }
@@ -218,7 +256,7 @@ function salvar(){
     $("#msg").className="msg ok"; $("#msg").textContent="Salvo na planilha"+(menc.length?" e avisado por e-mail.":".");
     carregar();
   }).withFailureHandler(function(e){ b.disabled=false; $("#msg").className="msg err"; $("#msg").textContent=e.message; })
-  .salvar({frente:"clinicas", linha:r._l, chave:r.Clinica, chave2:r.Cidade, campos:campos, nota:nota, mencoes:menc});
+  .salvar(Object.assign({frente:FRENTE, linha:r._l, campos:campos, nota:nota, mencoes:menc}, V().pedido(r)));
 }
 ["#q","#fFase","#fResp","#fUf","#fAtivas","#fAtraso"].forEach(function(id){ $(id).addEventListener("input",function(){ limite=150; render(); }); });
 $("#tb").addEventListener("click",function(e){ var tr=e.target.closest("tr.row"); if(!tr) return; var r=D.linhas.filter(function(x){return x._k===tr.dataset.k;})[0]; if(r) abrir(r); });
@@ -228,6 +266,9 @@ $("#fechar").addEventListener("click",fechar); $("#scrim").addEventListener("cli
 document.addEventListener("keydown",function(e){ if(e.key==="Escape" && !$("#painel").hidden) fechar(); });
 $("#salvar").addEventListener("click",salvar);
 $("#recarregar").addEventListener("click",carregar);
+$("#abas").addEventListener("click",function(e){ var b=e.target.closest("button[data-f]"); if(!b||b.dataset.f===FRENTE) return; FRENTE=b.dataset.f; sel=null; limite=150; fechar(); ["#fFase","#fResp","#fUf"].forEach(function(id){$(id).value="";}); $("#q").value=""; $("#fAtraso").checked=false; try{ history.replaceState(null,"","#"+FRENTE); }catch(_){}
+  carregar(); });
+try{ var h=(location.hash||"").slice(1); if(VISTAS[h]) FRENTE=h; }catch(_){}
 carregar();
 })();
 </script>
