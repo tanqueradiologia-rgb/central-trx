@@ -222,6 +222,7 @@ function fMoeda(v){ if(v===null||v===undefined) return "—"; if(v>=1e6) return 
 function fxPill(fx, sc){ const k=(fx||"SEM MEDICAO").split(" ")[0]; const cls={ATACAR:"ATACAR",QUENTE:"QUENTE",MORNO:"MORNO",FRIO:"FRIO"}[k]||"SEM"; const t = fx==="ATACAR AGORA"?"Atacar agora":fx==="SEM MEDICAO"||!fx?"Sem medição":fx.charAt(0)+fx.slice(1).toLowerCase(); return '<span class="pill fx fx-'+cls+'">'+(sc!=null&&sc!==""?Math.round(sc)+" · ":"")+esc(t)+'</span>'; }
 function sheetLink(linha){ const p=D.fontes.pipeline; return "https://docs.google.com/spreadsheets/d/"+p.id+"/edit#gid="+p.gid+"&range=A"+linha; }
 const LIC_URL = "https://drive.google.com/file/d/"+D.fontes.licitacoes.id+"/view";
+function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://docs.google.com/spreadsheets/d/"+f.id+"/edit#gid="+f.gid+"&range=A"+linha : LIC_URL; }
 
 /* ---------- frescor ---------- */
 (function(){
@@ -361,7 +362,7 @@ const lLi = makeList({
     '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
     '<td class="hide-sm">'+esc(r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
   detail:r=>'<div class="det-grid">'+field("Objeto",r.obj)+field("Onde disputa",r.onde)+field("Trava",r.bloq)+field("Próxima ação",r.acao)+field("Quando",r.qd?fData(r.qd):"")+field("Notas da Carla",r.notas)+field("Resultado",r.res)+field("Número de controle",r.id)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
-    '<div class="links">'+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+LIC_URL+'" target="_blank" rel="noopener">Abrir a planilha (aba '+esc(r.aba)+', linha '+r.l+') ↗</a></div>'
+    '<div class="links">'+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
   const ab=LI.filter(aberta);
@@ -396,7 +397,7 @@ const lQd = makeList({
     '<td>'+fxPill(r.fx,r.sc)+'</td>'+
     '<td class="clip meta hide-sm">'+esc(r.acao)+'</td>',
   detail:r=>'<div class="det-grid">'+field("Estrutura e oportunidade",r.obj)+field("Trava",r.bloq)+field("Cargo do contato",r.cargo)+field("Responsável",r.resp)+field("Notas da Carla",r.notas)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
-    '<div class="links"><a href="'+LIC_URL+'" target="_blank" rel="noopener">Abrir a planilha (aba SEM PROCESSO, linha '+r.l+') ↗</a></div>'
+    '<div class="links"><a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
   const cont={}; QD.forEach(r=>cont[r.uf]=(cont[r.uf]||0)+1);

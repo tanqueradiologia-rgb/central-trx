@@ -18,6 +18,8 @@ TZ = dt.timezone(dt.timedelta(hours=-3))
 PIPELINE_ID = "1rdhgZ_ps8Ih-wwj1dF4WuQhVsz_CnCLJI8JJwTyK9u0"
 PIPELINE_GID = 1118277134
 LICIT_ID = "1FTHl-0FePl8aSIwGEuzFAj-P1GWEx_H1"
+LICIT_SHEET = "1ReCnYKNThynTD6-xxvyuDKQ33pakPrZBDqg_1U0PPe8"
+LICIT_GID = 1773203614
 
 
 def txt(v, lim=None):
@@ -121,6 +123,20 @@ def abas_licitacoes(path):
     return res
 
 
+def abas_da_planilha(path):
+    """licitacoes.json (get_values da aba Licitacoes) agrupado pela coluna Trilha."""
+    pv = json.load(open(path, encoding="utf-8"))
+    rows = pv["values"] if isinstance(pv, dict) else pv
+    H = [str(h).strip() for h in rows[0]]
+    res = {k: [] for k in ("CREDENCIAMENTO", "PREGAO", "SEM PROCESSO", "DESCARTADOS")}
+    for n, r in enumerate(rows[1:], start=2):
+        d = dict(zip(H, r + [""] * (len(H) - len(r))))
+        t = str(d.get("Trilha") or "").strip()
+        if t in res and str(d.get("ID") or "").strip():
+            res[t].append((n, d))
+    return res
+
+
 def licitacao(linha, d, aba):
     return {
         "l": linha, "aba": aba,
@@ -174,7 +190,7 @@ def quadro(linha, d):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pipeline", required=True)
-    ap.add_argument("--licitacoes", required=True)
+    ap.add_argument("--licitacoes", required=True, help="xlsx do robô (reserva) ou licitacoes.json da planilha Google")
     ap.add_argument("--saida", required=True)
     ap.add_argument("--mod-pipeline", default="")
     ap.add_argument("--mod-licitacoes", default="")
@@ -183,7 +199,8 @@ def main():
     pv = json.load(open(a.pipeline, encoding="utf-8"))
     values = pv["values"] if isinstance(pv, dict) else pv
     cl = clinicas(values)
-    ab = abas_licitacoes(a.licitacoes)
+    da_planilha = a.licitacoes.endswith(".json")
+    ab = abas_da_planilha(a.licitacoes) if da_planilha else abas_licitacoes(a.licitacoes)
     lic = [licitacao(l, d, "CREDENCIAMENTO") for l, d in ab["CREDENCIAMENTO"]] + \
           [licitacao(l, d, "PREGAO") for l, d in ab["PREGAO"]]
     qd = [quadro(l, d) for l, d in ab["SEM PROCESSO"]]
@@ -197,7 +214,9 @@ def main():
         "fontes": {
             "pipeline": {"nome": "Pipeline TRX — Prospecção (fonte da verdade)", "id": PIPELINE_ID,
                           "gid": PIPELINE_GID, "mod": a.mod_pipeline, "linhas": len(cl)},
-            "licitacoes": {"nome": "Pipeline_Licitacoes.xlsx", "id": LICIT_ID, "mod": a.mod_licitacoes,
+            "licitacoes": {"nome": "Pipeline Licitações TRX (fonte da verdade)" if da_planilha else "Pipeline_Licitacoes.xlsx",
+                            "id": LICIT_SHEET if da_planilha else LICIT_ID, "gid": LICIT_GID if da_planilha else None,
+                            "sheet": da_planilha, "mod": a.mod_licitacoes,
                             "linhas": len(lic), "quadro": len(qd), "descartados": len(ab["DESCARTADOS"])},
         },
         "clinicas": cl,

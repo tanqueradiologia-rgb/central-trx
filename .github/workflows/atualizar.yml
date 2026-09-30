@@ -33,11 +33,17 @@ jobs:
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
         run: python scripts/buscar_planilhas.py
+      - name: Levar o robô para a planilha Google de licitações
+        env:
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+        run: |
+          python scripts/sincronizar_licitacoes.py Pipeline_Licitacoes.xlsx
+          python scripts/buscar_planilhas.py --so-licitacoes
       - name: Gerar os dados da página
         run: |
           set -a; . ./mods.env; set +a
-          python scripts/build_central.py --pipeline pipeline.json --licitacoes Pipeline_Licitacoes.xlsx \
-            --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT"
+          python scripts/build_central.py --pipeline pipeline.json --licitacoes licitacoes.json \
+            --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
