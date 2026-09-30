@@ -83,6 +83,7 @@ def linha_de(it, agora):
     return {
         "ID": str(it.get("numero_controle_pncp") or "").strip(),
         "Fase": "Mapeado",
+        "Responsavel": "Carla",  # mesmo padrão do robô do Mac
         "Orgao": it.get("orgao_nome") or "",
         "Cidade": it.get("municipio_nome") or "",
         "UF": it.get("uf") or "",
@@ -116,6 +117,8 @@ def limpar_ruido(api, H, ix, agora):
         if r[ix["Origem"]] != ORIGEM or r[ix["Fase"]].strip().lower() != "mapeado":
             continue
         if relevante({"title": r[ix["Edital"]], "description": r[ix["Objeto"]]}):
+            if "Responsavel" in ix and not str(r[ix["Responsavel"]]).strip():
+                mud.append({"range": f"{ABA}!{col(ix['Responsavel'] + 1)}{n}", "values": [["Carla"]]})
             continue
         mud += [{"range": f"{ABA}!{col(ix['Fase'] + 1)}{n}", "values": [[DESCARTE_FASE]]},
                 {"range": f"{ABA}!{col(ix['Resultado'] + 1)}{n}", "values": [[DESCARTE_MOTIVO]]},
@@ -123,7 +126,7 @@ def limpar_ruido(api, H, ix, agora):
                 {"range": f"{ABA}!{col(ix['Sincronizado em'] + 1)}{n}", "values": [[agora]]}]
     if mud:
         api.values().batchUpdate(spreadsheetId=SHEET_ID, body={"valueInputOption": "RAW", "data": mud}).execute()
-    return len(mud) // 4
+    return sum(1 for m in mud if m["values"] == [[DESCARTE_FASE]])
 
 
 def main():
