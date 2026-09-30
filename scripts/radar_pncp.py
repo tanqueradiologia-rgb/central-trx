@@ -18,13 +18,21 @@ from sincronizar_licitacoes import SHEET_ID, ABA, TZ, trilha_de, col  # noqa: E4
 ORIGEM = "Radar PNCP (GitHub)"
 TERMOS = ["telerradiologia", "telelaudo", "laudo a distância", "laudos radiológicos",
           "laudos de exames de imagem", "telemedicina radiologia"]
-# O objeto precisa falar de laudo/imagem para entrar.
-EXIGE = ["telerradiolog", "telelaudo", "laudo", "radiolog", "diagnostico por imagem",
-         "tomografia", "ressonancia", "mamografia", "raio x", "raio-x", "telemedicina"]
-# Compra de aparelho ou obra não interessa.
-FORA = ["aquisicao de equipamento", "aquisicao de aparelho", "manutencao preventiva",
-        "manutencao corretiva", "locacao de equipamento", "obra", "reforma", "filme radiologico",
-        "pelicula", "dosimetria", "protecao radiologica"]
+# Filtro na mesma linha do radar do Mac: descarta ruído, mantém o "talvez".
+IMAGEM = ["raio-x", "raio x", "raios x", "radiolog", "radiograf", "tomograf", "ressonanc", "mamograf",
+          "densitometr", "diagnostico por imagem", "exames de imagem", "imagens radiolog"]
+# Pedido de laudo remoto de imagem: entra mesmo com palavra da lista de descarte (ex.: ECG junto).
+FORTE = ["telerradiolog", "laudos de exames radiolog", "laudos radiolog", "laudos de raio", "laudo de raio",
+         "laudos de tomograf", "laudos de imagens"]
+REMOTO = ["telemedicina", "a distancia", "remot", "telelaudo", "pacs"]
+FORA = ["equipament", "mamografo", "aparelho de raio", "aquisicao", "compra de", "insumo", "filme radiograf",
+        "filme radiolog", "konica", "manutencao", "calibracao", "dosimetr", "contraste", "gadolin",
+        "marcacao pre-cirurgica", "protecao radiologica", "odontolog", "veterinar", "eletrocardiograma",
+        "ecg", "holter", "eletroencefalo", "analises clinicas", "esteriliza", "medicina do trabalho",
+        "hospedagem", "hotel", "obra", "reforma", "engenharia", "pavimenta", "uniforme", "combustivel",
+        "colchao", "medicamento", "veicular", "vistoria", "unidade movel", "itinerante"]
+DESCARTE_FASE = "Descartado"
+DESCARTE_MOTIVO = "Ruído do radar PNCP da nuvem (fora do filtro de telelaudo)"
 URL = "https://pncp.gov.br/api/search/"
 
 
@@ -84,7 +92,30 @@ def linha_de(it, agora):
 
 def relevante(it):
     txt = sem_acento(f"{it.get('title', '')} {it.get('description', '')}")
-    return any(k in txt for k in EXIGE) and not any(k in txt for k in FORA)
+    img = any(k in txt for k in IMAGEM)
+    if any(k in txt for k in FORTE) or (img and any(k in txt for k in REMOTO)):
+        return True
+    return img and not any(k in txt for k in FORA)
+
+
+def limpar_ruido(api, H, ix, agora):
+    """Linhas que este radar criou e que o filtro atual rejeita saem da fila (Fase Descartado).
+    Só mexe em linha com Origem deste radar e Fase ainda Mapeado."""
+    vals = api.values().get(spreadsheetId=SHEET_ID, range=f"{ABA}!A1:{col(len(H))}").execute().get("values", [])
+    mud = []
+    for n, r in enumerate(vals[1:], start=2):
+        r = r + [""] * (len(H) - len(r))
+        if r[ix["Origem"]] != ORIGEM or r[ix["Fase"]].strip().lower() != "mapeado":
+            continue
+        if relevante({"title": r[ix["Edital"]], "description": r[ix["Objeto"]]}):
+            continue
+        mud += [{"range": f"{ABA}!{col(ix['Fase'] + 1)}{n}", "values": [[DESCARTE_FASE]]},
+                {"range": f"{ABA}!{col(ix['Resultado'] + 1)}{n}", "values": [[DESCARTE_MOTIVO]]},
+                {"range": f"{ABA}!{col(ix['Trilha'] + 1)}{n}", "values": [["DESCARTADOS"]]},
+                {"range": f"{ABA}!{col(ix['Sincronizado em'] + 1)}{n}", "values": [[agora]]}]
+    if mud:
+        api.values().batchUpdate(spreadsheetId=SHEET_ID, body={"valueInputOption": "RAW", "data": mud}).execute()
+    return len(mud) // 4
 
 
 def main():
@@ -115,6 +146,7 @@ def main():
     existentes = {str(r[0]).strip() for r in ids if r}
 
     agora = dt.datetime.now(TZ).strftime("%d/%m/%Y %H:%M")
+    limpas = limpar_ruido(api, H, ix, agora)
     novas = []
     for rid, it in achados.items():
         if rid in existentes:
@@ -129,7 +161,7 @@ def main():
         api.values().append(spreadsheetId=SHEET_ID, range=f"{ABA}!A1", valueInputOption="RAW",
                             insertDataOption="INSERT_ROWS", body={"values": novas}).execute()
     print(f"Radar PNCP: {len(achados)} editais relevantes abertos, {len(novas)} novos na planilha, "
-          f"{erros} termo(s) com erro.")
+          f"{limpas} linhas de ruído descartadas, {erros} termo(s) com erro.")
 
 
 if __name__ == "__main__":
