@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}.saude{margin:8px 0 2px;padding:8px 12px;border-radius:8px;font-size:13px;line-height:1.45;border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent)}
+.saude summary{cursor:pointer;font-weight:600}.saude ul{margin:6px 0 0 18px;padding:0}
+</style>
 <title>Central TRX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -133,6 +135,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
       <a href="#quadro" data-tab="quadro">Quadro nacional<span class="n" id="n-quadro"></span></a>
     </nav>
+    <div id="saude" class="saude" hidden></div>
   </div>
 </header>
 
@@ -214,6 +217,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 </main>
 
 <script src="dados_central.js"></script>
+<script src="saude.js" onerror="window.SAUDE=null"></script>
 <script>
 (function(){
 "use strict";
@@ -250,6 +254,9 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
   const el=$("#fresh");
   $("#freshTxt").innerHTML = "Dados das planilhas de <b>"+esc(fData(D.gerado,true))+"</b>" + (h>8 ? " · <b>desatualizado há "+Math.floor(h)+"h</b>" : " · atualiza ao longo do dia");
   if(h>8) el.classList.add("stale");
+  try{ const S=window.SAUDE; if(S && (S.alertas||[]).length){ const el=$("#saude"); el.hidden=false;
+    el.innerHTML="<details><summary>Verificação automática: "+S.alertas.length+" alerta(s)"+((S.avisos||[]).length?" e "+S.avisos.length+" aviso(s)":"")+"</summary><ul>"+
+    S.alertas.map(a=>"<li><b>"+esc(a)+"</b></li>").join("")+(S.avisos||[]).map(a=>"<li>"+esc(a)+"</li>").join("")+"</ul></details>"; } }catch(e){}
   $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. A página reflete a mudança na próxima atualização (a cada 10 minutos).</div>";
 })();
 

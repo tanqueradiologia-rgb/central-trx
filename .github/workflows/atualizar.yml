@@ -65,7 +65,11 @@ jobs:
           python scripts/build_central.py --pipeline pipeline.json --licitacoes licitacoes.json \
             --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET"
           # evita que o navegador mostre dados velhos guardados em cache
-          sed -i "s#dados_central.js\"#dados_central.js?v=${GITHUB_RUN_ID}\"#" site/index.html
+          sed -i "s#dados_central.js\"#dados_central.js?v=${GITHUB_RUN_ID}\"#; s#saude.js\"#saude.js?v=${GITHUB_RUN_ID}\"#" site/index.html
+      - name: Verificação automática (motores e regras)
+        run: |
+          set -a; . ./mods.env; set +a
+          python scripts/verificar_central.py
       - name: Avisar se a sincronização falhou
         if: steps.sync.outcome == 'failure'
         run: echo "::warning::A sincronização com a planilha de licitações falhou nesta rodada; a página saiu com os dados da planilha como estavam."
