@@ -13,7 +13,7 @@ Nunca derruba a publicação: sai sempre com código 0.
 import datetime as dt, json, math, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sincronizar_licitacoes import (trilha_de, classificar_publico, medido, prazo_passou,  # noqa: E402
+from sincronizar_licitacoes import (slug, trilha_de, classificar_publico, medido, prazo_passou,  # noqa: E402
                                     ORIGENS_NUVEM)
 
 TZ = dt.timezone(dt.timedelta(hours=-3))
@@ -156,9 +156,10 @@ def main():
         if r.get("Trilha") in ("ARQUIVADO", "DESCARTADOS", "ENCERRADO"):
             continue
         nums = re.findall(r"\d+", str(r.get("Edital") or ""))
-        org = re.sub(r"[^a-z]", "", str(r.get("Orgao") or "").lower())[:25]
-        if nums and org:
-            k = (org, str(int(nums[0])), str(r.get("UF") or ""))
+        cid = slug(r.get("Cidade") or "")
+        nums = [x for x in nums if not re.fullmatch(r"20\d\d", x)] or nums
+        if nums and cid:
+            k = (cid, str(int(nums[0])), str(r.get("UF") or ""))
             grupos.setdefault(k, []).append(n)
     dup_proc = [f"{k[0]} ed.{k[1]} {k[2]}: linhas {'/'.join(map(str, v))}" for k, v in grupos.items() if len(v) > 1]
     abertos = sum(1 for _, r in lic if r.get("Trilha") in ("CREDENCIAMENTO", "PREGAO"))
