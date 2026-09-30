@@ -33,18 +33,30 @@ jobs:
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
         run: python scripts/buscar_planilhas.py
+      # Se a sincronização falhar, a página continua sendo publicada com o que já está
+      # na planilha Google de licitações; a falha aparece em vermelho no Actions.
       - name: Levar o robô para a planilha Google de licitações
+        id: sync
+        continue-on-error: true
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
         run: |
           python scripts/aplicar_medicoes.py
           python scripts/sincronizar_licitacoes.py Pipeline_Licitacoes.xlsx
-          python scripts/buscar_planilhas.py --so-licitacoes
+      - name: Ler a planilha Google de licitações
+        env:
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+        run: python scripts/buscar_planilhas.py --so-licitacoes
       - name: Gerar os dados da página
         run: |
           set -a; . ./mods.env; set +a
           python scripts/build_central.py --pipeline pipeline.json --licitacoes licitacoes.json \
             --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET"
+          # evita que o navegador mostre dados velhos guardados em cache
+          sed -i "s#dados_central.js\"#dados_central.js?v=${GITHUB_RUN_ID}\"#" site/index.html
+      - name: Avisar se a sincronização falhou
+        if: steps.sync.outcome == 'failure'
+        run: echo "::warning::A sincronização com a planilha de licitações falhou nesta rodada; a página saiu com os dados da planilha como estavam."
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
