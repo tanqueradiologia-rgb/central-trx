@@ -144,6 +144,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 (function(){
 "use strict";
 var D=null, sel=null, limite=150, FRENTE="clinicas";
+var ABRIR={f:"<?= abrirFrente ?>", l:"<?= abrirLinha ?>"};
 function num(v){ var n=parseFloat(String(v==null?"":v).replace(/\./g,"").replace(",",".")); return isNaN(n)?null:n; }
 function diasPara(v){ var i=iso(v); if(!i) return null; return Math.round((new Date(i+"T12:00:00")-new Date(hoje()+"T12:00:00"))/864e5); }
 var VISTAS={
@@ -204,6 +205,7 @@ function iniciar(){
   opcoes("#fUf", D.linhas.map(function(r){return r.UF;}), "Todas");
   render();
   if(sel){ var r=D.linhas.filter(function(x){return x._k===sel;})[0]; if(r) abrir(r); }
+  else if(ABRIR.l && ABRIR.f===FRENTE){ var ra=D.linhas.filter(function(x){return String(x._l)===ABRIR.l;})[0]; ABRIR.l=""; if(ra) abrir(ra); }
 }
 function filtrar(){
   var q=norm($("#q").value.trim()), fa=$("#fFase").value, fr=$("#fResp").value, fu=$("#fUf").value, at=$("#fAtivas").checked, ve=$("#fAtraso").checked;
@@ -280,6 +282,7 @@ $("#recarregar").addEventListener("click",carregar);
 $("#abas").addEventListener("click",function(e){ var b=e.target.closest("button[data-f]"); if(!b||b.dataset.f===FRENTE) return; FRENTE=b.dataset.f; sel=null; limite=150; fechar(); ["#fFase","#fResp","#fUf"].forEach(function(id){$(id).value="";}); $("#q").value=""; $("#fAtraso").checked=false; try{ history.replaceState(null,"","#"+FRENTE); }catch(_){}
   carregar(); });
 try{ var h=(location.hash||"").slice(1); if(VISTAS[h]) FRENTE=h; }catch(_){}
+if(ABRIR.f && VISTAS[ABRIR.f]) FRENTE=ABRIR.f;
 carregar();
 })();
 </script>

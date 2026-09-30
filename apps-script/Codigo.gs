@@ -99,8 +99,13 @@ const ABA_HIST = 'Historico';
 const ABA_EQUIPE = 'Equipe';
 const TZ = 'America/Sao_Paulo';
 
-function doGet() {
-  return HtmlService.createTemplateFromFile('Index').evaluate()
+function doGet(e) {
+  // Link vindo da Central (GitHub): ?f=clinicas|licitacoes|quadro&l=<linha da planilha> abre a linha direto.
+  const t = HtmlService.createTemplateFromFile('Index');
+  const p = (e && e.parameter) || {};
+  t.abrirFrente = /^(clinicas|licitacoes|quadro)$/.test(p.f || '') ? p.f : '';
+  t.abrirLinha = /^\d{1,6}$/.test(p.l || '') ? p.l : '';
+  return t.evaluate()
     .setTitle('Central TRX · Edição')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }

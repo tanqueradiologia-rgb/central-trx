@@ -125,6 +125,8 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .links a{color:var(--accent);font-weight:600;text-decoration:none;font-size:14px}
 .links a:hover{text-decoration:underline}
+.links a.btn-edit{background:var(--accent);color:var(--surface);border-radius:6px;padding:4px 12px}
+.links a.btn-edit:hover{text-decoration:none;filter:brightness(1.1)}
 .more{display:flex;justify-content:center;padding-block:12px}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direction:column;gap:4px}
@@ -142,7 +144,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
         <img class="logo logo-dark" src="marca/trx-simplificado-negativo.svg" alt="" width="96" height="32">
         <div>
         <h1>Central <span>TRX</span></h1>
-        <div class="sub">Clínicas, licitações, credenciamentos e pregões da TRX, pela classificação da Dor · só leitura</div>
+        <div class="sub">Clínicas, licitações, credenciamentos e pregões da TRX, pela classificação da Dor · para alterar, abra a linha e toque em Editar</div>
         </div>
       </div>
       <div class="fresh" id="fresh"><span class="dot"></span><span id="freshTxt">Carregando dados…</span></div>
@@ -263,6 +265,9 @@ function fDias(n){ if(n===null) return '<span class="d-mut">sem data</span>'; if
 function fMoeda(v){ if(v===null||v===undefined) return "—"; if(v>=1e6) return "R$ "+(v/1e6).toFixed(2).replace(".",",")+" mi"; if(v>=1e3) return "R$ "+Math.round(v/1e3)+" mil"; return "R$ "+v.toFixed(0); }
 function fxPill(fx, sc){ const k=(fx||"SEM MEDICAO").split(" ")[0]; const cls={ATACAR:"ATACAR",QUENTE:"QUENTE",MORNO:"MORNO",FRIO:"FRIO"}[k]||"SEM"; const t = fx==="ATACAR AGORA"?"Atacar agora":fx==="SEM MEDICAO"||!fx?"Sem medição":fx.charAt(0)+fx.slice(1).toLowerCase(); return '<span class="pill fx fx-'+cls+'">'+(sc!=null&&sc!==""?Math.round(sc)+" · ":"")+esc(t)+'</span>'; }
 function sheetLink(linha){ const p=D.fontes.pipeline; return "https://docs.google.com/spreadsheets/d/"+p.id+"/edit#gid="+p.gid+"&range=A"+linha; }
+const EDIT_URL = "https://script.google.com/macros/s/AKfycbyvrb5vdMCLLmK29GnQqZ_6RjDSIqtQj2g94NS_J6xKhX2cMLKPSBqrCwhnjcCemzZ7/exec";
+function editLink(f,l){ return EDIT_URL+"?f="+f+"&l="+l; }
+function editBtn(f,l){ return '<a class="btn-edit" href="'+editLink(f,l)+'" target="_blank" rel="noopener">✎ Editar esta linha</a>'; }
 const LIC_URL = "https://drive.google.com/file/d/"+D.fontes.licitacoes.id+"/view";
 function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://docs.google.com/spreadsheets/d/"+f.id+"/edit#gid="+f.gid+"&range=A"+linha : LIC_URL; }
 
@@ -275,7 +280,7 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
   try{ const S=window.SAUDE; if(S && (S.alertas||[]).length){ const el=$("#saude"); el.hidden=false;
     el.innerHTML="<details><summary>Verificação automática: "+S.alertas.length+" alerta(s)"+((S.avisos||[]).length?" e "+S.avisos.length+" aviso(s)":"")+"</summary><ul>"+
     S.alertas.map(a=>"<li><b>"+esc(a)+"</b></li>").join("")+(S.avisos||[]).map(a=>"<li>"+esc(a)+"</li>").join("")+"</ul></details>"; } }catch(e){}
-  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. A página reflete a mudança na próxima atualização (a cada 10 minutos).</div>";
+  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. Use o botão Editar em cada linha; a mudança aparece aqui em até 10 minutos.</div>";
 })();
 
 /* ---------- motor genérico de lista ---------- */
@@ -363,7 +368,7 @@ const lCl = makeList({
   detail:r=>'<div class="axes">'+axis("Janela de compra",r.jan,r.sjan)+axis("Necessidade",r.nec,r.snec)+axis("Dor do paciente",r.dor,r.ra)+'</div>'+
      '<div class="det-grid" style="margin-top:14px">'+field("Gancho",r.g)+field("Modalidades",r.mod)+field("Notas",r.notas)+field("Resultado",r.res)+field("O que os pacientes reclamam",r.oq)+
      field("Toque atual",r.toque)+field("Última atualização",r.ult?fData(r.ult):"")+field("Medido em",r.med?fData(r.med):"")+'</div>'+
-     '<div class="links"><a href="'+sheetLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
+     '<div class="links">'+editBtn("clinicas",r.l)+'<a href="'+sheetLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
   const cont={}; CL.forEach(r=>cont[r.fase]=(cont[r.fase]||0)+1);
@@ -407,7 +412,7 @@ const lLi = makeList({
     '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
     '<td class="hide-sm">'+esc(r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
   detail:r=>'<div class="det-grid">'+field("Objeto",r.obj)+field("Onde disputa",r.onde)+field("Trava",r.bloq)+field("Próxima ação",r.acao)+field("Quando",r.qd?fData(r.qd):"")+field("Notas da Carla",r.notas)+field("Resultado",r.res)+field("Número de controle",r.id)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
-    '<div class="links">'+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
+    '<div class="links">'+editBtn("licitacoes",r.l)+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
   const ab=LI.filter(aberta);
@@ -442,7 +447,7 @@ const lQd = makeList({
     '<td>'+fxPill(r.fx,r.sc)+'</td>'+
     '<td class="clip meta hide-sm">'+esc(r.acao)+'</td>',
   detail:r=>'<div class="det-grid">'+field("Estrutura e oportunidade",r.obj)+field("Trava",r.bloq)+field("Cargo do contato",r.cargo)+field("Responsável",r.resp)+field("Notas da Carla",r.notas)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
-    '<div class="links"><a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
+    '<div class="links">'+editBtn("quadro",r.l)+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
   const cont={}; QD.forEach(r=>cont[r.uf]=(cont[r.uf]||0)+1);
@@ -492,7 +497,7 @@ const lPr = makeList({
       '<td class="mono">'+(p.dt? (p.prazo? fData(p.dt,true)+'<div>'+fDiasP(p.dt)+'</div>' : (late?'<span class="d-bad">'+fData(p.dt)+' · atrasado</span>':fData(p.dt))) : '—')+'</td>'+
       '<td class="clip meta hide-sm">'+esc(p.acao||"")+'</td>'; },
   detail:p=>(p.src!=="clinicas" && (p.r.jan!=null||p.r.nec!=null||p.r.dorx!=null) ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dorx,p.r.oq)+'</div>' : p.src==="clinicas" ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dor,p.r.ra)+'</div>' : '')+'<div class="det-grid" style="margin-top:14px">'+field("Frente",p.tp)+field("Responsável",p.resp)+field("Objeto ou gancho",p.r.obj||p.r.g)+field("Trava",p.r.bloq)+field("Notas",p.r.notas)+'</div>'+
-    '<div class="links">'+(p.r.lpn?'<a href="'+esc(p.r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+'<a href="'+p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+p.src+'">Ver na aba da frente</a></div>'
+    '<div class="links">'+editBtn(p.src,p.r.l)+(p.r.lpn?'<a href="'+esc(p.r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+'<a href="'+p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+p.src+'">Ver na aba da frente</a></div>'
 });
 (function(){
   const cont={}; PR.forEach(p=>cont[p.fx]=(cont[p.fx]||0)+1);
