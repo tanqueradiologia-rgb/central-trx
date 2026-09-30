@@ -148,7 +148,8 @@ def main():
             if p is None:
                 sem_prazo.append(n)
             elif 0 <= (p - hoje).days <= 7 and fase in FASES_PARADAS:
-                risco.append((p, n, str(r.get("Orgao") or "")[:60], str(r.get("UF") or ""), str(r.get("Faixa") or "")))
+                risco.append((p, n, str(r.get("Orgao") or "")[:60], str(r.get("UF") or ""), str(r.get("Faixa") or ""),
+                              str(r.get("Responsavel") or ""), str(r.get("Modalidade") or "")[:30]))
     risco.sort()
     abertos = sum(1 for _, r in lic if r.get("Trilha") in ("CREDENCIAMENTO", "PREGAO"))
     nuvem = sum(1 for _, r in lic if r.get("Origem") in ORIGENS_NUVEM and r.get("Trilha") in ("CREDENCIAMENTO", "PREGAO"))
@@ -164,15 +165,15 @@ def main():
         avisos.append(f"{len(score_errado)} licitações medidas com Score fora da régua (a próxima sincronização corrige).")
     if risco:
         alertas.append(f"{len(risco)} processos abertos vencem em até 7 dias e ainda estão parados em fase inicial: " +
-                       "; ".join(f"{p.strftime('%d/%m')} {o} ({uf})" for p, _, o, uf, _ in risco[:8]) + ".")
+                       "; ".join(f"{p.strftime('%d/%m')} {o} ({uf})" for p, _, o, uf, *_ in risco[:8]) + ".")
     if sem_prazo:
         avisos.append(f"{len(sem_prazo)} processos abertos sem prazo na planilha.")
 
     status = "alerta" if alertas else ("atencao" if avisos else "ok")
     saude = {"gerado": AGORA.strftime("%Y-%m-%dT%H:%M"), "status": status,
              "alertas": alertas, "avisos": avisos, "numeros": info,
-             "risco": [{"prazo": p.strftime("%d/%m/%Y"), "linha": n, "orgao": o, "uf": uf, "faixa": fx}
-                       for p, n, o, uf, fx in risco]}
+             "risco": [{"prazo": p.strftime("%d/%m/%Y"), "linha": n, "orgao": o, "uf": uf, "faixa": fx, "resp": rp, "mod": md}
+                       for p, n, o, uf, fx, rp, md in risco]}
     os.makedirs("site", exist_ok=True)
     open("site/saude.js", "w", encoding="utf-8").write(
         "window.SAUDE=" + json.dumps(saude, ensure_ascii=False) + ";\n")
@@ -180,6 +181,10 @@ def main():
         print(f"::warning title=Central TRX::{a}")
     for a in avisos:
         print(f"::notice title=Central TRX::{a}")
+    for p, n, o, uf, fx, rp, md in risco:
+        print(f"::notice title=Prazo em risco::linha {n} | {p.strftime('%d/%m/%Y')} | {o} ({uf}) | {md} | {fx or 'sem faixa'} | resp: {rp or 'ninguém'}")
+    if sem_prazo:
+        print(f"::notice title=Sem prazo::linhas {', '.join(map(str, sem_prazo))}")
     print("Verificação:", status, json.dumps(info, ensure_ascii=False))
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
