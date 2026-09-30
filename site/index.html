@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Central TRX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabeçalho fixo com frescor dos dados, abas por frente de trabalho, faixa-resumo clicável e lista com detalhe expansível. */
+:root{
+  --bg:#eef2f5; --surface:#ffffff; --surface2:#f6f8fa; --ink:#14202b; --muted:#5a6b7c; --line:#d6dee6;
+  --accent:#1c5b8c; --accent-soft:#e3eef7;
+  --c-atacar:#b3262e; --c-quente:#c05f00; --c-morno:#86750a; --c-frio:#4b6a88; --c-sem:#8b96a2;
+  --ok:#2d7a4d; --warn:#b76b00; --bad:#b3262e;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1319; --surface:#141c24; --surface2:#19232d; --ink:#e4ebf1; --muted:#95a5b5; --line:#263340;
+  --accent:#72b1e4; --accent-soft:#1a2c3c;
+  --c-atacar:#f07078; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
+  --ok:#5fc48a; --warn:#f0a14a; --bad:#f07078; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1319; --surface:#141c24; --surface2:#19232d; --ink:#e4ebf1; --muted:#95a5b5; --line:#263340;
+  --accent:#72b1e4; --accent-soft:#1a2c3c;
+  --c-atacar:#f07078; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
+  --ok:#5fc48a; --warn:#f0a14a; --bad:#f07078; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:12px 0;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:26px;letter-spacing:.02em;margin:0;text-wrap:balance}
+.brand h1 span{color:var(--accent)}
+.brand .sub{color:var(--muted);font-size:13px}
+.fresh{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.fresh.stale .dot{background:var(--warn)}
+.fresh.stale b{color:var(--warn)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto}
+nav.tabs a{font-family:var(--f-display);font-weight:600;font-size:16px;letter-spacing:.03em;color:var(--muted);text-decoration:none;padding:8px 14px 10px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+nav.tabs .n{font-family:var(--f-mono);font-size:12px;font-weight:400;margin-left:6px;color:var(--muted)}
+
+section.pane{display:flex;flex-direction:column;gap:14px;padding-block:18px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.kpi:hover{border-color:var(--accent)}
+.kpi[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.kpi .v{font-family:var(--f-mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .k{font-family:var(--f-display);font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.kpi.bad .v{color:var(--bad)} .kpi.warn .v{color:var(--warn)} .kpi.ok .v{color:var(--ok)}
+
+.band{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.band h3{margin:0;font-family:var(--f-display);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.bar{display:flex;height:14px;border-radius:4px;overflow:hidden;background:var(--surface2)}
+.bar span{display:block;height:100%;min-width:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.legend button{font:inherit;font-size:13px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
+.legend button i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend button b{font-family:var(--f-mono);font-weight:500;font-variant-numeric:tabular-nums}
+.legend button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.filters label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-family:var(--f-display);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.filters input,.filters select{font:inherit;font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+.filters input[type="search"]{width:min(280px,100%)}
+.filters .chk{flex-direction:row;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-family:var(--f-body);font-weight:400;font-size:14px;color:var(--ink);padding-bottom:8px}
+.btn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.count{font-size:13px;color:var(--muted);margin-left:auto;padding-bottom:8px}
+
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);background:var(--surface2);white-space:nowrap;cursor:pointer;user-select:none}
+th[data-dir="asc"]::after{content:" ▲";font-size:9px} th[data-dir="desc"]::after{content:" ▼";font-size:9px}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--surface2)}
+tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
+.nm{font-weight:600}
+.meta{color:var(--muted);font-size:13px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:13px;white-space:nowrap}
+.clip{max-width:320px}
+.pill{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px;white-space:nowrap;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+.fx{color:#fff;border-color:transparent}
+.fx-ATACAR{background:var(--c-atacar)} .fx-QUENTE{background:var(--c-quente)} .fx-MORNO{background:var(--c-morno)} .fx-FRIO{background:var(--c-frio)} .fx-SEM{background:var(--c-sem)}
+:root[data-theme="dark"] .fx{color:#0d1319}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .fx{color:#0d1319}}
+.d-bad{color:var(--bad);font-weight:600} .d-warn{color:var(--warn);font-weight:600} .d-ok{color:var(--ok)} .d-mut{color:var(--muted)}
+tr.det td{background:var(--surface2);padding:14px 16px 18px}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 22px}
+.det-grid div{min-width:0}
+.det-grid h4{margin:0 0 3px;font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.det-grid p{margin:0;overflow-wrap:anywhere}
+.axes{display:flex;gap:14px;flex-wrap:wrap}
+.axis{display:flex;flex-direction:column;gap:3px;min-width:120px}
+.axis .lbl{font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.meter{height:6px;background:var(--line);border-radius:3px;overflow:hidden;width:120px}
+.meter span{display:block;height:100%;background:var(--accent)}
+.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.links a{color:var(--accent);font-weight:600;text-decoration:none;font-size:14px}
+.links a:hover{text-decoration:underline}
+.more{display:flex;justify-content:center;padding-block:12px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direction:column;gap:4px}
+@media (max-width:640px){.brand h1{font-size:22px}.kpi .v{font-size:20px}.count{margin-left:0;width:100%}header.top{position:static}table{min-width:0}.hide-sm{display:none}.clip{max-width:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div>
+        <h1>Central <span>TRX</span></h1>
+        <div class="sub">Prospecção e licitações da TRX Diagnóstico Digital · só leitura, a edição continua nas planilhas</div>
+      </div>
+      <div class="fresh" id="fresh"><span class="dot"></span><span id="freshTxt">Carregando dados…</span></div>
+    </div>
+    <nav class="tabs" aria-label="Frentes">
+      <a href="#clinicas" data-tab="clinicas">Clínicas particulares<span class="n" id="n-clinicas"></span></a>
+      <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
+      <a href="#quadro" data-tab="quadro">Quadro nacional<span class="n" id="n-quadro"></span></a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="pane" id="pane-clinicas" hidden>
+    <div class="kpis" id="k-clinicas"></div>
+    <div class="band"><h3>Funil por fase</h3><div class="bar" id="bar-clinicas"></div><div class="legend" id="leg-clinicas"></div></div>
+    <div class="filters">
+      <label>Buscar<input type="search" id="q-clinicas" placeholder="clínica, cidade, gancho…"></label>
+      <label>UF<select id="uf-clinicas"><option value="">Todas</option></select></label>
+      <label>Faixa<select id="fx-clinicas"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option></select></label>
+      <label>Responsável<select id="resp-clinicas"><option value="">Todos</option></select></label>
+      <label class="chk"><input type="checkbox" id="ativas-clinicas" checked> só ativas (sem Descartado, Sem retorno e Fechado)</label>
+      <button class="btn" id="limpar-clinicas" type="button">Limpar filtros</button>
+      <span class="count" id="c-clinicas"></span>
+    </div>
+    <div class="tbl"><table><thead><tr>
+      <th data-k="n">Clínica</th><th data-k="fase">Fase</th><th data-k="sc">Score</th><th data-k="resp" class="hide-sm">Resp.</th><th data-k="prox">Próximo toque</th><th data-k="acao" class="hide-sm">Próxima ação</th>
+    </tr></thead><tbody id="t-clinicas"></tbody></table></div>
+    <div class="more" id="m-clinicas"></div>
+  </section>
+
+  <section class="pane" id="pane-licitacoes" hidden>
+    <div class="kpis" id="k-licitacoes"></div>
+    <div class="band"><h3>Prazos das abertas</h3><div class="bar" id="bar-licitacoes"></div><div class="legend" id="leg-licitacoes"></div></div>
+    <div class="filters">
+      <label>Buscar<input type="search" id="q-licitacoes" placeholder="órgão, cidade, objeto, edital…"></label>
+      <label>UF<select id="uf-licitacoes"><option value="">Todas</option></select></label>
+      <label>Modalidade<select id="mod-licitacoes"><option value="">Todas</option></select></label>
+      <label>Encaixe<select id="enc-licitacoes"><option value="">Todos</option><option value="alta">alta</option><option value="media">média</option><option value="baixa">baixa</option></select></label>
+      <label>Fase<select id="fase-licitacoes"><option value="">Todas</option></select></label>
+      <label class="chk"><input type="checkbox" id="abertas-licitacoes" checked> só com prazo em aberto</label>
+      <button class="btn" id="limpar-licitacoes" type="button">Limpar filtros</button>
+      <span class="count" id="c-licitacoes"></span>
+    </div>
+    <div class="tbl"><table><thead><tr>
+      <th data-k="prazo">Prazo</th><th data-k="c">Órgão</th><th data-k="mod" class="hide-sm">Modalidade</th><th data-k="val">Valor estimado</th><th data-k="enc" class="hide-sm">Encaixe</th><th data-k="fase" class="hide-sm">Fase</th><th data-k="resp" class="hide-sm">Resp.</th>
+    </tr></thead><tbody id="t-licitacoes"></tbody></table></div>
+    <div class="more" id="m-licitacoes"></div>
+  </section>
+
+  <section class="pane" id="pane-quadro" hidden>
+    <div class="kpis" id="k-quadro"></div>
+    <div class="band"><h3>Municípios por UF</h3><div class="bar" id="bar-quadro"></div><div class="legend" id="leg-quadro"></div></div>
+    <div class="filters">
+      <label>Buscar<input type="search" id="q-quadro" placeholder="município, órgão, hospital…"></label>
+      <label>UF<select id="uf-quadro"><option value="">Todas</option></select></label>
+      <label>Situação do envio<select id="sit-quadro"><option value="">Todas</option></select></label>
+      <label>Encaixe<select id="enc-quadro"><option value="">Todos</option><option value="alta">alta</option><option value="media">média</option><option value="baixa">baixa</option></select></label>
+      <button class="btn" id="limpar-quadro" type="button">Limpar filtros</button>
+      <span class="count" id="c-quadro"></span>
+    </div>
+    <div class="tbl"><table><thead><tr>
+      <th data-k="c">Município</th><th data-k="org" class="hide-sm">Órgão</th><th data-k="sit">Situação do envio</th><th data-k="enc" class="hide-sm">Encaixe</th><th data-k="sc">Score</th><th data-k="acao" class="hide-sm">Próxima ação</th>
+    </tr></thead><tbody id="t-quadro"></tbody></table></div>
+    <div class="more" id="m-quadro"></div>
+  </section>
+
+  <footer id="rodape"></footer>
+</main>
+
+<script src="dados_central.js"></script>
+<script>
+(function(){
+"use strict";
+const D = window.CENTRAL;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const PAGE = 150;
+const HOJE = new Date(); HOJE.setHours(0,0,0,0);
+
+if(!D){
+  $("#freshTxt").textContent = "Os dados não carregaram. Recarregue a página; se continuar, avise o Marcos.";
+  document.querySelectorAll(".pane").forEach(p=>p.hidden=false);
+  return;
+}
+
+/* ---------- formatos ---------- */
+const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+function parseD(iso){ if(!iso) return null; const d = new Date(iso.length<=10 ? iso+"T00:00" : iso); return isNaN(d) ? null : d; }
+function fData(iso, hora){ const d=parseD(iso); if(!d) return "—"; let s=String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getFullYear()).slice(2); if(hora && iso.length>10) s+=" "+String(d.getHours()).padStart(2,"0")+"h"+String(d.getMinutes()).padStart(2,"0"); return s; }
+function dias(iso){ const d=parseD(iso); if(!d) return null; const x=new Date(d); x.setHours(0,0,0,0); return Math.round((x-HOJE)/864e5); }
+function passou(iso){ const d=parseD(iso); if(!d) return false; if(iso.length>10) return d.getTime()<Date.now(); return dias(iso)<0; }
+function fDiasP(iso){ if(iso && passou(iso) && dias(iso)===0) return '<span class="d-mut">encerrou hoje</span>'; return fDias(dias(iso)); }
+function fDias(n){ if(n===null) return '<span class="d-mut">sem data</span>'; if(n<0) return '<span class="d-mut">encerrado há '+(-n)+'d</span>'; if(n===0) return '<span class="d-bad">hoje</span>'; if(n<=3) return '<span class="d-bad">em '+n+'d</span>'; if(n<=10) return '<span class="d-warn">em '+n+'d</span>'; return '<span class="d-ok">em '+n+'d</span>'; }
+function fMoeda(v){ if(v===null||v===undefined) return "—"; if(v>=1e6) return "R$ "+(v/1e6).toFixed(2).replace(".",",")+" mi"; if(v>=1e3) return "R$ "+Math.round(v/1e3)+" mil"; return "R$ "+v.toFixed(0); }
+function fxPill(fx, sc){ const k=(fx||"SEM MEDICAO").split(" ")[0]; const cls={ATACAR:"ATACAR",QUENTE:"QUENTE",MORNO:"MORNO",FRIO:"FRIO"}[k]||"SEM"; const t = fx==="ATACAR AGORA"?"Atacar agora":fx==="SEM MEDICAO"||!fx?"Sem medição":fx.charAt(0)+fx.slice(1).toLowerCase(); return '<span class="pill fx fx-'+cls+'">'+(sc!=null&&sc!==""?Math.round(sc)+" · ":"")+esc(t)+'</span>'; }
+function sheetLink(linha){ const p=D.fontes.pipeline; return "https://docs.google.com/spreadsheets/d/"+p.id+"/edit#gid="+p.gid+"&range=A"+linha; }
+const LIC_URL = "https://drive.google.com/file/d/"+D.fontes.licitacoes.id+"/view";
+
+/* ---------- frescor ---------- */
+(function(){
+  const g=parseD(D.gerado); const h = g ? (Date.now()-g.getTime())/36e5 : 99;
+  const el=$("#fresh");
+  $("#freshTxt").innerHTML = "Dados das planilhas de <b>"+esc(fData(D.gerado,true))+"</b>" + (h>8 ? " · <b>desatualizado há "+Math.floor(h)+"h</b>" : " · atualiza ao longo do dia");
+  if(h>8) el.classList.add("stale");
+  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados).</div><div>Para mudar Fase, próxima ação ou notas, abra a linha na planilha. A página reflete a mudança na próxima atualização.</div>";
+})();
+
+/* ---------- motor genérico de lista ---------- */
+function makeList(cfg){
+  const st = {limit:PAGE, sort:cfg.sort, dir:cfg.dir, open:new Set(), extra:{}};
+  const tbody=$("#t-"+cfg.id), more=$("#m-"+cfg.id), cnt=$("#c-"+cfg.id);
+  const ths=document.querySelectorAll("#pane-"+cfg.id+" th");
+  function filtered(){
+    const q=norm($("#q-"+cfg.id).value.trim());
+    return cfg.rows.filter(r=>{
+      if(q && !norm(cfg.hay(r)).includes(q)) return false;
+      for(const f of cfg.filters){ const v=$("#"+f.el).value; if(v && !f.test(r,v)) return false; }
+      for(const k in st.extra){ if(st.extra[k] && !st.extra[k](r)) return false; }
+      if(cfg.toggle && $("#"+cfg.toggle.el).checked && !cfg.toggle.test(r)) return false;
+      return true;
+    });
+  }
+  function sorted(rows){
+    const k=st.sort, s=st.dir==="asc"?1:-1, key=cfg.sortKey||((r,k)=>r[k]);
+    return rows.slice().sort((a,b)=>{ let x=key(a,k), y=key(b,k); const ex=(x===null||x===undefined||x===""), ey=(y===null||y===undefined||y===""); if(ex&&ey) return 0; if(ex) return 1; if(ey) return -1; if(typeof x==="string") return x.localeCompare(y,"pt")*s; return (x-y)*s; });
+  }
+  function render(){
+    const rows=sorted(filtered());
+    ths.forEach(th=>{ th.dataset.dir = th.dataset.k===st.sort ? st.dir : ""; });
+    cnt.textContent = rows.length.toLocaleString("pt-BR")+" de "+cfg.rows.length.toLocaleString("pt-BR");
+    if(!rows.length){ tbody.innerHTML='<tr><td colspan="'+ths.length+'"><div class="empty">Nenhum item com esses filtros. Use "Limpar filtros" para ver tudo.</div></td></tr>'; more.innerHTML=""; return; }
+    let h="";
+    rows.slice(0,st.limit).forEach(r=>{
+      const key=cfg.id+":"+r.l, open=st.open.has(key);
+      h+='<tr class="row" tabindex="0" data-key="'+esc(key)+'" aria-expanded="'+open+'">'+cfg.cells(r)+'</tr>';
+      if(open) h+='<tr class="det"><td colspan="'+ths.length+'">'+cfg.detail(r)+'</td></tr>';
+    });
+    tbody.innerHTML=h;
+    more.innerHTML = rows.length>st.limit ? '<button class="btn" type="button">Mostrar mais '+Math.min(PAGE,rows.length-st.limit)+'</button>' : "";
+    cfg.after && cfg.after();
+  }
+  tbody.addEventListener("click",e=>{ if(e.target.closest("a")) return; const tr=e.target.closest("tr.row"); if(!tr) return; const k=tr.dataset.key; st.open.has(k)?st.open.delete(k):st.open.add(k); render(); });
+  tbody.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ") && e.target.matches("tr.row")){ e.preventDefault(); e.target.click(); } });
+  more.addEventListener("click",()=>{ st.limit+=PAGE; render(); });
+  ths.forEach(th=>th.addEventListener("click",()=>{ const k=th.dataset.k; if(st.sort===k) st.dir = st.dir==="asc"?"desc":"asc"; else { st.sort=k; st.dir = (cfg.defDir&&cfg.defDir[k])||"asc"; } render(); }));
+  const ids=["q-"+cfg.id].concat(cfg.filters.map(f=>f.el)).concat(cfg.toggle?[cfg.toggle.el]:[]);
+  ids.forEach(id=>$("#"+id).addEventListener("input",()=>{ st.limit=PAGE; render(); }));
+  $("#limpar-"+cfg.id).addEventListener("click",()=>{ $("#q-"+cfg.id).value=""; cfg.filters.forEach(f=>$("#"+f.el).value=""); st.extra={}; if(cfg.toggle) $("#"+cfg.toggle.el).checked=cfg.toggle.def; st.limit=PAGE; cfg.onClear&&cfg.onClear(); render(); });
+  return {render, st, setExtra(k,fn){ st.extra[k]=fn; st.limit=PAGE; render(); }};
+}
+function fillSelect(id, vals){ const s=$("#"+id); [...new Set(vals.filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt")).forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; s.appendChild(o); }); }
+function kpiBtn(label, value, cls, key){ return '<button class="kpi '+(cls||"")+'" type="button" data-key="'+key+'" aria-pressed="false"><span class="v">'+value+'</span><span class="k">'+esc(label)+'</span></button>'; }
+function wireKpis(boxId, list, defs){
+  const box=$("#"+boxId);
+  box.innerHTML = defs.map(d=>kpiBtn(d.label, d.value, d.cls, d.key)).join("");
+  box.addEventListener("click",e=>{ const b=e.target.closest(".kpi"); if(!b) return; const on=b.getAttribute("aria-pressed")!=="true"; box.querySelectorAll(".kpi").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed",on); const d=defs.find(x=>x.key===b.dataset.key); list.setExtra("kpi", on ? d.test : null); });
+  return ()=>box.querySelectorAll(".kpi").forEach(x=>x.setAttribute("aria-pressed","false"));
+}
+function band(barId, legId, parts, list, test){
+  const tot=parts.reduce((a,p)=>a+p.n,0)||1;
+  $("#"+barId).innerHTML = parts.map(p=>'<span title="'+esc(p.label)+': '+p.n+'" style="width:'+(p.n/tot*100)+'%;background:'+p.color+'"></span>').join("");
+  const leg=$("#"+legId);
+  leg.innerHTML = parts.map(p=>'<button type="button" data-v="'+esc(p.value)+'" aria-pressed="false"><i style="background:'+p.color+'"></i>'+esc(p.label)+' <b>'+p.n+'</b></button>').join("");
+  leg.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; const on=b.getAttribute("aria-pressed")!=="true"; leg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed",on); list.setExtra("band", on ? (r=>test(r,b.dataset.v)) : null); });
+  return ()=>leg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
+}
+const PAL = ["var(--accent)","var(--c-quente)","var(--c-frio)","var(--ok)","var(--c-morno)","var(--c-atacar)","var(--c-sem)"];
+
+/* ---------- CLÍNICAS ---------- */
+const INATIVAS = new Set(["Descartado","Sem retorno","Fechado"]);
+const ORDEM_FASE = ["Mapeando","Pesquisando decisor","Em cadencia","Decisor engajado","Handoff gestora","Diagnostico operacional","Fechado","Sem retorno","Descartado"];
+const COR_FASE = {"Mapeando":"var(--c-sem)","Pesquisando decisor":"var(--c-frio)","Em cadencia":"var(--accent)","Decisor engajado":"var(--ok)","Handoff gestora":"var(--c-morno)","Diagnostico operacional":"var(--c-quente)","Fechado":"var(--ok)","Sem retorno":"var(--warn)","Descartado":"var(--bad)"};
+const CL = D.clinicas;
+$("#n-clinicas").textContent = CL.filter(r=>!INATIVAS.has(r.fase)).length;
+fillSelect("uf-clinicas", CL.map(r=>r.uf)); fillSelect("resp-clinicas", CL.map(r=>r.resp));
+function axis(lbl, v, sinal){ return '<div class="axis"><span class="lbl">'+lbl+'</span>'+(v==null?'<span class="meta">não medido</span>':'<span class="mono">'+Math.round(v)+' / 100</span><span class="meter"><span style="width:'+Math.max(0,Math.min(100,v))+'%"></span></span>')+(sinal?'<span class="meta">'+esc(sinal)+'</span>':'')+'</div>'; }
+function field(t, v){ return v ? '<div><h4>'+t+'</h4><p>'+esc(v)+'</p></div>' : ""; }
+const lCl = makeList({
+  id:"clinicas", rows:CL, sort:"sc", dir:"desc", defDir:{sc:"desc",prox:"asc"},
+  hay:r=>[r.n,r.c,r.uf,r.g,r.mod,r.notas,r.acao,r.fase,r.resp].join(" "),
+  filters:[{el:"uf-clinicas",test:(r,v)=>r.uf===v},{el:"fx-clinicas",test:(r,v)=>r.fx===v},{el:"resp-clinicas",test:(r,v)=>r.resp===v}],
+  toggle:{el:"ativas-clinicas",def:true,test:r=>!INATIVAS.has(r.fase)},
+  cells:r=>{ const dp=dias(r.prox); const late = dp!==null && dp<0 && !INATIVAS.has(r.fase);
+    return '<td><div class="nm">'+esc(r.n)+'</div><div class="meta">'+esc(r.c)+(r.uf?" · "+esc(r.uf):"")+(r.pr?" · prioridade "+esc(r.pr.toLowerCase()):"")+'</div></td>'+
+      '<td><span class="pill" style="border-color:'+(COR_FASE[r.fase]||"var(--line)")+'">'+esc(r.fase)+'</span></td>'+
+      '<td>'+fxPill(r.fx,r.sc)+(r.cob?'<div class="meta">'+esc(r.cob)+' eixos</div>':'')+'</td>'+
+      '<td class="hide-sm">'+esc(r.resp||"—")+'</td>'+
+      '<td class="mono">'+(r.prox?(late?'<span class="d-bad">'+fData(r.prox)+' · atrasado</span>':fData(r.prox)):'—')+'</td>'+
+      '<td class="clip meta hide-sm">'+esc(r.acao&&r.acao!=="-"?r.acao:"")+'</td>'; },
+  detail:r=>'<div class="axes">'+axis("Janela de compra",r.jan,r.sjan)+axis("Necessidade",r.nec,r.snec)+axis("Dor do paciente",r.dor,r.ra)+'</div>'+
+     '<div class="det-grid" style="margin-top:14px">'+field("Gancho",r.g)+field("Modalidades",r.mod)+field("Notas",r.notas)+field("Resultado",r.res)+field("O que os pacientes reclamam",r.oq)+
+     field("Toque atual",r.toque)+field("Última atualização",r.ult?fData(r.ult):"")+field("Medido em",r.med?fData(r.med):"")+'</div>'+
+     '<div class="links"><a href="'+sheetLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
+});
+(function(){
+  const cont={}; CL.forEach(r=>cont[r.fase]=(cont[r.fase]||0)+1);
+  const fases = ORDEM_FASE.filter(f=>cont[f]).concat(Object.keys(cont).filter(f=>!ORDEM_FASE.includes(f)));
+  const clearBand = band("bar-clinicas","leg-clinicas", fases.map((f,i)=>({label:f,value:f,n:cont[f],color:COR_FASE[f]||PAL[i%PAL.length]})), lCl, (r,v)=>r.fase===v);
+  const at=CL.filter(r=>!INATIVAS.has(r.fase));
+  const quentes=at.filter(r=>r.fx==="ATACAR AGORA"||r.fx==="QUENTE").length;
+  const cad=at.filter(r=>["Em cadencia","Decisor engajado","Handoff gestora","Diagnostico operacional"].includes(r.fase)).length;
+  const atras=at.filter(r=>{const d=dias(r.prox); return d!==null&&d<0;}).length;
+  const semMed=at.filter(r=>r.fx==="SEM MEDICAO").length;
+  const med7=CL.filter(r=>{const d=dias(r.med); return d!==null&&d>=-7;}).length;
+  const clearK = wireKpis("k-clinicas", lCl, [
+    {key:"q",label:"Atacar agora ou quentes",value:quentes,cls:quentes?"warn":"",test:r=>!INATIVAS.has(r.fase)&&(r.fx==="ATACAR AGORA"||r.fx==="QUENTE")},
+    {key:"c",label:"Em conversa",value:cad,cls:"ok",test:r=>["Em cadencia","Decisor engajado","Handoff gestora","Diagnostico operacional"].includes(r.fase)},
+    {key:"a",label:"Toques atrasados",value:atras,cls:atras?"bad":"",test:r=>{const d=dias(r.prox); return !INATIVAS.has(r.fase)&&d!==null&&d<0;}},
+    {key:"s",label:"Sem retorno",value:cont["Sem retorno"]||0,cls:"",test:r=>r.fase==="Sem retorno"},
+    {key:"m",label:"Ativas sem medição",value:semMed,cls:"",test:r=>!INATIVAS.has(r.fase)&&r.fx==="SEM MEDICAO"},
+    {key:"7",label:"Medidas em 7 dias",value:med7,cls:"",test:r=>{const d=dias(r.med); return d!==null&&d>=-7;}}
+  ]);
+  // KPIs e faixa que olham inativas desligam o filtro "só ativas" para mostrar o resultado
+  document.querySelectorAll('#k-clinicas .kpi[data-key="s"],#leg-clinicas button').forEach(b=>b.addEventListener("click",()=>{ $("#ativas-clinicas").checked=false; lCl.render(); }));
+  $("#limpar-clinicas").addEventListener("click",()=>{ clearBand(); clearK(); });
+})();
+
+/* ---------- LICITAÇÕES ---------- */
+const LI = D.licitacoes;
+const FECHADAS = /perdid|descart|desist|encerr|n[aã]o particip/i;
+const aberta = r => !FECHADAS.test(r.fase) && !passou(r.prazo);
+$("#n-licitacoes").textContent = LI.filter(aberta).length;
+fillSelect("uf-licitacoes", LI.map(r=>r.uf)); fillSelect("mod-licitacoes", LI.map(r=>r.mod)); fillSelect("fase-licitacoes", LI.map(r=>r.fase));
+const lLi = makeList({
+  id:"licitacoes", rows:LI, sort:"prazo", dir:"asc", defDir:{val:"desc",prazo:"asc"},
+  sortKey:(r,k)=> k==="prazo" ? (r.prazo? parseD(r.prazo).getTime() : null) : k==="enc" ? ({alta:0,media:1,baixa:2}[r.enc] ?? 3) : r[k],
+  hay:r=>[r.org,r.c,r.uf,r.obj,r.ed,r.mod,r.onde,r.bloq,r.acao,r.notas,r.fase].join(" "),
+  filters:[{el:"uf-licitacoes",test:(r,v)=>r.uf===v},{el:"mod-licitacoes",test:(r,v)=>r.mod===v},{el:"enc-licitacoes",test:(r,v)=>r.enc===v},{el:"fase-licitacoes",test:(r,v)=>r.fase===v}],
+  toggle:{el:"abertas-licitacoes",def:true,test:aberta},
+  cells:r=>'<td class="mono">'+fData(r.prazo,true)+'<div>'+fDiasP(r.prazo)+'</div></td>'+
+    '<td><div class="nm">'+esc(r.c)+(r.uf?" · "+esc(r.uf):"")+'</div><div class="meta">'+esc(r.org)+'</div>'+(r.bloq?'<div class="meta" style="color:var(--warn)">Trava: '+esc(r.bloq)+'</div>':'')+'</td>'+
+    '<td class="hide-sm">'+esc(r.mod)+'<div class="meta">'+esc(r.ed)+'</div></td>'+
+    '<td class="mono">'+fMoeda(r.val)+'</td>'+
+    '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
+    '<td class="hide-sm">'+esc(r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
+  detail:r=>'<div class="det-grid">'+field("Objeto",r.obj)+field("Onde disputa",r.onde)+field("Trava",r.bloq)+field("Próxima ação",r.acao)+field("Quando",r.qd?fData(r.qd):"")+field("Notas da Carla",r.notas)+field("Resultado",r.res)+field("Número de controle",r.id)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
+    '<div class="links">'+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+LIC_URL+'" target="_blank" rel="noopener">Abrir a planilha (aba '+esc(r.aba)+', linha '+r.l+') ↗</a></div>'
+});
+(function(){
+  const ab=LI.filter(aberta);
+  const g=[["≤ 3 dias","var(--c-atacar)",d=>d!==null&&d<=3],["4 a 10 dias","var(--c-quente)",d=>d!==null&&d>3&&d<=10],["11 a 30 dias","var(--accent)",d=>d!==null&&d>10&&d<=30],["mais de 30 dias","var(--c-frio)",d=>d!==null&&d>30],["sem data","var(--c-sem)",d=>d===null]];
+  const clearBand = band("bar-licitacoes","leg-licitacoes", g.map(([l,c,t])=>({label:l,value:l,n:ab.filter(r=>t(dias(r.prazo))).length,color:c})), lLi, (r,v)=>{ const t=g.find(x=>x[0]===v)[2]; return aberta(r)&&t(dias(r.prazo)); });
+  const soma=ab.reduce((a,r)=>a+(r.val||0),0);
+  const clearK = wireKpis("k-licitacoes", lLi, [
+    {key:"a",label:"Processos abertos",value:ab.length,cls:"",test:aberta},
+    {key:"3",label:"Encerram em até 3 dias",value:ab.filter(r=>{const d=dias(r.prazo);return d!==null&&d<=3;}).length,cls:"bad",test:r=>{const d=dias(r.prazo);return aberta(r)&&d!==null&&d<=3;}},
+    {key:"10",label:"Encerram em até 10 dias",value:ab.filter(r=>{const d=dias(r.prazo);return d!==null&&d<=10;}).length,cls:"warn",test:r=>{const d=dias(r.prazo);return aberta(r)&&d!==null&&d<=10;}},
+    {key:"t",label:"Abertos com trava",value:ab.filter(r=>r.bloq).length,cls:"",test:r=>aberta(r)&&!!r.bloq},
+    {key:"e",label:"Encaixe alto abertos",value:ab.filter(r=>r.enc==="alta").length,cls:"ok",test:r=>aberta(r)&&r.enc==="alta"},
+    {key:"v",label:"Valor somado aberto",value:fMoeda(soma),cls:"",test:aberta}
+  ]);
+  $("#limpar-licitacoes").addEventListener("click",()=>{ clearBand(); clearK(); });
+})();
+
+/* ---------- QUADRO ---------- */
+const QD = D.quadro;
+$("#n-quadro").textContent = QD.length;
+fillSelect("uf-quadro", QD.map(r=>r.uf)); fillSelect("sit-quadro", QD.map(r=>r.sit));
+const COR_SIT = {"Rascunho gerado":"var(--accent)","Sem e-mail (achar contato)":"var(--warn)","Aguardando envio":"var(--c-quente)","Enviado":"var(--ok)","Respondeu":"var(--ok)"};
+const lQd = makeList({
+  id:"quadro", rows:QD, sort:"sc", dir:"desc", defDir:{sc:"desc"},
+  sortKey:(r,k)=> k==="enc" ? ({alta:0,media:1,baixa:2}[r.enc] ?? 3) : r[k],
+  hay:r=>[r.c,r.uf,r.org,r.obj,r.sit,r.acao,r.notas,r.cargo].join(" "),
+  filters:[{el:"uf-quadro",test:(r,v)=>r.uf===v},{el:"sit-quadro",test:(r,v)=>r.sit===v},{el:"enc-quadro",test:(r,v)=>r.enc===v}],
+  cells:r=>'<td><div class="nm">'+esc(r.c)+'</div><div class="meta">'+esc(r.uf)+'</div></td>'+
+    '<td class="clip hide-sm">'+esc(r.org)+'</td>'+
+    '<td><span class="pill" style="border-color:'+(COR_SIT[r.sit]||"var(--line)")+'">'+esc(r.sit)+'</span></td>'+
+    '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
+    '<td>'+fxPill(r.fx,r.sc)+'</td>'+
+    '<td class="clip meta hide-sm">'+esc(r.acao)+'</td>',
+  detail:r=>'<div class="det-grid">'+field("Estrutura e oportunidade",r.obj)+field("Trava",r.bloq)+field("Cargo do contato",r.cargo)+field("Responsável",r.resp)+field("Notas da Carla",r.notas)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
+    '<div class="links"><a href="'+LIC_URL+'" target="_blank" rel="noopener">Abrir a planilha (aba SEM PROCESSO, linha '+r.l+') ↗</a></div>'
+});
+(function(){
+  const cont={}; QD.forEach(r=>cont[r.uf]=(cont[r.uf]||0)+1);
+  const ufs=Object.keys(cont).sort((a,b)=>cont[b]-cont[a]);
+  const top=ufs.slice(0,8), resto=ufs.slice(8);
+  const parts=top.map((u,i)=>({label:u,value:u,n:cont[u],color:PAL[i%PAL.length]}));
+  if(resto.length) parts.push({label:"outras "+resto.length+" UFs",value:"__outras",n:resto.reduce((a,u)=>a+cont[u],0),color:"var(--c-sem)"});
+  const clearBand = band("bar-quadro","leg-quadro", parts, lQd, (r,v)=> v==="__outras" ? resto.includes(r.uf) : r.uf===v);
+  const s={}; QD.forEach(r=>s[r.sit]=(s[r.sit]||0)+1);
+  const clearK = wireKpis("k-quadro", lQd, [
+    {key:"t",label:"Municípios no quadro",value:QD.length,cls:"",test:()=>true},
+    {key:"r",label:"Rascunho gerado",value:s["Rascunho gerado"]||0,cls:"",test:r=>r.sit==="Rascunho gerado"},
+    {key:"e",label:"Sem e-mail",value:s["Sem e-mail (achar contato)"]||0,cls:"warn",test:r=>r.sit==="Sem e-mail (achar contato)"},
+    {key:"g",label:"Aguardando envio",value:s["Aguardando envio"]||0,cls:"",test:r=>r.sit==="Aguardando envio"},
+    {key:"a",label:"Encaixe alto",value:QD.filter(r=>r.enc==="alta").length,cls:"ok",test:r=>r.enc==="alta"},
+    {key:"q",label:"Quentes",value:QD.filter(r=>r.fx==="QUENTE"||r.fx==="ATACAR AGORA").length,cls:"",test:r=>r.fx==="QUENTE"||r.fx==="ATACAR AGORA"}
+  ]);
+  $("#limpar-quadro").addEventListener("click",()=>{ clearBand(); clearK(); });
+})();
+
+/* ---------- abas ---------- */
+const TABS=["clinicas","licitacoes","quadro"];
+const rendered={};
+function show(tab){
+  if(!TABS.includes(tab)) tab="clinicas";
+  TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  if(!rendered[tab]){ ({clinicas:lCl,licitacoes:lLi,quadro:lQd})[tab].render(); rendered[tab]=true; }
+  try{ localStorage.setItem("central-aba",tab); }catch(e){}
+}
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+let inicial = location.hash.slice(1);
+if(!TABS.includes(inicial)){ try{ inicial = localStorage.getItem("central-aba") || "clinicas"; }catch(e){ inicial="clinicas"; } }
+show(inicial);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,64 @@
+name: Atualizar Central TRX
+
+on:
+  schedule:
+    - cron: "*/15 10-23 * * *"   # a cada 15 min, das 07h às 20h59 de Brasília (UTC-3)
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependências
+        run: pip install --quiet google-auth google-api-python-client openpyxl
+      - name: Baixar as planilhas
+        env:
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+        run: python scripts/buscar_planilhas.py
+      - name: Gerar os dados da página
+        run: |
+          set -a; . ./mods.env; set +a
+          python scripts/build_central.py --pipeline pipeline.json --licitacoes Pipeline_Licitacoes.xlsx \
+            --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  # O GitHub desliga agendamentos de repositórios sem atividade por 60 dias.
+  # Este passo mensal registra atividade para a atualização nunca parar.
+  manter-ativo:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Registrar atividade no dia 1
+        run: |
+          if [ "$(date -u +%d)" = "01" ] && [ "$(date -u +%H%M)" \< "1015" ]; then
+            date -u +%Y-%m-%d > .ativo
+            git config user.name "central-trx-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add .ativo && git commit -m "Manter agendamento ativo" && git push || true
+          fi
