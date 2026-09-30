@@ -8,29 +8,37 @@
 .saude summary{cursor:pointer;font-weight:600}.saude ul{margin:6px 0 0 18px;padding:0}
 </style>
 <title>Central TRX</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="icon" type="image/svg+xml" href="marca/favicon-48.svg">
+<link rel="apple-touch-icon" href="marca/favicon-512.svg">
 <style>
-/* Layout: cabeçalho fixo com frescor dos dados, abas por frente de trabalho, faixa-resumo clicável e lista com detalhe expansível. */
+@font-face{font-family:"Open Sans";src:url("marca/OpenSans-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Open Sans";src:url("marca/OpenSans-Italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Open Sans";src:url("marca/OpenSans-SemiBold.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Open Sans";src:url("marca/OpenSans-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Open Sans SemiCondensed";src:url("marca/OpenSans_SemiCondensed-SemiBold.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Open Sans SemiCondensed";src:url("marca/OpenSans_SemiCondensed-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+</style>
+<style>
+/* Identidade: marca TRX Diagnóstico Digital (paleta oficial, Open Sans, logo técnico simplificado). Design system: TRX Diagnóstico Digital.
+   Layout: cabeçalho fixo com frescor dos dados, abas por frente de trabalho, faixa-resumo clicável e lista com detalhe expansível. */
 :root{
-  --bg:#eef2f5; --surface:#ffffff; --surface2:#f6f8fa; --ink:#14202b; --muted:#5a6b7c; --line:#d6dee6;
-  --accent:#1c5b8c; --accent-soft:#e3eef7;
+  --bg:#f4f2f2; --surface:#ffffff; --surface2:#f4f2f2; --ink:#28313e; --muted:#334861; --line:#dfe0e2;
+  --accent:#0e3a5a; --accent-soft:#e3eef7;
   --c-atacar:#b3262e; --c-quente:#c05f00; --c-morno:#86750a; --c-frio:#4b6a88; --c-sem:#8b96a2;
   --ok:#2d7a4d; --warn:#b76b00; --bad:#b3262e;
-  --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
-  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-display:"Open Sans SemiCondensed","Open Sans","Arial Narrow",Arial,sans-serif;
+  --f-body:"Open Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"Open Sans","Segoe UI",system-ui,sans-serif; /* números: Open Sans com algarismos tabulares (marca TRX) */
   --r:8px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0d1319; --surface:#141c24; --surface2:#19232d; --ink:#e4ebf1; --muted:#95a5b5; --line:#263340;
-  --accent:#72b1e4; --accent-soft:#1a2c3c;
+  --accent:#4cbecf; --accent-soft:#1a2c3c;
   --c-atacar:#f07078; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
   --ok:#5fc48a; --warn:#f0a14a; --bad:#f07078; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0d1319; --surface:#141c24; --surface2:#19232d; --ink:#e4ebf1; --muted:#95a5b5; --line:#263340;
-  --accent:#72b1e4; --accent-soft:#1a2c3c;
+  --accent:#4cbecf; --accent-soft:#1a2c3c;
   --c-atacar:#f07078; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
   --ok:#5fc48a; --warn:#f0a14a; --bad:#f07078; color-scheme:dark}
 *{box-sizing:border-box}
@@ -41,6 +49,12 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .brand h1{font-family:var(--f-display);font-weight:700;font-size:26px;letter-spacing:.02em;margin:0;text-wrap:balance}
 .brand h1 span{color:var(--accent)}
+.brand .id{display:flex;align-items:center;gap:12px}
+.brand .logo{height:32px;width:auto;display:block;flex:none}
+.brand .logo-dark{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .brand .logo-light{display:none}:root:not([data-theme="light"]) .brand .logo-dark{display:block}}
+:root[data-theme="dark"] .brand .logo-light{display:none}
+:root[data-theme="dark"] .brand .logo-dark{display:block}
 .brand .sub{color:var(--muted);font-size:13px}
 .fresh{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
@@ -57,7 +71,7 @@ section.pane{display:flex;flex-direction:column;gap:14px;padding-block:18px 0}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .kpi:hover{border-color:var(--accent)}
 .kpi[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
-.kpi .v{font-family:var(--f-mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .v{font-family:var(--f-mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
 .kpi .k{font-family:var(--f-display);font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .kpi.bad .v{color:var(--bad)} .kpi.warn .v{color:var(--warn)} .kpi.ok .v{color:var(--ok)}
 
@@ -68,7 +82,7 @@ section.pane{display:flex;flex-direction:column;gap:14px;padding-block:18px 0}
 .legend{display:flex;flex-wrap:wrap;gap:6px}
 .legend button{font:inherit;font-size:13px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
 .legend button i{width:10px;height:10px;border-radius:2px;display:inline-block}
-.legend button b{font-family:var(--f-mono);font-weight:500;font-variant-numeric:tabular-nums}
+.legend button b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
 .legend button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 
 .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
@@ -114,7 +128,7 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .more{display:flex;justify-content:center;padding-block:12px}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direction:column;gap:4px}
-@media (max-width:640px){.brand h1{font-size:22px}.kpi .v{font-size:20px}.count{margin-left:0;width:100%}header.top{position:static}table{min-width:0}.hide-sm{display:none}.clip{max-width:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.brand h1{font-size:22px}.brand .logo{height:24px}.kpi .v{font-size:20px}.count{margin-left:0;width:100%}header.top{position:static}table{min-width:0}.hide-sm{display:none}.clip{max-width:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -123,9 +137,13 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 <header class="top">
   <div class="top-in">
     <div class="brand">
-      <div>
+      <div class="id">
+        <img class="logo logo-light" src="marca/trx-simplificado.svg" alt="TRX Diagnóstico Digital" width="96" height="32">
+        <img class="logo logo-dark" src="marca/trx-simplificado-negativo.svg" alt="" width="96" height="32">
+        <div>
         <h1>Central <span>TRX</span></h1>
         <div class="sub">Clínicas, licitações, credenciamentos e pregões da TRX, pela classificação da Dor · só leitura</div>
+        </div>
       </div>
       <div class="fresh" id="fresh"><span class="dot"></span><span id="freshTxt">Carregando dados…</span></div>
     </div>
