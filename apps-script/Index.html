@@ -3,22 +3,29 @@
 <head>
 <base target="_top">
 <meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="icon" type="image/svg+xml" href="https://tanqueradiologia-rgb.github.io/central-trx/marca/favicon-48.svg">
+<style>
+@font-face{font-family:"Open Sans";src:url("https://tanqueradiologia-rgb.github.io/central-trx/marca/OpenSans-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Open Sans";src:url("https://tanqueradiologia-rgb.github.io/central-trx/marca/OpenSans-Italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Open Sans";src:url("https://tanqueradiologia-rgb.github.io/central-trx/marca/OpenSans-SemiBold.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Open Sans";src:url("https://tanqueradiologia-rgb.github.io/central-trx/marca/OpenSans-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Open Sans SemiCondensed";src:url("https://tanqueradiologia-rgb.github.io/central-trx/marca/OpenSans_SemiCondensed-SemiBold.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Open Sans SemiCondensed";src:url("https://tanqueradiologia-rgb.github.io/central-trx/marca/OpenSans_SemiCondensed-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+</style>
 <style>
 /* Layout: lista filtrável à esquerda; painel de edição com histórico abre à direita (tela cheia no celular). */
 :root{
-  --bg:#eef2f5; --surface:#ffffff; --surface2:#f6f8fa; --ink:#14202b; --muted:#5a6b7c; --line:#d6dee6;
-  --accent:#1c5b8c; --accent-soft:#e3eef7; --accent-ink:#ffffff;
+  --bg:#f4f2f2; --surface:#ffffff; --surface2:#f4f2f2; --ink:#28313e; --muted:#334861; --line:#dfe0e2;
+  --accent:#0e3a5a; --accent-soft:#e3eef7; --accent-ink:#ffffff;
   --c-atacar:#b3262e; --c-quente:#c05f00; --c-morno:#86750a; --c-frio:#4b6a88; --c-sem:#8b96a2;
   --ok:#2d7a4d; --warn:#b76b00; --bad:#b3262e;
-  --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
-  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-display:"Open Sans SemiCondensed","Open Sans","Arial Narrow",Arial,sans-serif;
+  --f-body:"Open Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"Open Sans","Segoe UI",system-ui,sans-serif; /* números: Open Sans com algarismos tabulares (marca TRX) */
 }
 @media (prefers-color-scheme: dark){:root{
   --bg:#0d1319; --surface:#141c24; --surface2:#19232d; --ink:#e4ebf1; --muted:#95a5b5; --line:#263340;
-  --accent:#72b1e4; --accent-soft:#1a2c3c; --accent-ink:#0d1319;
+  --accent:#4cbecf; --accent-soft:#1a2c3c; --accent-ink:#0d1319;
   --c-atacar:#f07078; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
   --ok:#5fc48a; --warn:#f0a14a; --bad:#f07078; color-scheme:dark}}
 *{box-sizing:border-box}
@@ -27,6 +34,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1
 header{background:var(--surface);border-bottom:1px solid var(--line);padding-block:12px;padding-inline:16px;display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between}
 header h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.02em}
 header h1 span{color:var(--accent)}
+header .id{display:flex;align-items:center;gap:12px}
+header .logo{height:28px;width:auto;display:block;flex:none}
+header .logo-dark{display:none}
+@media (prefers-color-scheme: dark){header .logo-light{display:none}header .logo-dark{display:block}}
 header .who{font-size:13px;color:var(--muted);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 header a{color:var(--accent);font-weight:600;text-decoration:none}
 main{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:14px 40px;display:flex;flex-direction:column;gap:12px}
@@ -83,14 +94,14 @@ textarea{min-height:84px;resize:vertical;width:100%}
 .tl .it{display:flex;flex-direction:column;gap:2px}
 .tl .it .when{font-size:12px;color:var(--muted)}
 .tl .it.nota .txt{background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;white-space:pre-wrap;overflow-wrap:anywhere}
-.abas{display:flex;gap:4px;flex-wrap:wrap}.abas button{border:1px solid var(--line);background:var(--surface2);color:inherit;border-radius:6px;padding:6px 10px;cursor:pointer;font:inherit;font-size:13px}.abas button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.abas{display:flex;gap:4px;flex-wrap:wrap}.abas button{border:1px solid var(--line);background:var(--surface2);color:inherit;border-radius:6px;padding:6px 10px;cursor:pointer;font:inherit;font-size:13px}.abas button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .loading{padding:40px;text-align:center;color:var(--muted)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,tr.row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
 <header>
-  <h1>Central <span>TRX</span> · Edição</h1>
+  <div class="id"><img class="logo logo-light" src="https://tanqueradiologia-rgb.github.io/central-trx/marca/trx-simplificado.svg" alt="TRX Diagnóstico Digital" width="84" height="28"><img class="logo logo-dark" src="https://tanqueradiologia-rgb.github.io/central-trx/marca/trx-simplificado-negativo.svg" alt="" width="84" height="28"><h1>Central <span>TRX</span> · Edição</h1></div>
   <nav class="abas" id="abas" aria-label="Frentes"></nav>
   <div class="who"><span id="quem">Carregando…</span><a id="lkPlan" href="#" target="_blank" rel="noopener">Abrir a planilha ↗</a><button class="btn" id="recarregar" type="button">Recarregar dados</button></div>
 </header>
