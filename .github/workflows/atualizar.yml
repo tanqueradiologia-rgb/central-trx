@@ -2,7 +2,7 @@ name: Atualizar Central TRX
 
 on:
   schedule:
-    - cron: "*/15 10-23 * * *"   # a cada 15 min, das 07h às 20h59 de Brasília (UTC-3)
+    - cron: "*/10 * * * *"   # a cada 10 min, o dia todo (o GitHub pode atrasar alguns minutos)
   workflow_dispatch: {}
   push:
     branches: [main]
@@ -43,6 +43,18 @@ jobs:
         run: |
           python scripts/aplicar_medicoes.py
           python scripts/sincronizar_licitacoes.py Pipeline_Licitacoes.xlsx
+      # Radar PNCP na nuvem: de hora em hora (e em toda rodada manual ou por push).
+      - name: Radar PNCP (editais abertos de telerradiologia)
+        id: radar
+        continue-on-error: true
+        env:
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "$(date -u +%M)" -lt 10 ]; then
+            python scripts/radar_pncp.py
+          else
+            echo "Radar roda só na primeira rodada de cada hora."
+          fi
       - name: Ler a planilha Google de licitações
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
@@ -57,6 +69,9 @@ jobs:
       - name: Avisar se a sincronização falhou
         if: steps.sync.outcome == 'failure'
         run: echo "::warning::A sincronização com a planilha de licitações falhou nesta rodada; a página saiu com os dados da planilha como estavam."
+      - name: Avisar se o radar PNCP falhou
+        if: steps.radar.outcome == 'failure'
+        run: echo "::warning::O radar PNCP falhou nesta rodada."
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -75,7 +90,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Registrar atividade no dia 1
         run: |
-          if [ "$(date -u +%d)" = "01" ] && [ "$(date -u +%H%M)" \< "1015" ]; then
+          if [ "$(date -u +%d)" = "01" ] && [ "$(date -u +%H%M)" \< "0010" ]; then
             date -u +%Y-%m-%d > .ativo
             git config user.name "central-trx-bot"
             git config user.email "actions@users.noreply.github.com"

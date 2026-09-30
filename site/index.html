@@ -250,7 +250,7 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
   const el=$("#fresh");
   $("#freshTxt").innerHTML = "Dados das planilhas de <b>"+esc(fData(D.gerado,true))+"</b>" + (h>8 ? " · <b>desatualizado há "+Math.floor(h)+"h</b>" : " · atualiza ao longo do dia");
   if(h>8) el.classList.add("stale");
-  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. A página reflete a mudança na próxima atualização (a cada 15 minutos).</div>";
+  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. A página reflete a mudança na próxima atualização (a cada 10 minutos).</div>";
 })();
 
 /* ---------- motor genérico de lista ---------- */

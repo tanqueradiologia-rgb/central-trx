@@ -5,7 +5,7 @@
 Por que existe: as tarefas do Mac (quadro nacional, radar de licitações, monitor de
 e-mail) continuam gravando o .xlsx do jeito de sempre. A equipe passa a trabalhar na
 planilha Google (direto ou pelo app Central TRX · Edição). Este script roda no GitHub
-a cada 15 minutos e junta as duas coisas.
+a cada 10 minutos e junta as duas coisas.
 
 Regras (as mesmas do abastecer_licitacoes.py):
   - A chave é a coluna ID.
@@ -39,6 +39,7 @@ CONTROLE = ["Trilha", "ID", "Sincronizado em"]
 MEDICAO = ["Eixo Janela", "Sinal de compra", "Eixo Necessidade", "Sinal operacional", "Eixo Dor",
            "O que reclamam", "Cobertura", "Medido em", "Fonte da medicao"]
 CALCULADAS = ["Score", "Faixa"]
+ORIGENS_NUVEM = {"Radar PNCP (GitHub)"}
 FASES_INICIAIS = {"", "mapeado", "lendo edital", "montando habilitacao", "em aberto"}
 
 
@@ -242,7 +243,26 @@ def main():
             cont["novas"] += 1
 
     for rid, (n, cur) in por_id.items():
-        if rid not in robo and str(cur.get("Trilha") or "") != "ARQUIVADO":
+        if rid in robo:
+            continue
+        if str(cur.get("Origem") or "") in ORIGENS_NUVEM:
+            # linha criada na nuvem (radar_pncp.py): não depende do xlsx do Mac
+            alt = {}
+            t = trilha_de(cur)
+            if t != str(cur.get("Trilha") or ""):
+                alt["Trilha"] = t
+            if medido(cur):
+                sc, fx, cob = classificar_publico(cur, t)
+                for c, v in (("Score", "" if sc is None else sc), ("Faixa", fx), ("Cobertura", cob)):
+                    if c in ix and not igual(v, cur.get(c)):
+                        alt[c] = v
+            if alt:
+                alt["Sincronizado em"] = agora
+                cont["atualizadas"] += 1
+                for c, v in alt.items():
+                    mudancas.append({"range": f"{ABA}!{col(ix[c] + 1)}{n}", "values": [[v]]})
+            continue
+        if str(cur.get("Trilha") or "") != "ARQUIVADO":
             mudancas.append({"range": f"{ABA}!{col(ix['Trilha'] + 1)}{n}", "values": [["ARQUIVADO"]]})
             mudancas.append({"range": f"{ABA}!{col(ix['Sincronizado em'] + 1)}{n}", "values": [[agora]]})
             cont["arquivadas"] += 1
