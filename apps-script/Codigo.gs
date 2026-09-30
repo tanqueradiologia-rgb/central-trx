@@ -1,6 +1,7 @@
 /**
  * Central TRX · Edição
- * App web ligado à planilha "Pipeline TRX — Prospecção (fonte da verdade)".
+ * App web (projeto próprio, separado dos scripts da planilha) que lê e grava na
+ * "Pipeline TRX — Prospecção (fonte da verdade)" pelo ID em PLANILHA_ID.
  *
  * A planilha continua sendo a fonte da verdade. O app só lê e grava nela,
  * sempre com o login Google de quem está usando (implantar como
@@ -37,6 +38,7 @@ const FRENTES = {
   }
 };
 
+const PLANILHA_ID = '1rdhgZ_ps8Ih-wwj1dF4WuQhVsz_CnCLJI8JJwTyK9u0';  // Pipeline TRX — Prospecção (fonte da verdade)
 const ABA_HIST = 'Historico';
 const ABA_EQUIPE = 'Equipe';
 const TZ = 'America/Sao_Paulo';
@@ -49,6 +51,8 @@ function doGet() {
 
 /* ---------------- leitura ---------------- */
 
+function planilha_() { return SpreadsheetApp.openById(PLANILHA_ID); }
+
 function cabecalho_(sh) {
   const h = sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0];
   const idx = {};
@@ -57,7 +61,7 @@ function cabecalho_(sh) {
 }
 
 function equipe_() {
-  const sh = SpreadsheetApp.getActive().getSheetByName(ABA_EQUIPE);
+  const sh = planilha_().getSheetByName(ABA_EQUIPE);
   if (!sh || sh.getLastRow() < 2) return [];
   return sh.getRange(2, 1, sh.getLastRow() - 1, 4).getDisplayValues()
     .filter(function (r) { return r[0] && String(r[3]).toLowerCase() !== 'não' && String(r[3]).toLowerCase() !== 'nao'; })
@@ -65,7 +69,7 @@ function equipe_() {
 }
 
 function historico_(frente) {
-  const sh = SpreadsheetApp.getActive().getSheetByName(ABA_HIST);
+  const sh = planilha_().getSheetByName(ABA_HIST);
   const porChave = {};
   if (!sh || sh.getLastRow() < 2) return porChave;
   const vals = sh.getRange(2, 1, sh.getLastRow() - 1, 10).getDisplayValues();
@@ -82,7 +86,7 @@ function historico_(frente) {
 function getDados(frente) {
   frente = frente || 'clinicas';
   const cfg = FRENTES[frente];
-  const sh = SpreadsheetApp.getActive().getSheetByName(cfg.aba);
+  const sh = planilha_().getSheetByName(cfg.aba);
   const idx = cabecalho_(sh);
   const n = sh.getLastRow() - 1;
   const vals = n > 0 ? sh.getRange(2, 1, n, sh.getLastColumn()).getDisplayValues() : [];
@@ -104,7 +108,7 @@ function getDados(frente) {
     equipe: equipe_(),
     linhas: linhas,
     historico: hist,
-    planilha: SpreadsheetApp.getActive().getUrl(),
+    planilha: planilha_().getUrl(),
     gid: sh.getSheetId()
   };
 }
@@ -121,7 +125,7 @@ function salvar(pedido) {
   const lock = LockService.getDocumentLock();
   if (!lock.tryLock(20000)) throw new Error('A planilha está ocupada. Tente de novo em alguns segundos.');
   try {
-    const ss = SpreadsheetApp.getActive();
+    const ss = planilha_();
     const sh = ss.getSheetByName(cfg.aba);
     const idx = cabecalho_(sh);
     let linha = localizar_(sh, idx, cfg, pedido);
