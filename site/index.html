@@ -123,11 +123,12 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
     <div class="brand">
       <div>
         <h1>Central <span>TRX</span></h1>
-        <div class="sub">Prospecção e licitações da TRX Diagnóstico Digital · só leitura, a edição continua nas planilhas</div>
+        <div class="sub">Clínicas, licitações, credenciamentos e pregões da TRX, pela classificação da Dor · só leitura</div>
       </div>
       <div class="fresh" id="fresh"><span class="dot"></span><span id="freshTxt">Carregando dados…</span></div>
     </div>
     <nav class="tabs" aria-label="Frentes">
+      <a href="#prioridades" data-tab="prioridades">Prioridades<span class="n" id="n-prioridades"></span></a>
       <a href="#clinicas" data-tab="clinicas">Clínicas particulares<span class="n" id="n-clinicas"></span></a>
       <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
       <a href="#quadro" data-tab="quadro">Quadro nacional<span class="n" id="n-quadro"></span></a>
@@ -136,6 +137,25 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 </header>
 
 <main class="wrap">
+  <section class="pane" id="pane-prioridades" hidden>
+    <div class="kpis" id="k-prioridades"></div>
+    <div class="band"><h3>Tudo o que está ativo, pela classificação da Dor</h3><div class="bar" id="bar-prioridades"></div><div class="legend" id="leg-prioridades"></div></div>
+    <div class="filters">
+      <label>Buscar<input type="search" id="q-prioridades" placeholder="nome, cidade, órgão, edital…"></label>
+      <label>Frente<select id="tp-prioridades"><option value="">Todas</option><option>Clínica</option><option>Credenciamento</option><option>Pregão</option><option>Sem processo</option></select></label>
+      <label>Faixa<select id="fx-prioridades"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option></select></label>
+      <label>UF<select id="uf-prioridades"><option value="">Todas</option></select></label>
+      <label>Responsável<select id="resp-prioridades"><option value="">Todos</option></select></label>
+      <label class="chk"><input type="checkbox" id="med-prioridades"> só com medição</label>
+      <button class="btn" id="limpar-prioridades" type="button">Limpar filtros</button>
+      <span class="count" id="c-prioridades"></span>
+    </div>
+    <div class="tbl"><table><thead><tr>
+      <th data-k="ord">Ordem</th><th data-k="n">Quem</th><th data-k="tp" class="hide-sm">Frente</th><th data-k="sc">Score</th><th data-k="fase" class="hide-sm">Fase</th><th data-k="dt">Prazo ou toque</th><th data-k="acao" class="hide-sm">Próxima ação</th>
+    </tr></thead><tbody id="t-prioridades"></tbody></table></div>
+    <div class="more" id="m-prioridades"></div>
+  </section>
+
   <section class="pane" id="pane-clinicas" hidden>
     <div class="kpis" id="k-clinicas"></div>
     <div class="band"><h3>Funil por fase</h3><div class="bar" id="bar-clinicas"></div><div class="legend" id="leg-clinicas"></div></div>
@@ -230,7 +250,7 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
   const el=$("#fresh");
   $("#freshTxt").innerHTML = "Dados das planilhas de <b>"+esc(fData(D.gerado,true))+"</b>" + (h>8 ? " · <b>desatualizado há "+Math.floor(h)+"h</b>" : " · atualiza ao longo do dia");
   if(h>8) el.classList.add("stale");
-  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados).</div><div>Para mudar Fase, próxima ação ou notas, abra a linha na planilha. A página reflete a mudança na próxima atualização.</div>";
+  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados).</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. A página reflete a mudança na próxima atualização (a cada 15 minutos).</div>";
 })();
 
 /* ---------- motor genérico de lista ---------- */
@@ -418,18 +438,65 @@ const lQd = makeList({
   $("#limpar-quadro").addEventListener("click",()=>{ clearBand(); clearK(); });
 })();
 
+/* ---------- PRIORIDADES: tudo junto, pela Dor ---------- */
+const QD_INAT = /descart|sem interesse/i;
+const PR = [].concat(
+  CL.filter(r=>!INATIVAS.has(r.fase)).map(r=>({src:"clinicas", r, tp:"Clínica", n:r.n, sub:[r.c,r.uf].filter(Boolean).join(" · "), uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.fase, dt:r.prox, prazo:false, acao:r.acao&&r.acao!=="-"?r.acao:"", resp:r.resp, link:sheetLink(r.l)})),
+  LI.filter(aberta).map(r=>({src:"licitacoes", r, tp:r.aba==="CREDENCIAMENTO"?"Credenciamento":"Pregão", n:r.org||r.id, sub:[r.c,r.uf,r.ed||r.mod].filter(Boolean).join(" · "), uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.fase, dt:r.prazo, prazo:true, acao:r.acao, resp:r.resp, link:licLink(r.l)})),
+  QD.filter(r=>!QD_INAT.test(r.sit)).map(r=>({src:"quadro", r, tp:"Sem processo", n:r.c+(r.uf?" · "+r.uf:""), sub:r.org, uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.sit, dt:"", prazo:false, acao:r.acao, resp:r.resp, link:licLink(r.l)}))
+);
+const FX_ORD = {"ATACAR AGORA":0,"QUENTE":1,"MORNO":2,"FRIO":3,"SEM MEDICAO":4};
+// Ordem: prazo de licitação em até 7 dias primeiro (perder a data custa o ano), depois a Dor (faixa e score).
+PR.forEach((p,i)=>{ const d=p.prazo?dias(p.dt):null; p.urg = d!==null && d>=0 && d<=7; p.ordk=[p.urg?0:1, p.urg?d:0, FX_ORD[p.fx]??5, -(p.sc??-1)]; p.l=i; });
+PR.sort((a,b)=>{ for(let i=0;i<4;i++){ if(a.ordk[i]!==b.ordk[i]) return a.ordk[i]-b.ordk[i]; } return 0; });
+PR.forEach((p,i)=>{ p.ord=i+1; });
+$("#n-prioridades").textContent = PR.filter(p=>p.urg||p.fx==="ATACAR AGORA"||p.fx==="QUENTE").length;
+fillSelect("uf-prioridades", PR.map(p=>p.uf)); fillSelect("resp-prioridades", PR.map(p=>p.resp));
+const lPr = makeList({
+  id:"prioridades", rows:PR, sort:"ord", dir:"asc", defDir:{sc:"desc",ord:"asc",dt:"asc"},
+  sortKey:(p,k)=> k==="dt" ? (p.dt? parseD(p.dt).getTime() : null) : k==="sc" ? (p.sc??null) : p[k],
+  hay:p=>[p.n,p.sub,p.tp,p.fase,p.acao,p.resp,p.r.obj,p.r.g,p.r.notas].join(" "),
+  filters:[{el:"tp-prioridades",test:(p,v)=>p.tp===v},{el:"fx-prioridades",test:(p,v)=>p.fx===v},{el:"uf-prioridades",test:(p,v)=>p.uf===v},{el:"resp-prioridades",test:(p,v)=>p.resp===v}],
+  toggle:{el:"med-prioridades",def:false,test:p=>p.fx!=="SEM MEDICAO"},
+  cells:p=>{ const d=dias(p.dt); const late=!p.prazo && d!==null && d<0;
+    return '<td class="mono">'+p.ord+'</td>'+
+      '<td><div class="nm">'+esc(p.n)+'</div><div class="meta">'+esc(p.sub||"")+'</div></td>'+
+      '<td class="hide-sm"><span class="pill">'+esc(p.tp)+'</span></td>'+
+      '<td>'+fxPill(p.fx,p.sc)+'</td>'+
+      '<td class="hide-sm">'+esc(p.fase||"—")+'</td>'+
+      '<td class="mono">'+(p.dt? (p.prazo? fData(p.dt,true)+'<div>'+fDiasP(p.dt)+'</div>' : (late?'<span class="d-bad">'+fData(p.dt)+' · atrasado</span>':fData(p.dt))) : '—')+'</td>'+
+      '<td class="clip meta hide-sm">'+esc(p.acao||"")+'</td>'; },
+  detail:p=>'<div class="det-grid">'+field("Frente",p.tp)+field("Responsável",p.resp)+field("Objeto ou gancho",p.r.obj||p.r.g)+field("Trava",p.r.bloq)+field("Notas",p.r.notas)+'</div>'+
+    '<div class="links">'+(p.r.lpn?'<a href="'+esc(p.r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+'<a href="'+p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+p.src+'">Ver na aba da frente</a></div>'
+});
+(function(){
+  const cont={}; PR.forEach(p=>cont[p.fx]=(cont[p.fx]||0)+1);
+  const cores={"ATACAR AGORA":"var(--c-atacar)","QUENTE":"var(--c-quente)","MORNO":"var(--c-morno)","FRIO":"var(--c-frio)","SEM MEDICAO":"var(--c-sem)"};
+  const nomes={"ATACAR AGORA":"Atacar agora","QUENTE":"Quente","MORNO":"Morno","FRIO":"Frio","SEM MEDICAO":"Sem medição"};
+  const clearBand = band("bar-prioridades","leg-prioridades", Object.keys(cores).filter(f=>cont[f]).map(f=>({label:nomes[f],value:f,n:cont[f],color:cores[f]})), lPr, (p,v)=>p.fx===v);
+  const clearK = wireKpis("k-prioridades", lPr, [
+    {key:"u",label:"Prazos em até 7 dias",value:PR.filter(p=>p.urg).length,cls:"bad",test:p=>p.urg},
+    {key:"a",label:"Atacar agora",value:cont["ATACAR AGORA"]||0,cls:"warn",test:p=>p.fx==="ATACAR AGORA"},
+    {key:"q",label:"Quentes",value:cont["QUENTE"]||0,cls:"",test:p=>p.fx==="QUENTE"},
+    {key:"c",label:"Clínicas ativas",value:PR.filter(p=>p.src==="clinicas").length,cls:"",test:p=>p.src==="clinicas"},
+    {key:"l",label:"Processos abertos",value:PR.filter(p=>p.src==="licitacoes").length,cls:"",test:p=>p.src==="licitacoes"},
+    {key:"s",label:"Sem medição",value:cont["SEM MEDICAO"]||0,cls:"",test:p=>p.fx==="SEM MEDICAO"}
+  ]);
+  $("#limpar-prioridades").addEventListener("click",()=>{ clearBand(); clearK(); });
+})();
+
 /* ---------- abas ---------- */
-const TABS=["clinicas","licitacoes","quadro"];
+const TABS=["prioridades","clinicas","licitacoes","quadro"];
 const rendered={};
 function show(tab){
-  if(!TABS.includes(tab)) tab="clinicas";
+  if(!TABS.includes(tab)) tab="prioridades";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({clinicas:lCl,licitacoes:lLi,quadro:lQd})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,quadro:lQd})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
 let inicial = location.hash.slice(1);
-if(!TABS.includes(inicial)){ try{ inicial = localStorage.getItem("central-aba") || "clinicas"; }catch(e){ inicial="clinicas"; } }
+if(!TABS.includes(inicial)){ try{ inicial = localStorage.getItem("central-aba") || "prioridades"; }catch(e){ inicial="prioridades"; } }
 show(inicial);
 })();
 </script>
