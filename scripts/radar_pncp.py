@@ -48,8 +48,16 @@ def buscar(termo):
                                     "ordenacao": "-data"})
         req = urllib.request.Request(f"{URL}?{q}", headers={"User-Agent": "central-trx/1.0",
                                                            "Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=40) as r:
-            doc = json.load(r)
+        doc = None
+        for tentativa in range(4):  # o PNCP às vezes derruba a conexão; tenta de novo com espera
+            try:
+                with urllib.request.urlopen(req, timeout=40) as r:
+                    doc = json.load(r)
+                break
+            except Exception:
+                if tentativa == 3:
+                    raise
+                time.sleep(5 * (tentativa + 1) ** 2)
         lote = doc.get("items") or []
         itens += lote
         if len(lote) < 100:
@@ -119,6 +127,17 @@ def limpar_ruido(api, H, ix, agora):
 
 
 def main():
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+    cred = service_account.Credentials.from_service_account_info(
+        json.loads(os.environ["GOOGLE_SA_JSON"]), scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    api = build("sheets", "v4", credentials=cred, cache_discovery=False).spreadsheets()
+    H = [str(h).strip() for h in api.values().get(spreadsheetId=SHEET_ID, range=f"{ABA}!1:1")
+         .execute().get("values", [[]])[0]]
+    ix = {h: i for i, h in enumerate(H)}
+    agora = dt.datetime.now(TZ).strftime("%d/%m/%Y %H:%M")
+    limpas = limpar_ruido(api, H, ix, agora)  # não depende do PNCP responder
+
     achados, erros = {}, 0
     for t in TERMOS:
         try:
@@ -129,24 +148,14 @@ def main():
         except Exception as e:  # um termo com erro não derruba os outros
             erros += 1
             print(f"::warning::PNCP falhou para '{t}': {e}")
-        time.sleep(1)
+        time.sleep(2)
     if erros == len(TERMOS):
-        sys.exit("ERRO: o PNCP não respondeu a nenhum termo.")
+        print(f"Radar PNCP: {limpas} linhas de ruído descartadas; PNCP não respondeu a nenhum termo.")
+        sys.exit(1)
 
-    from google.oauth2 import service_account
-    from googleapiclient.discovery import build
-    cred = service_account.Credentials.from_service_account_info(
-        json.loads(os.environ["GOOGLE_SA_JSON"]), scopes=["https://www.googleapis.com/auth/spreadsheets"])
-    api = build("sheets", "v4", credentials=cred, cache_discovery=False).spreadsheets()
-    H = [str(h).strip() for h in api.values().get(spreadsheetId=SHEET_ID, range=f"{ABA}!1:1")
-         .execute().get("values", [[]])[0]]
-    ix = {h: i for i, h in enumerate(H)}
     ids = api.values().get(spreadsheetId=SHEET_ID, range=f"{ABA}!{col(ix['ID'] + 1)}2:{col(ix['ID'] + 1)}") \
         .execute().get("values", [])
     existentes = {str(r[0]).strip() for r in ids if r}
-
-    agora = dt.datetime.now(TZ).strftime("%d/%m/%Y %H:%M")
-    limpas = limpar_ruido(api, H, ix, agora)
     novas = []
     for rid, it in achados.items():
         if rid in existentes:
