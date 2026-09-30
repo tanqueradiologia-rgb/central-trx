@@ -1,0 +1,494 @@
+{
+ "data": "2026-09-30",
+ "origem": "pesquisa em lote (6 agentes), método ROTINA_planilha-da-dor",
+ "medicoes": {
+  "05853163000130-1-000001/2027": {
+   "Sinal operacional": "Sem fato verificável sobre radiologista ou parque: CNES e edital no TCM-PA inacessíveis (403).",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA para Prefeitura/SMS de Marabá; Doctoralia do Hospital Municipal tem 7 avaliações, sem queixa de exame ou laudo.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.doctoralia.com.br/clinicas/hospital-municipal-de-maraba"
+  },
+  "18964518": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital Municipal reconstruído (dez/2025), 45 leitos, tomógrafo doado pelo Estado (R$ 1,195 mi), RX e US; nenhum radiologista citado.",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.guaranyjunior.com.br/2025/12/20/hospital-municipal-de-novo-progresso-e-reconstruido-e-ampliado-com-apoio-do-governo-do-para/ https://agenciapara.com.br/noticia/73531/hospital-municipal-de-novo-progresso-e-reconstruido-e-ampliado-com-apoio-do-governo-do-para"
+  },
+  "04794081000106-1-000143-guaxupe": {
+   "Eixo Dor": 5,
+   "O que reclamam": "RA: página da prefeitura sem reputação e sem reclamações de saúde; queixas visíveis são iluminação e vias (reclameaqui.com.br/empresa/prefeitura-guaxupe)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-guaxupe/ https://folha.qconcursos.com/n/prefeitura-de-guaxupe-mg-abre-processo-seletivo-simplificado-com-3-vagas-na-saude"
+  },
+  "08739930000173-1-000070/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA (busca por prefeitura/hospital de Nova Palmeira no Reclame Aqui sem resultado)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://novapalmeira.pb.gov.br/secretaria/saude/"
+  },
+  "18659334000137-1-000504/2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Atenção Especializada municipal tem sala de ultrassom e mamógrafo (2.270 mamografias até out/2019); nenhum sinal de falta de radiologista achado",
+   "Eixo Dor": 10,
+   "O que reclamam": "Página no RA não encontrada na busca; sem queixas de laudo localizadas",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.campobelo.mg.gov.br/portal/noticias/0/3/1192/atencao-especializada-de-campo-belo-realiza-cerca-de-24-mil-atendimentos-por-ano"
+  },
+  "18733133": {
+   "Eixo Necessidade": 100,
+   "Sinal operacional": "Hospital Regional tem RX, TC, mamografia e US; quadro do Plano Operativo 2024 (204 profissionais) tem 11 técnicos de RX e nenhum médico radiologista (fonte: plano, não CNES).",
+   "Eixo Dor": 10,
+   "O que reclamam": "RA da Prefeitura de Peixoto sem reputação (1 queixa, sobre ruas); MPMT (set/2026) cobra solução para crise no Hospital Regional: eletivas suspensas por falta de insumos e problemas no telhado.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://amm.diariomunicipal.org/publicacao/1370889/ https://nx1.com.br/2026/09/14/promotorias-cobram-solucao-para-crise-em-hospital-regional/ https://www.reclameaqui.com.br/empresa/prefeitura-peixoto-de-azevedo/"
+  },
+  "18581705": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://cisvali.com.br/chamamento-publico-001-2026/"
+  },
+  "vazante-mg-credenciamento-01-2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Credenciamento 01/2026 para telerradiologia de tomografia com PACS e suporte, teto R$ 312.616; edital não informa volume nem quadro de radiologistas",
+   "Eixo Dor": 5,
+   "O que reclamam": "RA: 1 reclamação (mar/2026) sobre uso comercial de praças; nada sobre saúde ou exames",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.vazante.mg.gov.br/portal/editais/0/4/4508/ https://www.reclameaqui.com.br/empresa/prefeitura-vazante/"
+  },
+  "08937139000178-1-000004/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA (busca achou só Surubim Internet e Compesa)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/surubim-internet/"
+  },
+  "11607006000148-1-000040/2026": {
+   "Eixo Dor": 12,
+   "O que reclamam": "RA da prefeitura tem 1 reclamação (poda de árvore), nenhuma de saúde. Prefeitura admite fila histórica de mais de 7 mil pessoas para ultrassom e quase 3 mil para raio-X (notícia de 09/03/2026).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-tijucas/ https://www.tijucas.sc.gov.br/noticias/detalhe/tijucas-avanca-na-saude-com-reducao-de-filas-e-mais-exames-disponiveis"
+  },
+  "18192898000102-1-000196/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "Página da prefeitura no RA não encontrada na busca; sem queixas de laudo localizadas",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · "
+  },
+  "07891674000172-1-000003/2027": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital Regional do Vale do Jaguaribe (estadual, ISGH) em Limoeiro tem TC, RM, RX e US em atividade; parque municipal próprio não confirmado",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA (busca achou só Banco do Nordeste e Enel)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.isgh.org.br/onde-estamos/hospital-regional-vale-do-jaguaribe"
+  },
+  "02031332000169-1-000046/2026": {
+   "Eixo Dor": 5,
+   "O que reclamam": "RA: 1 reclamação, sem reputação; temas de multa, lixo, iluminação e ponto de ônibus, nada de saúde",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-joao-monlevade/"
+  },
+  "01608511000153-1-000042/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "Página no RA não encontrada na busca; sem queixas de laudo localizadas",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · "
+  },
+  "25053117000164-1-000246/2025": {
+   "Sinal operacional": "Fila de TC e US: carreta do Ministério da Saúde instalada em set/2026 com 80 exames/dia de TC e US para pacientes em espera no CEM (parque municipal não confirmado).",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA; fila de espera por TC e US atendida por carreta federal (Jornal A Folha, set/2026).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.jornalafolha.com.br/noticia/carreta-de-exames-de-imagem-chegou-a-palmas-pacientes-na-fila-de-espera-devem-ir-ao-cem https://conexaoto.com.br/2026/04/24/palmas-recebe-unidade-movel-do-ministerio-da-saude-para-agilizar-exames-de-tomografia"
+  },
+  "01668772000169-1-000044/2026": {
+   "Sinal operacional": "Sem fato verificável sobre parque de imagem ou radiologista.",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://geminiano.pi.gov.br/secretarias/secretaria-municipal-de-saude"
+  },
+  "22981088000102-1-000112/2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital Municipal (jun/2024, 40 leitos) com RX e US; RX digital DR Konica em manutenção contratada (R$ 36,2 mil, jul/2026); TC via consórcio regional em Ourilândia.",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://fatoregional.com.br/hospital-municipal-de-tucuma-ja-esta-em-funcionamento-e-marca-um-novo-capitulo-na-historia-da-saude-publica-do-municipio/ https://www.otempo.com.br/politica/2026/7/22/tucuma-aplica-r-362-mil-em-manutencao-de-equipamentos-de-raio-x-da-rede-municipal https://prefeituradetucuma.pa.gov.br/prefeitos-da-regiao-pa-279-se-reunem-para-tratar-do-consorcio-de-tomografo/"
+  },
+  "18414565000180-1-000053/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "Página no RA não encontrada na busca; sem queixas de laudo localizadas",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://alertalicitacao.com.br/!municipios/3148707/encerradas"
+  },
+  "22981088000102-1-000113/2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital Municipal (jun/2024, 40 leitos) com RX e US; RX digital DR Konica em manutenção contratada (R$ 36,2 mil, jul/2026); TC via consórcio regional em Ourilândia.",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://fatoregional.com.br/hospital-municipal-de-tucuma-ja-esta-em-funcionamento-e-marca-um-novo-capitulo-na-historia-da-saude-publica-do-municipio/ https://www.otempo.com.br/politica/2026/7/22/tucuma-aplica-r-362-mil-em-manutencao-de-equipamentos-de-raio-x-da-rede-municipal https://prefeituradetucuma.pa.gov.br/prefeitos-da-regiao-pa-279-se-reunem-para-tratar-do-consorcio-de-tomografo/"
+  },
+  "18307835000154-1-000168/2026": {
+   "Sinal operacional": "Out/2023: vereador propôs tomógrafo para a UPA porque pacientes que precisam de tomografia são encaminhados a hospitais distantes (sem chave de necessidade comprovada)",
+   "Eixo Dor": 10,
+   "O que reclamam": "Página no RA não encontrada na busca; relato de deslocamento de pacientes da UPA para fazer tomografia fora (Jornal O Espeto, 2023)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://jornaloespeto.com.br/2023/10/13/ricardo-oliveira-sugere-investimento-em-tomografo-para-upa-de-itabirito/"
+  },
+  "01611339000197-1-000170/2026": {
+   "Sinal operacional": "Sem fato de necessidade; município licitou em jul/2026 projetos complementares da UPA",
+   "Eixo Dor": 5,
+   "O que reclamam": "Página no RA sem índice, 0% de resposta; queixas são de iluminação, ruas e telefone que não atende, nada de saúde",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-balneario-pinhal/ https://alertalicitacao.com.br/!licitacao/PNCP-01611339000197-1-000118-2026"
+  },
+  "13133909000160-1-000005/2027": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Unidade Mista Francisco de Assis Chateaubriand (CNES 2428784) tem 1 RX 100-500 mA e 1 US em uso, sem tomógrafo e sem telemedicina declarada",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA; Cremepe (2021) fiscalizou a Unidade Mista sem apontar falha de imagem",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://guia.agendarconsulta.com/pernambuco/carpina/unidade-mista-francisco-de-assis-chateaubriand-2428784 https://cnes2.datasus.gov.br/Listar_Mantidas.asp?VCnpj=11097342000198&VEstado=26&VNome=PREFEITURA+MUNICIPAL+DE+CARPINA https://www.cremepe.org.br/2021/08/23/cremepe-fiscaliza-unidade-mista-de-carpina/"
+  },
+  "12292556000188-1-000015/2025": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Rede municipal de Cabo Frio oferta RX, US, TC e RM pelo SUS, com 95% dos exames feitos no município (notícia da prefeitura, 2018).",
+   "Eixo Dor": 55,
+   "O que reclamam": "RA da Prefeitura de Cabo Frio: nota 1,6/10 (Não Recomendada), 16 reclamações, 0% de resposta; inclui demora para agendar ultrassom de gestante de 22 semanas.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-cabo-frio/ https://cabofrio.rj.gov.br/saude-de-cabo-frio-amplia-oferta-de-exames-para-a-populacao/"
+  },
+  "10404184000109-1-000606/2026": {
+   "Eixo Dor": 30,
+   "O que reclamam": "Prefeitura de Olinda no RA: reputação 0,0, 11 reclamações, 0% respondidas; queixas de saúde citam poucas fichas em posto e falta de medicação/atendimento domiciliar, nenhuma cita laudo (Reclame Aqui)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-olinda/lista-reclamacoes/"
+  },
+  "63496573000178-1-000001/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "Página no RA não encontrada na busca; imprensa local registra fila de até 6 h na UPA e paciente esquecida ao ser levada para exame de imagem em hospital (Patos Hoje, 2022)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://patoshoje.com.br/noticias/paciente-internada-na-upa-fica-esquecida-em-hospital-apos-ser-levada-para-fazer-exame-72414.html https://patoshoje.com.br/noticias/pacientes-chegam-a-ficar-seis-horas-na-fila-e-reclamam-da-demora-do-atendimento-na-upa-43242.html"
+  },
+  "13825492000104-1-000088/2025": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital Municipal Vereador Ranulfo José de Almeida (CNES 2390078) tem 1 RX 100-500 mA e 1 US convencional em uso e já declara radiologia por telemedicina.",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA; hospital com 0 avaliações no guia CNES.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://guia.agendarconsulta.com/bahia/laje/hospital-municipal-vereador-ranulfo-jose-de-almeida-2390078"
+  },
+  "88814181000130-1-000344/2026": {
+   "Sinal operacional": "Hospital São Vicente de Paulo (115 leitos, 10 UTI, ~1.700 atendimentos de urgência/mês, referência de 21 municípios) vistoriado pelo Cremers a pedido do MP em set/2024; sem dado de imagem ou radiologista",
+   "Eixo Dor": 5,
+   "O que reclamam": "Página no RA sem índice, 8 queixas (IPTU, rodoviária, alvará), nenhuma de saúde",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-osorio/lista-reclamacoes/ https://cremers.org.br/cremers-vistoria-hospital-sao-vicente-de-paulo-em-osorio-para-verificar-estrutura-de-atendimento-a-populacao/"
+  },
+  "73357469000156-1-000149/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "RA: 6 reclamações, 0% respondidas; temas de alvará, meio ambiente, recepção e transporte, nada de exame ou laudo",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-lagoa-santa/"
+  },
+  "88861430000149-1-001023/2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital de Caridade de Canguçu trocou o tomógrafo em maio/2026 (exames suspensos de 8 a 25/05, pacientes encaminhados para a região)",
+   "Eixo Dor": 5,
+   "O que reclamam": "Página no RA com 0 reclamações; tomografia suspensa por 17 dias em maio/2026 com encaminhamento regional (cangucuonline)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.cangucuonline.com.br/noticias/cangucu/rs/saude/hospital-de-caridade-de-cangucu-suspende-exames-de-tomografia-para-troca-de-equipamento/ https://www.reclameaqui.com.br/empresa/prefeitura-cangucu/lista-reclamacoes/?status=NOT_ANSWERED"
+  },
+  "04842827000101-1-000077/2025": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "TR de mai/2025: hospital tem tomógrafo IMEX 128 cortes e mamógrafo; previsão de 960 TC/ano (~80/mês) e 1.800 mamografias/ano, laudo por radiologista da contratada",
+   "Eixo Dor": 10,
+   "O que reclamam": "Página no RA não encontrada na busca; sem queixas de laudo localizadas",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://bocaiuva.mg.gov.br/licitacoes/e6444d9e01ff1c2681bcdfd2ee968b74.pdf"
+  },
+  "88015000000100-1-000201/2026": {
+   "Sinal operacional": "Sem fato de necessidade encontrado na web",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.pedrasaltas.rs.gov.br/"
+  },
+  "15126437000305-1-003669/2026": {
+   "Sinal operacional": "Nenhum fato de necessidade confirmado na web (edital do pregão não localizado).",
+   "Eixo Dor": 20,
+   "O que reclamam": "RA da EBSERH (nacional): 11 reclamações, nota 2,0, sem reputação; queixas sobre concurso e falta de informação, nenhuma sobre exame ou laudo em Fortaleza (reclameaqui.com.br/empresa/ebserh).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/ebserh/ https://www.reclameaqui.com.br/ebserh/nao-se-consegue-informacao_a43NgxrHeDNEAef_/"
+  },
+  "29664289000125-1-000009/2026": {
+   "Eixo Necessidade": 70,
+   "Sinal operacional": "Policlínica Regional de Feira de Santana tem no CNES TC 16 canais, RM 1,5T, mamógrafo com estereotaxia, RX digital e US/Doppler, todos em uso; telemedicina declarada só para ECG, ergometria e Holter, não para imagem. Pregão prevê 30.900 laudos.",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA; nenhuma avaliação pública localizada da Policlínica.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://cnes2.datasus.gov.br/Mod_Conjunto.asp?VCo_Unidade=2910809507930 https://guia.agendarconsulta.com/bahia/feira-de-santana/policlinica-regional-regiao-de-saude-feira-de-santana-9507930"
+  },
+  "87842233000110-1-000461/2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital São José (referência SUS local) tem CDI com RX, 3 US, mamógrafo e tomógrafo (matéria de 2021); a Secretaria só autoriza e encaminha exames de imagem",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://radiosolaris.com.br/beta/conheca-um-pouco-do-hospital-sao-jose-de-antonio-prado/ https://www.antonioprado.rs.gov.br/servicos_e_atividades.php?id=14"
+  },
+  "08754111000103-1-000120/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA (busca achou só Prefeitura de Areial e Cagepa, não a Prefeitura de Areia)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-areial/ https://guia.agendarconsulta.com/paraiba/areia"
+  },
+  "36901264000163-1-000652/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://inovacapixaba.es.gov.br/HDDS https://inovacapixaba.es.gov.br/editaisdepregao"
+  },
+  "imas-ararangua-sc-2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.imas.net.br/site/unidade/hospital-regional-de-ararangua-e-policlinica/ https://www.pciconcursos.com.br/noticias/imas-abre-processo-seletivo-para-tecnico-de-radiologia-no-hospital-regional-de-ararangua"
+  },
+  "18602037000155-1-000298/2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Edital municipal de telerradiologia 2026 cobre laudos de raio-X, tomografia e mamografia com PACS (parque de RX, TC e MMG confirmado); edital não traz volume nem cita falta de radiologista",
+   "Eixo Dor": 5,
+   "O que reclamam": "Página no RA sem índice e sem queixa de saúde; única queixa recente é sobre alvará de MEI (reclameaqui.com.br/empresa/prefeitura-sao-gotardo)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.saogotardo.mg.gov.br/licitacoes/imprimeextratos.php?dados=8881 https://www.reclameaqui.com.br/empresa/prefeitura-sao-gotardo/ https://cebes.com.br/hospital-municipal-de-sao-gotardo-2100681/"
+  },
+  "quadro-itabuna-ba": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital de Base de Itabuna faz cerca de 800 TC e 500 US por mês pelo SUS, com RX digital, atendendo mais de 100 municípios (dado de 2020).",
+   "Eixo Dor": 15,
+   "O que reclamam": "RA da Prefeitura de Itabuna: 2 reclamações, 0% de resposta, sobre multas e transporte, nenhuma sobre saúde ou exame.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://diariobahia.com.br/numeros-colocam-hospital-de-base-de-itabuna-como-referencia-em-diagnostico-por-imagem/ https://www.reclameaqui.com.br/empresa/prefeitura-itabuna/"
+  },
+  "18675639": {
+   "Sinal operacional": "Sem fato verificável: site da prefeitura (credenciamento 001/2026) inacessível na pesquisa.",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://itaberai.go.gov.br/edital-do-credenciamento-da-saude-n-001-2026/"
+  },
+  "19075828": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://cnes2.datasus.gov.br/Listar_Mantidas.asp?VCnpj=55293427000117&VEstado=35&VNome=PREFEITURA+MUNICIPAL+DA+ESTANCIA+TUR+DE+PRESIDENTE+EPITACIO"
+  },
+  "cisamures-lages-sc-2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://cisamures.sc.gov.br/"
+  },
+  "manaus-semsa-oficio-2026": {
+   "Sinal operacional": "Sem fato verificável sobre radiologista ou parque; nomeações do concurso SEMSA (ago/2026) incluem técnico em radiologia e nenhum médico radiologista.",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA para a SEMSA.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.manaus.am.gov.br/semsa/wp-content/uploads/sites/8/2026/08/CONCURSO-SEMSA-ED-002-70a-NOMEACAO-DOM-6380-24.08.2026-CAD-1.pdf"
+  },
+  "isgh-cotacao-198842-26-laudos-remotos": {
+   "Eixo Necessidade": 90,
+   "Sinal operacional": "Seleção ISGH publicada em 04/06/2026 com 1 vaga de médico radiologista no HRN Sobral (R$ 10,1 a 11,3 mil), inscrições até 07/07/2026.",
+   "Eixo Dor": 15,
+   "O que reclamam": "HRN sem página própria no RA; página do ISGH tem 2 reclamações (80% 'baixa qualidade'), sobre seleção e suspeita de negligência, sem citar laudo (reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.f5cariri.com.br/2026/06/isgh-contrata-medicos-em-diversas.html https://www.reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar/ https://www.isgh.org.br/onde-estamos/hospital-regional-norte"
+  },
+  "fuabc-amemg0127-2026-radiologia": {
+   "Eixo Dor": 25,
+   "O que reclamam": "RA da Fundação do ABC com reputação 'Não recomendada', 15 reclamações e 0% de resposta; queixas de atendimento em AMEs e uma de demora de exame no AME Itu. Nenhuma cita Mogi Guaçu (gestão assumida em 01/07/2026).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/fundacao-do-abc/ https://abcagora.com.br/2026/07/01/fundacao-abc-assume-gestao-ame/"
+  },
+  "02385669000174-1-001167/2026": {
+   "Sinal operacional": "Sem fato de necessidade encontrado; a chamada FIOTEC de radiologista achada (08/2026) é do Hospital Federal da Lagoa, RJ, de fev/2026, fora da janela e da cidade",
+   "Eixo Dor": 20,
+   "O que reclamam": "RA: nota 2,9/10, 5 reclamações, 0% resolvidas, nenhuma sobre exame ou laudo (reclameaqui.com.br/empresa/fiotec-...)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/fiotec-fundacao-para-o-desenvolvimento-cientifico-e-tecnologico-em-saude/ https://www.fiotec.fiocruz.br/images/Chamada_08-2026_-_HFL_M%C3%A9dico.pdf"
+  },
+  "quadro-abel-figueiredo-pa": {
+   "Sinal operacional": "Sem fato sobre parque de imagem ou radiologista; prefeitura divulga sala de telemedicina e compra de ambulância e ônibus da saúde (jun/2026).",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://abelfigueiredo.pa.gov.br/site/abel-figueiredo-agora-conta-com-a-sala-especial-da-telemedicina-mais-uma-ferramenta-que-veio-para-melhorar-cada-vez-mais-os-atendimentos-em-saude/ https://abelfigueiredo.pa.gov.br/site/uma-conquista-que-representa-mais-cuidado-mais-dignidade-e-mais-qualidade-no-atendimento-a-nossa-populacao/"
+  },
+  "quadro-candeias-ba": {
+   "Sinal operacional": "Termo de referência de telerradiologia publicado pela prefeitura, mas o documento não pôde ser lido; nenhum fato de necessidade confirmado.",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://sai.io.org.br/Handler.ashx?f=f&query=92cbf5d1-a118-451b-9211-9ee4d9c9dde0.pdf&name=TRTELERADIOLOGIAPUBLICA%C3%87%C3%83O.pdf https://cebes.com.br/hospital-municipal-de-candeias-2387581/"
+  },
+  "ciscomcam-campo-mourao-pr-2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.doctoralia.com.br/clinicas/ciscomcam"
+  },
+  "pbsaude-guarabira-pb-2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital Regional de Guarabira fez 1.482 RX, 543 US e 0 mamografias (meta 28) em set/2024, segundo relatório de gestão; PB Saúde anunciou CDI com o primeiro tomógrafo público do brejo paraibano",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA; idosa de 74 anos denunciou em 14/09/2026 demora e falta de atendimento no HRG, raio-X não foi feito e ela pagou exame particular em João Pessoa (fontepb); NPS de 44 em set/2024 (relatório de gestão)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.pbsaude.pb.gov.br/prestacao-de-contas/relatorios-de-gestao/RelatrioHRGSetembro20242.pdf https://pbsaude.pb.gov.br/noticias/repositorio-noticias/novo-cdi-do-hospital-regional-de-guarabira-tera-primeiro-tomografo-publico-do-brejo-paraibano https://fontepb.com/idosa-denuncia-demora-agressao-verbal-e-falta-de-atendimento-no-hospital-regional-de-guarabira/"
+  },
+  "toledo-pr-sms-2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "ETP do município: 3 aparelhos de RX (UPA e PAM, dois em regime 24h), só 7 técnicos de radiologia e nenhum radiologista citado; termo de fiscalização do DEFEP alerta risco de interdição ética pelo CRM-PR",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA (a página 'Prefeitura - Toledo' no RA é de Toledo-MG)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.toledo.pr.gov.br/sites/default/files/paginabasica-2025-04/etp_tecnico_raio_x_4.pdf https://www.reclameaqui.com.br/empresa/prefeitura-toledo_691184/"
+  },
+  "isgh-200152-26-rm-jaguaribe-seed": {
+   "Eixo Necessidade": 90,
+   "Sinal operacional": "Seleção ISGH de 04/06/2026 com 2 vagas de médico radiologista no HRVJ Limoeiro do Norte, inscrições até 07/07/2026.",
+   "Eixo Dor": 15,
+   "O que reclamam": "HRVJ sem página própria no RA; página do ISGH tem 2 reclamações sem menção a exame ou laudo.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.f5cariri.com.br/2026/06/isgh-contrata-medicos-em-diversas.html https://www.reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar/"
+  },
+  "isgh-200231-26-laudos-remotos-hrn": {
+   "Eixo Necessidade": 90,
+   "Sinal operacional": "Seleção ISGH publicada em 04/06/2026 com 1 vaga de médico radiologista no HRN Sobral (R$ 10,1 a 11,3 mil), inscrições até 07/07/2026.",
+   "Eixo Dor": 15,
+   "O que reclamam": "HRN sem página própria no RA; página do ISGH tem 2 reclamações (80% 'baixa qualidade'), sobre seleção e suspeita de negligência, sem citar laudo (reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.f5cariri.com.br/2026/06/isgh-contrata-medicos-em-diversas.html https://www.reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar/ https://www.isgh.org.br/onde-estamos/hospital-regional-norte"
+  },
+  "isgh-200152-200170-fila-aberta": {
+   "Eixo Necessidade": 90,
+   "Sinal operacional": "Seleção ISGH de 04/06/2026 abriu 6 vagas de médico radiologista (HRN Sobral 1, HRSC Quixeramobim 2, HRVJ Limoeiro 2, Fortaleza 1), inscrições até 07/07/2026.",
+   "Eixo Dor": 15,
+   "O que reclamam": "RA do ISGH: 2 reclamações, 0% de resposta, 80% 'baixa qualidade'; temas de seleção de pessoal e segurança do paciente no SUS, sem menção a laudo.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.f5cariri.com.br/2026/06/isgh-contrata-medicos-em-diversas.html https://www.reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar/"
+  },
+  "isgh-200231-26-laudos-remotos-hrn-seed": {
+   "Eixo Necessidade": 90,
+   "Sinal operacional": "Seleção ISGH publicada em 04/06/2026 com 1 vaga de médico radiologista no HRN Sobral (R$ 10,1 a 11,3 mil), inscrições até 07/07/2026.",
+   "Eixo Dor": 15,
+   "O que reclamam": "HRN sem página própria no RA; página do ISGH tem 2 reclamações (80% 'baixa qualidade'), sobre seleção e suspeita de negligência, sem citar laudo (reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.f5cariri.com.br/2026/06/isgh-contrata-medicos-em-diversas.html https://www.reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar/ https://www.isgh.org.br/onde-estamos/hospital-regional-norte"
+  },
+  "isgh-200152-26-fila-aberta": {
+   "Eixo Necessidade": 90,
+   "Sinal operacional": "Seleção ISGH de 04/06/2026 abriu 6 vagas de médico radiologista (HRN Sobral 1, HRSC Quixeramobim 2, HRVJ Limoeiro 2, Fortaleza 1), inscrições até 07/07/2026.",
+   "Eixo Dor": 15,
+   "O que reclamam": "RA do ISGH: 2 reclamações, 0% de resposta, 80% 'baixa qualidade'; temas de seleção de pessoal e segurança do paciente no SUS, sem menção a laudo.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.f5cariri.com.br/2026/06/isgh-contrata-medicos-em-diversas.html https://www.reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar/"
+  },
+  "sao-bento-do-una-pe-2026": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Hospital Municipal Dr José Antonio de Siqueira Neto (CNES 2352133) tem só 1 RX em uso e serviço de radiologia; prefeitura avisou que o RX está parado para reforma e digitalização, com exames feitos em municípios vizinhos",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://guia.agendarconsulta.com/pernambuco/sao-bento-do-una/hospital-municipal-dr-jose-antonio-de-siqueira-neto-2352133 https://www.saobentodouna.pe.gov.br/aviso-importante-3/"
+  },
+  "isgh-200307-26-laudos-remotos-hrn-seed": {
+   "Eixo Necessidade": 90,
+   "Sinal operacional": "Seleção ISGH publicada em 04/06/2026 com 1 vaga de médico radiologista no HRN Sobral (R$ 10,1 a 11,3 mil), inscrições até 07/07/2026.",
+   "Eixo Dor": 15,
+   "O que reclamam": "HRN sem página própria no RA; página do ISGH tem 2 reclamações (80% 'baixa qualidade'), sobre seleção e suspeita de negligência, sem citar laudo (reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.f5cariri.com.br/2026/06/isgh-contrata-medicos-em-diversas.html https://www.reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar/ https://www.isgh.org.br/onde-estamos/hospital-regional-norte"
+  },
+  "hu-ufcat-catalao-go-2026": {
+   "Sinal operacional": "Hospital inaugurado em 02/06/2026, 100% digital, 166 leitos previstos em implantação por fases em 12 meses; R$ 67 mi federais em equipamentos, sem lista de imagem nem dado de radiologista",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página própria do HU-UFCAT no RA; página Ebserh sem reputação definida, queixa achada é de fila de cirurgia no HC-UFG, não em Catalão",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://catalao.go.gov.br/noticias/saude/hu-ufcat-e-inaugurado-em-catalao-como-referencia-em-eficiencia-e-tecnologia-100-digital https://www.reclameaqui.com.br/ebserh/nao-se-consegue-informacao_a43NgxrHeDNEAef_/"
+  },
+  "11237287000194-1-000013/2026": {
+   "Sinal operacional": "CNES lista só 5 unidades municipais de atenção básica (Centro de Saúde, UBS, posto, SMS), sem hospital; equipamento de imagem não confirmado",
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://cnes2.datasus.gov.br/Listar_Mantidas.asp?VCnpj=00098095000128&VEstado=52&VNome=PREFEITURA+MUNICIPAL+DE+NOVA+GLORIA"
+  },
+  "15389588000194-1-000080/2026": {
+   "Sinal operacional": "Hospital Municipal José Valdir Antunes de Oliveira (CNES 2659603, gerido pela FUNSAÚDE); seletivo FUNSAÚDE de jun/2026 não inclui radiologista; equipamento de imagem não confirmado",
+   "Eixo Dor": 5,
+   "O que reclamam": "Página no RA com 0 reclamações avaliadas; única queixa é de taxa de iluminação pública (2023), nada de saúde",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-sao-gabriel-do-oeste/ https://cnes2.datasus.gov.br/Listar_Mantidas.asp?VCnpj=15389588000194&VEstado=50&VNome=MUNICIPIO+DE+SAO+GABRIEL+DO+OESTE https://concursosnobrasil.com/concursos/ms/2026/06/25/funsaude-de-sao-gabriel-do-oeste-ms-publica-edital-com-salarios-de-ate-r-62-mil/"
+  },
+  "46634481000198-1-000220/2026": {
+   "Eixo Dor": 12,
+   "O que reclamam": "RA da prefeitura sem reputação definida, poucas reclamações, todas de transporte público; nenhuma de saúde, exame ou laudo.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/prefeitura-municipal-de-porto-feliz/expresso-porto-feliz_cZk_xLc8oiag9qW6/"
+  },
+  "36901264000163-1-000659/2026": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://inovacapixaba.es.gov.br/editaisdepregao"
+  },
+  "quadro-gurupi-to": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "UPA municipal com RX digital (30-45 exames/dia) e Policlínica com US; no Hospital Regional (estadual) o MPTO apontou em out/2025 ausência de radiologista presencial e falhas no telelaudo.",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA; MPTO cobrou regularização da radiologia do Hospital Regional de Gurupi (risco ao paciente).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://gurupi.to.gov.br/2023/03/raio-x-comprado-pela-prefeitura-de-gurupi-ja-funciona-na-upa/ https://gurupi.to.gov.br/2022/03/em-gurupi-policlinica-inicia-oferta-de-servico-de-ultrassonografia/ https://tocantins.jornalopcao.com.br/noticias/hospital-regional-de-gurupi-tem-dez-dias-para-ajustar-falhas-em-exames-e-presenca-de-medicos-radiologistas-determina-mpto-570635/"
+  },
+  "quadro-unai-mg": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Prefeitura noticia tomógrafo em funcionamento no Hospital Municipal Dr. Joaquim Brochado (CNES 2760924); sem dado de radiologista no quadro",
+   "Eixo Dor": 5,
+   "O que reclamam": "Página no RA com 0 reclamações e sem índice; nenhuma queixa de exame ou laudo encontrada (reclameaqui.com.br/empresa/prefeitura-unai)",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.prefeituraunai.mg.gov.br/pmu2/index.php/secretarias/noticias/46-saude/2087-tomografo-ja-esta-em-funcionamento-no-hospital-municipal.html https://www.reclameaqui.com.br/empresa/prefeitura-unai/ https://hospitaleclinicas.com.br/cnes/2760924/hospital-municipal-dr-joaquim-brochado"
+  },
+  "19086750": {
+   "Eixo Dor": 30,
+   "O que reclamam": "RA com reputação 'Não recomendada', 52 reclamações e 0% de resposta; recentes tratam de trânsito, CRAS e ônibus. Na saúde, espera de mais de 4h na UPA (2024), sem queixa de exame ou laudo.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.reclameaqui.com.br/empresa/prefeitura-campo-largo/lista-reclamacoes/ https://www.reclameaqui.com.br/prefeitura-campo-largo/upa-campo-largo-4h-de-espera-fiquei-de-mais-de-4-horas-para-atendimento_N5nd1I1T9dpzarUb/"
+  },
+  "isgh-publinexo-pe339-2026": {
+   "Eixo Necessidade": 90,
+   "Sinal operacional": "Seleção ISGH de 04/06/2026 com 2 vagas de médico radiologista no HRSC Quixeramobim, inscrições até 07/07/2026.",
+   "Eixo Dor": 15,
+   "O que reclamam": "HRSC sem página própria no RA; página do ISGH tem 2 reclamações sem menção a exame ou laudo.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.f5cariri.com.br/2026/06/isgh-contrata-medicos-em-diversas.html https://www.reclameaqui.com.br/empresa/instituto-de-saude-e-gestao-hospitalar/"
+  },
+  "quadro-santarem-pa": {
+   "Eixo Necessidade": 10,
+   "Sinal operacional": "Rede pública fez em 2025 11.229 TC, 10.559 US e 100.610 RX (Hospital Municipal, PSM e UPA 24h); tomógrafo próprio no HMS.",
+   "Eixo Dor": 10,
+   "O que reclamam": "Sem página no RA; Câmara registrou queixas de superlotação e falta de especialista no Ambulatório Municipal (2021), não de laudo.",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://santarem.pa.gov.br/noticias/saude/mais-de-122-mil-exames-de-imagem-garantiram-diagnosticos-e-atendimento-mais-agil-na-rede-publica-de-santarem-em-2025-i4ilvr https://santarem.pa.gov.br/noticias/gerais/com-tomografo-proprio-hospital-municipal-deixara-de-terceirizar-mais-de-500-exames-ao-mes-2033e0816241-6859-41da-88f4-b04e2abc221a https://santarem.pa.leg.br/ambulatorio-municipal-e-alvo-de-reclamacoes/"
+  },
+  "quadro-rio-do-sul-sc": {
+   "Eixo Dor": 10,
+   "O que reclamam": "sem página no RA. Imprensa local relata paciente há 3 anos na fila da Policlínica e laudos de imagem sumidos do sistema de regulação (GCD, 2024).",
+   "Medido em": "30/09/2026",
+   "Fonte da medicao": "pesquisa 30/09/2026 · https://www.gcd.com.br/rio-do-sul/morador-de-rio-do-sul-espera-ha-tre-anos-por-atendimento-especializado/ https://www.gcd.com.br/rio-do-sul/saude-de-rio-do-sul-abre-licitacao-para-exames-e-procedimentos-especializados/"
+  }
+ }
+}

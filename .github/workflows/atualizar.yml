@@ -37,6 +37,7 @@ jobs:
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
         run: |
+          python scripts/aplicar_medicoes.py
           python scripts/sincronizar_licitacoes.py Pipeline_Licitacoes.xlsx
           python scripts/buscar_planilhas.py --so-licitacoes
       - name: Gerar os dados da página
