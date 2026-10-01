@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<script>(function(){var t="light";try{t=localStorage.getItem("trx-tema")||"light";}catch(e){}document.documentElement.setAttribute("data-theme",t);})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}.saude{margin:8px 0 2px;padding:8px 12px;border-radius:8px;font-size:13px;line-height:1.45;border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent)}
@@ -32,16 +33,17 @@
   --r:8px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0d1319; --surface:#141c24; --surface2:#19232d; --ink:#e4ebf1; --muted:#95a5b5; --line:#263340;
-  --accent:#4cbecf; --accent-soft:#1a2c3c;
-  --c-atacar:#f07078; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
-  --ok:#5fc48a; --warn:#f0a14a; --bad:#f07078; color-scheme:dark}}
+  --bg:#17202a; --surface:#1e2833; --surface2:#243040; --ink:#e8eef3; --muted:#a7b5c3; --line:#364554;
+  --accent:#4cbecf; --accent-soft:#213a4f;
+  --c-atacar:#f5868c; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
+  --ok:#5fc48a; --warn:#f0a14a; --bad:#f5868c; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0d1319; --surface:#141c24; --surface2:#19232d; --ink:#e4ebf1; --muted:#95a5b5; --line:#263340;
-  --accent:#4cbecf; --accent-soft:#1a2c3c;
-  --c-atacar:#f07078; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
-  --ok:#5fc48a; --warn:#f0a14a; --bad:#f07078; color-scheme:dark}
+  --bg:#17202a; --surface:#1e2833; --surface2:#243040; --ink:#e8eef3; --muted:#a7b5c3; --line:#364554;
+  --accent:#4cbecf; --accent-soft:#213a4f;
+  --c-atacar:#f5868c; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
+  --ok:#5fc48a; --warn:#f0a14a; --bad:#f5868c; color-scheme:dark}
 *{box-sizing:border-box}
+.tema{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:3px 10px;cursor:pointer}.tema-nav{margin:auto 0 8px auto;flex:none}.tema:hover{border-color:var(--accent);color:var(--ink)}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 .wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
@@ -189,6 +191,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <a href="#clinicas" data-tab="clinicas">Clínicas particulares<span class="n" id="n-clinicas"></span></a>
       <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
       <a href="#quadro" data-tab="quadro">Quadro nacional<span class="n" id="n-quadro"></span></a>
+      <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
     </nav>
     <div id="saude" class="saude" hidden></div>
   </div>
@@ -638,5 +641,6 @@ show(inicial);
 })();
 </script>
 
+<script>(function(){var b=document.getElementById("tema");if(!b)return;function rot(){var d=document.documentElement.getAttribute("data-theme")==="dark";b.textContent=d?"Tema claro":"Tema escuro";b.setAttribute("aria-pressed",d?"true":"false");}rot();b.addEventListener("click",function(){var n=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",n);try{localStorage.setItem("trx-tema",n);}catch(e){}rot();});})();</script>
 </body>
 </html>
