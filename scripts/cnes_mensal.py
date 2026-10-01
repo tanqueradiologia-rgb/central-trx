@@ -21,6 +21,13 @@ UFS = ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "
 GRUPO = {2: "MMG", 3: "MMG", 17: "MMG", 4: "RX", 5: "RX", 6: "RX", 8: "RX", 9: "DO", 11: "TC", 12: "RM",
          13: "US", 14: "US", 15: "US", 18: "PET"}
 ESFERA = {"M": "Municipal", "E": "Estadual", "F": "Federal", "P": "Privada"}
+NATUREZA = {"1": "Pública", "2": "Privada", "3": "Sem fins lucrativos", "4": "Pessoa física"}
+
+
+def esfera_de(r):
+    """Esfera administrativa; quando o CNES deixa em branco (comum nas privadas), usa a natureza jurídica."""
+    e = ESFERA.get(str(r.get("ESFERA_A") or "").strip(), "")
+    return e or NATUREZA.get(str(r.get("NAT_JUR") or "").strip()[:1], "")
 TZ = dt.timezone(dt.timedelta(hours=-3))
 
 
@@ -36,8 +43,14 @@ def ler_dbc(ftp, caminho):
 
 def municipios():
     try:
-        with urllib.request.urlopen("https://servicodados.ibge.gov.br/api/v1/localidades/municipios", timeout=60) as r:
-            return {str(m["id"])[:6]: m["nome"] for m in json.load(r)}
+        req = urllib.request.Request("https://servicodados.ibge.gov.br/api/v1/localidades/municipios",
+                                     headers={"Accept-Encoding": "gzip"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            raw = r.read()
+        if raw[:2] == b"\x1f\x8b":
+            import gzip
+            raw = gzip.decompress(raw)
+        return {str(m["id"])[:6]: m["nome"] for m in json.loads(raw)}
     except Exception as e:
         print(f"::warning::IBGE sem resposta ({e}); municípios ficam só com o código")
         return {}
@@ -74,7 +87,7 @@ def main():
         for r in eq:
             cnes = str(r.get("CNES") or "").strip()
             e = est.setdefault(cnes, {"cnes": cnes, "uf": uf, "mun": str(r.get("CODUFMUN") or ""),
-                                      "cnpj": "", "esfera": ESFERA.get(str(r.get("ESFERA_A") or "").strip(), ""),
+                                      "cnpj": "", "esfera": esfera_de(r),
                                       "tp_unid": str(r.get("TP_UNID") or ""), "eq": collections.Counter(),
                                       "eq_sus": collections.Counter(), "s121": set(), "serv": set(), "comp": comps[uf]})
             if str(r.get("PF_PJ") or "") == "3" and not e["cnpj"]:
@@ -95,7 +108,7 @@ def main():
             if e is None:
                 e = est.setdefault(cnes, {"cnes": cnes, "uf": uf, "mun": str(r.get("CODUFMUN") or ""),
                                           "cnpj": str(r.get("CPF_CNPJ") or "").strip() if str(r.get("PF_PJ") or "") == "3" else "",
-                                          "esfera": ESFERA.get(str(r.get("ESFERA_A") or "").strip(), ""),
+                                          "esfera": esfera_de(r),
                                           "tp_unid": str(r.get("TP_UNID") or ""), "eq": collections.Counter(),
                                           "eq_sus": collections.Counter(), "s121": set(), "serv": set(), "comp": comps[uf]})
             if serv:
