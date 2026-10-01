@@ -3,6 +3,7 @@ name: Atualizar Central TRX
 on:
   schedule:
     - cron: "*/10 * * * *"   # a cada 10 min, o dia todo (o GitHub pode atrasar alguns minutos)
+    - cron: "37 * * * *"     # rodada de hora em hora que também roda o radar PNCP
   workflow_dispatch: {}
   push:
     branches: [main]
@@ -50,10 +51,10 @@ jobs:
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ] || [ "$(date -u +%M)" -lt 10 ]; then
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "${{ github.event.schedule }}" = "37 * * * *" ]; then
             python scripts/radar_pncp.py
           else
-            echo "Radar roda só na primeira rodada de cada hora."
+            echo "Radar roda só na rodada de hora em hora (cron 37)."
           fi
       - name: Ler a planilha Google de licitações
         env:
