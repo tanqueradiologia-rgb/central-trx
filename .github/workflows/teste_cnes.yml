@@ -1,0 +1,32 @@
+name: Teste fontes CNES
+on: workflow_dispatch
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: API dados abertos (estabelecimentos)
+        run: curl -s -m 60 "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos?codigo_municipio=520870&limit=2" | head -c 400; echo
+      - name: Base mensal CNES (zip completo, so cabecalho)
+        run: |
+          for m in 202609 202608; do
+            curl -sI -m 60 "https://cnes.datasus.gov.br/EstatisticasServlet?path=BASE_DE_DADOS_CNES_${m}.ZIP" | head -8; echo "---"
+          done
+      - name: FTP DATASUS equipamentos GO (EQ) e servicos (SR)
+        run: |
+          curl -s -m 90 --list-only "ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/EQ/" | grep -E "EQGO26" | tail -3
+          curl -s -m 90 --list-only "ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/SR/" | grep -E "SRGO26" | tail -3
+      - name: Ler um arquivo EQ de GO com PySUS-like (dbc)
+        run: |
+          pip install -q pyreaddbc dbfread >/dev/null 2>&1 || true
+          f=$(curl -s -m 90 --list-only "ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/EQ/" | grep -E "^EQGO26" | sort | tail -1)
+          echo "arquivo: $f"; curl -s -m 120 -o eq.dbc "ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/EQ/$f"; ls -la eq.dbc
+          python - <<'PY'
+          import pyreaddbc, dbfread
+          pyreaddbc.dbc2dbf("eq.dbc","eq.dbf")
+          t=dbfread.DBF("eq.dbf",encoding="latin-1")
+          print("campos:", t.field_names)
+          for i,r in enumerate(t):
+              print(dict(r))
+              if i>=2: break
+          PY
