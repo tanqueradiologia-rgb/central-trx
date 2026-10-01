@@ -16,8 +16,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sincronizar_licitacoes import SHEET_ID, ABA, TZ, trilha_de, col  # noqa: E402
 
 ORIGEM = "Radar PNCP (GitHub)"
-TERMOS = ["telerradiologia", "telelaudo", "laudo a distância", "laudos radiológicos",
-          "laudos de exames de imagem", "telemedicina radiologia"]
+# Os 20 termos do radar do Mac (auditoria de 13/07/2026). A busca do PNCP exige TODAS as palavras
+# do termo; os termos curtos (diagnostico por imagem, radiologia, mamografia...) pegam os
+# credenciamentos que não escrevem "laudo". Não alongue os curtos.
+TERMOS = ["telerradiologia", "telelaudo", "telediagnostico", "teleradiologia", "laudos radiologicos",
+          "laudo a distancia", "emissao de laudos", "laudo de raio-x", "interpretacao de exames",
+          "telemedicina laudo", "diagnostico por imagem", "exames de imagem", "radiologia",
+          "servicos de radiologia", "tomografia computadorizada", "ressonancia magnetica", "mamografia",
+          "densitometria", "pacs", "raio-x"]
 # Filtro na mesma linha do radar do Mac: descarta ruído, mantém o "talvez".
 IMAGEM = ["raio-x", "raio x", "raios x", "radiolog", "radiograf", "tomograf", "ressonanc", "mamograf",
           "densitometr", "diagnostico por imagem", "exames de imagem", "imagens radiolog"]
@@ -31,6 +37,17 @@ FORA = ["equipament", "mamografo", "aparelho de raio", "aquisicao", "compra de",
         "ecg", "holter", "eletroencefalo", "analises clinicas", "esteriliza", "medicina do trabalho",
         "hospedagem", "hotel", "obra", "reforma", "engenharia", "pavimenta", "uniforme", "combustivel",
         "colchao", "medicamento", "veicular", "vistoria", "unidade movel", "itinerante"]
+# Encaixe: alta = laudo remoto de imagem; baixa = trabalho presencial ou preço abaixo do piso.
+PRESENCIAL = ["plantoes", "plantao", "por quilometro", "r$/km", "deslocamento", "biopsia", "ultrassonografia",
+              "ultrassom", "usg", "doppler", "carga horaria", "tecnico em radiologia", "tecnicos em radiologia",
+              "operador de raio", "realizacao de exames", "com equipamento proprio", "consultorio movel",
+              "veiculo movel"]
+# Piso de venda por laudo (nunca abaixo). RX: decisão do Marcos em 01/10/2026 (R$ 10,00).
+# TC, RM e MMG: repasse ao radiologista dividido por 0,81 (19% de impostos e comissões).
+PISOS = [("RX", ["raio-x", "raio x", "raios x", "radiograf", " rx "], 10.00),
+         ("MMG", ["mamograf"], 22.22),
+         ("TC", ["tomograf"], 43.21),
+         ("RM", ["ressonanc"], 61.73)]
 DESCARTE_FASE = "Descartado"
 DESCARTE_MOTIVO = "Ruído do radar PNCP da nuvem (fora do filtro de telelaudo)"
 URL = "https://pncp.gov.br/api/search/"
@@ -42,7 +59,7 @@ def sem_acento(t):
 
 def buscar(termo):
     itens, pagina = [], 1
-    while pagina <= 5:
+    while pagina <= 3:
         q = urllib.parse.urlencode({"tipos_documento": "edital", "status": "recebendo_proposta",
                                     "q": termo, "tam_pagina": 100, "pagina": pagina,
                                     "ordenacao": "-data"})
@@ -107,6 +124,53 @@ def relevante(it):
     return img and not any(k in txt for k in FORA)
 
 
+def encaixe_texto(it):
+    """Encaixe só pelo texto do edital: alta, media ou baixa (com motivo)."""
+    txt = " " + sem_acento(f"{it.get('title', '')} {it.get('description', '')}") + " "
+    pres = [k for k in PRESENCIAL if k in txt]
+    if pres:
+        return "baixa", "presencial ou fora do telelaudo: " + ", ".join(pres[:3])
+    img = any(k in txt for k in IMAGEM)
+    if any(k in txt for k in FORTE) or (img and any(k in txt for k in REMOTO)):
+        return "alta", ""
+    return "media", ""
+
+
+def checar_piso(cnpj, ano, seq):
+    """Lê os itens do PNCP e devolve a lista de itens com valor unitário abaixo do piso."""
+    url = f"https://pncp.gov.br/api/pncp/v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens?pagina=1&tamanhoPagina=200"
+    req = urllib.request.Request(url, headers={"User-Agent": "central-trx/1.0", "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        itens = json.load(r)
+    abaixo = []
+    for i in itens if isinstance(itens, list) else []:
+        desc = " " + sem_acento(i.get("descricao") or "") + " "
+        vu = i.get("valorUnitarioEstimado")
+        if not isinstance(vu, (int, float)) or vu <= 0:
+            continue
+        for nome, chaves, piso in PISOS:
+            if any(k in desc for k in chaves) and vu < piso:
+                abaixo.append(f"{nome} R$ {vu:.2f} (piso R$ {piso:.2f})".replace(".", ","))
+                break
+    return abaixo
+
+
+def avaliar(it):
+    """Encaixe e bloqueio de um edital novo: texto mais o teste de preço pelos itens do PNCP."""
+    enc, motivo = encaixe_texto(it)
+    m = re.match(r"^(\d{14})-1-0*(\d+)/(\d{4})$", str(it.get("numero_controle_pncp") or "").strip())
+    if m:
+        try:
+            abaixo = checar_piso(m.group(1), m.group(3), m.group(2))
+            if abaixo:
+                enc = "baixa"
+                motivo = (motivo + "; " if motivo else "") + "preço abaixo do piso: " + "; ".join(abaixo[:3])
+            time.sleep(1)
+        except Exception as e:
+            print(f"  itens sem resposta para {it.get('numero_controle_pncp')}: {e}")
+    return enc, motivo
+
+
 def limpar_ruido(api, H, ix, agora):
     """Linhas que este radar criou e que o filtro atual rejeita saem da fila (Fase Descartado).
     Só mexe em linha com Origem deste radar e Fase ainda Mapeado."""
@@ -119,6 +183,11 @@ def limpar_ruido(api, H, ix, agora):
         if relevante({"title": r[ix["Edital"]], "description": r[ix["Objeto"]]}):
             if "Responsavel" in ix and not str(r[ix["Responsavel"]]).strip():
                 mud.append({"range": f"{ABA}!{col(ix['Responsavel'] + 1)}{n}", "values": [["Carla"]]})
+            if "Encaixe" in ix and not str(r[ix["Encaixe"]]).strip():  # linhas antigas: encaixe pelo texto
+                enc, motivo = encaixe_texto({"title": r[ix["Edital"]], "description": r[ix["Objeto"]]})
+                mud.append({"range": f"{ABA}!{col(ix['Encaixe'] + 1)}{n}", "values": [[enc]]})
+                if motivo and "Bloqueio" in ix and not str(r[ix["Bloqueio"]]).strip():
+                    mud.append({"range": f"{ABA}!{col(ix['Bloqueio'] + 1)}{n}", "values": [[motivo]]})
             continue
         mud += [{"range": f"{ABA}!{col(ix['Fase'] + 1)}{n}", "values": [[DESCARTE_FASE]]},
                 {"range": f"{ABA}!{col(ix['Resultado'] + 1)}{n}", "values": [[DESCARTE_MOTIVO]]},
@@ -213,8 +282,9 @@ def main():
         reg["Trilha"] = trilha_de(reg)
         if reg["Trilha"] == "ENCERRADO":
             continue
+        reg["Encaixe"], reg["Bloqueio"] = avaliar(it)
         novas.append([reg.get(h, "") for h in H])
-        print("  novo:", rid, "|", reg["Orgao"], "|", reg["Cidade"], reg["UF"], "|", reg["Prazo"])
+        print("  novo:", rid, "|", reg["Orgao"], "|", reg["Cidade"], reg["UF"], "|", reg["Prazo"], "|", reg["Encaixe"])
     if novas:
         api.values().append(spreadsheetId=SHEET_ID, range=f"{ABA}!A1", valueInputOption="RAW",
                             insertDataOption="INSERT_ROWS", body={"values": novas}).execute()
