@@ -475,7 +475,7 @@ const lLi = makeList({
     '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
     '<td class="hide-sm">'+esc(r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
   detail:r=>'<div class="det-grid">'+field("Objeto",r.obj)+field("Onde disputa",r.onde)+field("Trava",r.bloq)+field("Próxima ação",r.acao)+field("Quando",r.qd?fData(r.qd):"")+field("Notas da Carla",r.notas)+field("Resultado",r.res)+field("Número de controle",r.id)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
-    '<div class="links">'+editBtn("licitacoes",r.l)+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
+    '<div class="links">'+editBtn("licitacoes",r.l)+(r.pasta?'<a href="'+esc(r.pasta)+'" target="_blank" rel="noopener">Pasta do processo ↗</a>':'')+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
   const ab=LI.filter(aberta);
@@ -560,7 +560,7 @@ const lPr = makeList({
       '<td class="mono">'+(p.dt? (p.prazo? fData(p.dt,true)+'<div>'+fDiasP(p.dt)+'</div>' : (late?'<span class="d-bad">'+fData(p.dt)+' · atrasado</span>':fData(p.dt))) : '—')+'</td>'+
       '<td class="clip meta hide-sm">'+esc(p.acao||"")+'</td>'; },
   detail:p=>(p.src!=="clinicas" && (p.r.jan!=null||p.r.nec!=null||p.r.dorx!=null) ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dorx,p.r.oq)+'</div>' : p.src==="clinicas" ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dor,p.r.ra)+'</div>' : '')+'<div class="det-grid" style="margin-top:14px">'+field("Frente",p.tp)+field("Responsável",p.resp)+field("Objeto ou gancho",p.r.obj||p.r.g)+field("Trava",p.r.bloq)+field("Notas",p.r.notas)+'</div>'+
-    '<div class="links">'+editBtn(p.src,p.r.l)+(p.r.lpn?'<a href="'+esc(p.r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+'<a href="'+p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+p.src+'">Ver na aba da frente</a></div>'
+    '<div class="links">'+editBtn(p.src,p.r.l)+(p.r.pasta?'<a href="'+esc(p.r.pasta)+'" target="_blank" rel="noopener">Pasta do processo ↗</a>':'')+(p.r.lpn?'<a href="'+esc(p.r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+'<a href="'+p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+p.src+'">Ver na aba da frente</a></div>'
 });
 (function(){
   const cont={}; PR.forEach(p=>cont[p.fx]=(cont[p.fx]||0)+1);

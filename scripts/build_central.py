@@ -162,6 +162,7 @@ def licitacao(linha, d, aba):
         "res": txt(d.get("Resultado"), 160),
         "led": txt(d.get("Link edital")) if str(d.get("Link edital") or "").startswith("http") else "",
         "lpn": txt(d.get("Link PNCP")) if str(d.get("Link PNCP") or "").startswith("http") else "",
+        "pasta": txt(d.get("Pasta do processo")) if str(d.get("Pasta do processo") or "").startswith("http") else "",
         "at": data_iso(d.get("Atualizado em")),
         "jan": num(d.get("Eixo Janela")), "sjan": txt(d.get("Sinal de compra"), 200),
         "nec": num(d.get("Eixo Necessidade")), "snec": txt(d.get("Sinal operacional"), 200),
