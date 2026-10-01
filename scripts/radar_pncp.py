@@ -266,8 +266,13 @@ def main():
 
     achados, erros = {}, 0
     from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=4) as ex:  # 20 termos: em paralelo para caber no tempo do Actions
-        futuros = {t: ex.submit(buscar, t) for t in TERMOS}
+    # O PNCP derruba conexões quando recebe muitas buscas juntas. Cada rodada faz os 4 termos de
+    # telelaudo e metade dos outros (alternando pela hora): todo termo é buscado ao menos a cada 2 h.
+    fixos, resto = TERMOS[:4], TERMOS[4:]
+    hora = dt.datetime.now(TZ).hour
+    termos = fixos + [t for i, t in enumerate(resto) if i % 2 == hora % 2]
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        futuros = {t: ex.submit(buscar, t) for t in termos}
     for t, f in futuros.items():
         try:
             for it in f.result():
@@ -277,7 +282,7 @@ def main():
         except Exception as e:  # um termo com erro não derruba os outros
             erros += 1
             print(f"::warning::PNCP falhou para '{t}': {e}")
-    if erros == len(TERMOS):
+    if erros == len(termos):
         print(f"Radar PNCP: {limpas} linhas de ruído descartadas; PNCP não respondeu a nenhum termo.")
         sys.exit(1)
 
@@ -299,7 +304,7 @@ def main():
         api.values().append(spreadsheetId=SHEET_ID, range=f"{ABA}!A1", valueInputOption="RAW",
                             insertDataOption="INSERT_ROWS", body={"values": novas}).execute()
     print(f"Radar PNCP: {len(achados)} editais relevantes abertos, {len(novas)} novos na planilha, "
-          f"{limpas} linhas de ruído descartadas, {prazos} prazos completados, {erros} termo(s) com erro.")
+          f"{limpas} linhas de ruído descartadas, {prazos} prazos completados, {len(termos)} termos, {erros} com erro.")
 
 
 if __name__ == "__main__":
