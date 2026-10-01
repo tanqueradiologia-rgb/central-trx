@@ -129,6 +129,47 @@ def limpar_ruido(api, H, ix, agora):
     return sum(1 for m in mud if m["values"] == [[DESCARTE_FASE]])
 
 
+def completar_prazos(api, H, ix, agora, limite=30):
+    """Processo aberto sem prazo e com ID no formato do PNCP ({cnpj}-1-{seq}/{ano}): busca a data
+    de encerramento das propostas na API de consulta do PNCP e grava só a coluna Prazo."""
+    if "Prazo" not in ix:
+        return 0
+    vals = api.values().get(spreadsheetId=SHEET_ID, range=f"{ABA}!A1:{col(len(H))}").execute().get("values", [])
+    mud, feitas = [], 0
+    for n, r in enumerate(vals[1:], start=2):
+        if feitas >= limite:
+            break
+        r = r + [""] * (len(H) - len(r))
+        if r[ix["Trilha"]] not in ("CREDENCIAMENTO", "PREGAO") or str(r[ix["Prazo"]]).strip():
+            continue
+        m = re.match(r"^(\d{14})-1-0*(\d+)/(\d{4})$", str(r[ix["ID"]]).strip())
+        if not m:
+            continue
+        cnpj, seq, ano = m.groups()
+        url = f"https://pncp.gov.br/api/consulta/v1/orgaos/{cnpj}/compras/{ano}/{seq}"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "central-trx/1.0", "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                doc = json.load(resp)
+        except Exception as e:
+            print(f"  prazo: linha {n} sem resposta do PNCP ({e})")
+            continue
+        fim = str(doc.get("dataEncerramentoProposta") or "")
+        mm = re.match(r"(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?", fim)
+        if not mm:
+            continue
+        y, mo, d, hh, mi = mm.groups()
+        valor = f"{d}/{mo}/{y}" + (f" {hh}:{mi}" if hh else "")
+        mud += [{"range": f"{ABA}!{col(ix['Prazo'] + 1)}{n}", "values": [[valor]]},
+                {"range": f"{ABA}!{col(ix['Sincronizado em'] + 1)}{n}", "values": [[agora]]}]
+        feitas += 1
+        print(f"  prazo: linha {n} {r[ix['Orgao']][:40]} -> {valor}")
+        time.sleep(1)
+    if mud:
+        api.values().batchUpdate(spreadsheetId=SHEET_ID, body={"valueInputOption": "RAW", "data": mud}).execute()
+    return feitas
+
+
 def main():
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
@@ -140,6 +181,11 @@ def main():
     ix = {h: i for i, h in enumerate(H)}
     agora = dt.datetime.now(TZ).strftime("%d/%m/%Y %H:%M")
     limpas = limpar_ruido(api, H, ix, agora)  # não depende do PNCP responder
+    try:
+        prazos = completar_prazos(api, H, ix, agora)
+    except Exception as e:
+        prazos = 0
+        print(f"::warning::Completar prazos falhou: {e}")
 
     achados, erros = {}, 0
     for t in TERMOS:
@@ -173,7 +219,7 @@ def main():
         api.values().append(spreadsheetId=SHEET_ID, range=f"{ABA}!A1", valueInputOption="RAW",
                             insertDataOption="INSERT_ROWS", body={"values": novas}).execute()
     print(f"Radar PNCP: {len(achados)} editais relevantes abertos, {len(novas)} novos na planilha, "
-          f"{limpas} linhas de ruído descartadas, {erros} termo(s) com erro.")
+          f"{limpas} linhas de ruído descartadas, {prazos} prazos completados, {erros} termo(s) com erro.")
 
 
 if __name__ == "__main__":

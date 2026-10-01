@@ -217,6 +217,11 @@ def main():
         sys.exit(f"ERRO: leitura suspeita (clinicas={len(cl)}, quadro={len(qd)}). Nada foi gerado.")
 
     agora = dt.datetime.now(TZ)
+    # processos que encerraram nos últimos 10 dias sem Resultado: a equipe registra o que houve
+    lim = (agora - dt.timedelta(days=10)).strftime("%Y-%m-%d")
+    enc_rec = [licitacao(l, d, "ENCERRADO") for l, d in ab.get("ENCERRADO", [])]
+    enc_rec = sorted([e for e in enc_rec if e["prazo"] and e["prazo"][:10] >= lim and not e["res"]],
+                     key=lambda e: e["prazo"], reverse=True)
     dados = {
         "gerado": agora.strftime("%Y-%m-%dT%H:%M"),
         "fontes": {
@@ -231,6 +236,7 @@ def main():
         "clinicas": cl,
         "licitacoes": lic,
         "quadro": qd,
+        "encerrados_recentes": enc_rec,
     }
     js = "window.CENTRAL=" + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n"
     open(a.saida, "w", encoding="utf-8").write(js)

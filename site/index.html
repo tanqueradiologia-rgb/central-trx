@@ -137,6 +137,11 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .ag-it .t{font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ag-it .s{color:var(--muted);font-size:12px}
 .ag-more{font:inherit;font-size:13px;background:none;border:none;color:var(--accent);font-weight:600;cursor:pointer;padding:2px 0}
 .ag-vazio{color:var(--muted);font-size:13px}
+.ag-enc{border:1px dashed var(--bad);border-radius:var(--r);padding:10px 12px}
+.ag-enc h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 4px;color:var(--bad)}
+.ag-enc p{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.ag-enc .lst{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px}
+.ag-enc a.ag-it{text-decoration:none;margin:0}
 .cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:8px}.cal-nav b{font-family:var(--f-display);font-size:16px;min-width:130px;text-transform:capitalize}
 .cal-nav button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:2px 10px;cursor:pointer}
 .cal-leg{margin-left:auto;display:flex;gap:12px;font-size:12px;color:var(--muted)}.cal-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
@@ -194,6 +199,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
     <div class="agenda">
       <div class="ag-head"><h2>Agenda</h2><span class="meta">Prazos de licitação e toques combinados com clínicas. Clique num item ou num dia para ver na lista.</span></div>
       <div class="ag-cols" id="ag-cols"></div>
+      <div class="ag-enc" id="ag-enc" hidden></div>
       <div class="cal" id="cal"></div>
     </div>
     <div class="avisos" id="avisos" hidden></div>
@@ -583,6 +589,11 @@ const lPr = makeList({
     const b=e.target.closest(".ag-it"); if(b){ const x=COM[+b.dataset.i]; filtrar(x.p.n, p=>p===x.p, x.p); return; }
     const m=e.target.closest(".ag-more"); if(m){ const g=grupos[+m.dataset.g]; const set=new Set(COM.filter(g.f).map(x=>x.p)); filtrar(g.t, p=>set.has(p)); }
   });
+  // processos que encerraram sem decisão registrada
+  const ENC = D.encerrados_recentes||[];
+  if(ENC.length){ const el=$("#ag-enc"); el.hidden=false;
+    el.innerHTML='<h3>Encerraram sem decisão registrada · '+ENC.length+'</h3><p>O prazo passou e a linha ficou em fase inicial. Abra e registre em Resultado o que aconteceu (não participamos e por quê, ou participamos).</p><div class="lst">'+
+      ENC.map(e=>'<a class="ag-it pz" href="'+editLink("licitacoes",e.l)+'" target="_blank" rel="noopener"><span class="t">'+esc(e.org||e.id)+'</span><span class="s">'+esc([e.uf,e.ed||e.mod].filter(Boolean).join(" · "))+' · encerrou '+fData(e.prazo)+(e.resp?' · '+esc(e.resp):'')+' · ✎ registrar</span></a>').join("")+'</div>'; }
   // calendário
   const porDia={}; COM.forEach(x=>{ (porDia[x.dia]=porDia[x.dia]||{pz:0,tq:0})[x.pz?"pz":"tq"]++; });
   let ref=new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);

@@ -62,7 +62,7 @@ const FRENTES = {
     aba: 'Licitacoes',
     chave: 'ID',
     filtro: function (r) {
-      if (r.Trilha === 'CREDENCIAMENTO' || r.Trilha === 'PREGAO') return true;
+      if (r.Trilha === 'CREDENCIAMENTO' || r.Trilha === 'PREGAO' || r.Trilha === 'ENCERRADO') return true;
       return r.Trilha === 'DESCARTADOS' && !doQuadro_(r);
     },
     leitura: LEITURA_LIC,
