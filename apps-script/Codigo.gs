@@ -128,12 +128,58 @@ function cabecalho_(sh) {
   return idx;
 }
 
+/** Aba Equipe: Nome | Email | Apelido | Ativo | Papel (papéis do roteiro separados por vírgula). */
 function equipe_() {
   const sh = planilha_().getSheetByName(ABA_EQUIPE);
   if (!sh || sh.getLastRow() < 2) return [];
-  return sh.getRange(2, 1, sh.getLastRow() - 1, 4).getDisplayValues()
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 5).getDisplayValues()
     .filter(function (r) { return r[0] && String(r[3]).toLowerCase() !== 'não' && String(r[3]).toLowerCase() !== 'nao'; })
-    .map(function (r) { return { nome: r[0], email: r[1], apelido: (r[2] || r[0]).toLowerCase() }; });
+    .map(function (r) {
+      return { nome: r[0], email: String(r[1] || '').trim(), apelido: (r[2] || r[0]).toLowerCase(),
+        papeis: String(r[4] || '').split(',').map(function (x) { return x.trim(); }).filter(String) };
+    });
+}
+
+/** Quem recebe aviso quando uma linha passa para "quem": nome da pessoa ou papel do roteiro (Gestor, Socios medicos...). */
+function emailsDe_(quem, eq) {
+  const q = String(quem || '').trim().toLowerCase();
+  if (!q) return [];
+  return eq.filter(function (e) {
+    return e.email && (e.nome.toLowerCase() === q || e.apelido === q ||
+      e.papeis.some(function (p) { return p.toLowerCase() === q; }));
+  }).map(function (e) { return e.email; });
+}
+
+/** Menções e passagens dos últimos 30 dias para quem está usando o app. */
+function getAvisos() {
+  const eu = String(Session.getActiveUser().getEmail() || '').toLowerCase();
+  const sh = planilha_().getSheetByName(ABA_HIST);
+  const lidoAte = Number(PropertiesService.getUserProperties().getProperty('lidoAte') || 0);
+  if (!eu || !sh || sh.getLastRow() < 2) return { avisos: [], novos: 0 };
+  const ini = Math.max(2, sh.getLastRow() - 3000);
+  const vals = sh.getRange(ini, 1, sh.getLastRow() - ini + 1, 10).getValues();
+  const limite = Date.now() - 30 * 864e5;
+  const out = [];
+  vals.forEach(function (r) {
+    const menc = String(r[9] || '').toLowerCase();
+    if (menc.indexOf(eu) < 0) return;
+    const quando = r[0] instanceof Date ? r[0] : parseBr_(r[0]);
+    const t = quando ? quando.getTime() : 0;
+    if (t && t < limite) return;
+    const tipo = String(r[4] || '');
+    out.push({ quando: quando ? Utilities.formatDate(quando, TZ, 'dd/MM HH:mm') : String(r[0]), t: t,
+      autor: r[1], linha: r[2], nome: r[3], frente: tipo.indexOf(':') > 0 ? tipo.split(':')[0] : 'clinicas',
+      tipo: tipo.replace(/^[^:]+:/, ''), msg: r[8], novo: t > lidoAte });
+  });
+  out.sort(function (a, b) { return b.t - a.t; });
+  return { avisos: out.slice(0, 60), novos: out.filter(function (a) { return a.novo; }).length };
+}
+
+function marcarLidos() { PropertiesService.getUserProperties().setProperty('lidoAte', String(Date.now())); return true; }
+
+function parseBr_(v) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/.exec(String(v || ''));
+  return m ? new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)) : null;
 }
 
 function historico_(frente) {
@@ -174,6 +220,7 @@ function getDados(frente) {
     frente: frente,
     titulo: cfg.titulo,
     usuario: Session.getActiveUser().getEmail() || '',
+    avisos: getAvisos(),
     agora: Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm"),
     edicao: cfg.edicao,
     roteiro: ROTEIRO[{ clinicas: 'particulares', licitacoes: 'licitacoes', quadro: 'quadro' }[frente]],
@@ -226,12 +273,30 @@ function salvar(pedido) {
     });
 
     const nota = String(pedido.nota || '').trim();
-    const menc = (pedido.mencoes || []).filter(String);
+    const eq = equipe_();
+    // menção a um papel (ex.: "papel:Gestor") vale para todos que têm esse papel na aba Equipe
+    let menc = [];
+    (pedido.mencoes || []).filter(String).forEach(function (m) {
+      (m.indexOf('papel:') === 0 ? emailsDe_(m.slice(6), eq) : [m]).forEach(function (x) { if (menc.indexOf(x) < 0) menc.push(x); });
+    });
+    menc = menc.filter(function (x) { return x.toLowerCase() !== autor.toLowerCase(); });
+    // passagem: quem passa a ser Responsável pela linha é avisado no app e por e-mail
+    let passagem = null;
+    if (pedido.campos && cfg.edicao.Responsavel && idx.Responsavel !== undefined) {
+      const novoResp = String(pedido.campos.Responsavel || '').trim();
+      if (novoResp && novoResp !== String(atual[idx.Responsavel] || '').trim()) {
+        const para = emailsDe_(novoResp, eq).filter(function (x) { return x.toLowerCase() !== autor.toLowerCase(); });
+        if (para.length) passagem = { para: para, quem: novoResp,
+          fase: String((pedido.campos.Fase || atual[idx.Fase]) || '') };
+      }
+    }
+    if (passagem) hist.push([agora, autor, linha, nome, pedido.frente + ':passagem', 'Responsavel', '', passagem.quem,
+      'A linha passou para ' + passagem.quem + (passagem.fase ? ' (Fase ' + passagem.fase + ')' : '') + '.', passagem.para.join(', ')]);
     if (nota) {
       hist.push([agora, autor, linha, nome, pedido.frente + ':nota', '', '', '', nota, menc.join(', ')]);
       mudou = true;
     }
-    if (!mudou) return { ok: true, nada: true };
+    if (!mudou && !passagem) return { ok: true, nada: true };
 
     if (cfg.carimbo && idx[cfg.carimbo] !== undefined)
       sh.getRange(linha, idx[cfg.carimbo] + 1).setValue(Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'));
@@ -240,7 +305,9 @@ function salvar(pedido) {
     hs.getRange(hs.getLastRow() + 1, 1, hist.length, 10).setValues(hist);
     SpreadsheetApp.flush();
 
-    if (nota && menc.length) avisar_(menc, autor, nome, nota, linha, cfg);
+    if (nota && menc.length) avisar_(menc, autor, nome, nota, linha, cfg, pedido.frente);
+    if (passagem) avisar_(passagem.para, autor, nome, 'Esta linha passou para ' + passagem.quem +
+      (passagem.fase ? ', na Fase ' + passagem.fase : '') + '. Abra para ver o histórico e o próximo passo do roteiro.', linha, cfg, pedido.frente, true);
     return { ok: true, linha: linha, historico: hist.length };
   } finally {
     lock.releaseLock();
@@ -264,14 +331,14 @@ function localizar_(sh, idx, cfg, pedido) {
   throw new Error('Não encontrei "' + pedido.chave + '" na planilha. Ela pode ter sido renomeada. Recarregue a página.');
 }
 
-function avisar_(emails, autor, nome, nota, linha, cfg) {
-  const url = ScriptApp.getService().getUrl();
+function avisar_(emails, autor, nome, nota, linha, cfg, frente, passagem) {
+  const url = ScriptApp.getService().getUrl() + '?f=' + (frente || 'clinicas') + '&l=' + linha;
   emails.forEach(function (e) {
     try {
       MailApp.sendEmail({
         to: e,
-        subject: 'Central TRX: nota em ' + nome,
-        htmlBody: '<p><b>' + autor + '</b> marcou você numa nota sobre <b>' + nome + '</b>:</p>' +
+        subject: 'Central TRX: ' + (passagem ? 'passou para você: ' : 'nota em ') + nome,
+        htmlBody: '<p><b>' + autor + '</b> ' + (passagem ? 'passou para você' : 'marcou você numa nota sobre') + ' <b>' + nome + '</b>:</p>' +
           '<blockquote>' + nota.replace(/</g, '&lt;') + '</blockquote>' +
           '<p><a href="' + url + '">Abrir a Central TRX · Edição</a> (' + cfg.titulo + ', linha ' + linha + ' da aba ' + cfg.aba + ').</p>'
       });

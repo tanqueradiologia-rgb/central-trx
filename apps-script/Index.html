@@ -92,6 +92,13 @@ textarea{min-height:84px;resize:vertical;width:100%}
 .rot .et{font-weight:700}.rot p{margin:4px 0;font-size:14px}.rot .pr{font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px}
 .rot .pr.sem{background:var(--accent-soft);color:var(--accent)}.rot .pr.com{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
 .rot .alerta{color:var(--warn);font-weight:600}
+.avp{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:30;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(0,0,0,.12)}
+.avp .hd{display:flex;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}.avp h2{margin:0;font-size:18px}
+.avp .bd{overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.avi{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer}
+.avi.novo{border-left:4px solid var(--accent)}.avi:hover{border-color:var(--accent)}.avi .w{font-size:12px;color:var(--muted)}.avi .n{font-weight:600}.avi .m{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.btn.av .badge{margin-left:6px}
+.menc .grp{font-weight:600}
 .msg{font-size:14px}.msg.ok{color:var(--ok)}.msg.err{color:var(--bad)}
 .info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px}
 .info div{min-width:0}.info h4{margin:0 0 2px;font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -109,7 +116,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <header>
   <div class="id"><img class="logo logo-light" src="https://tanqueradiologia-rgb.github.io/central-trx/marca/trx-simplificado.svg" alt="TRX Diagnóstico Digital" width="84" height="28"><img class="logo logo-dark" src="https://tanqueradiologia-rgb.github.io/central-trx/marca/trx-simplificado-negativo.svg" alt="" width="84" height="28"><h1>Central <span>TRX</span> · Edição</h1></div>
   <nav class="abas" id="abas" aria-label="Frentes"></nav>
-  <div class="who"><span id="quem">Carregando…</span><a id="lkPlan" href="#" target="_blank" rel="noopener">Abrir a planilha ↗</a><button class="btn" id="recarregar" type="button">Recarregar dados</button><button class="tema" id="tema" type="button">Tema escuro</button></div>
+  <div class="who"><button class="btn av" id="btAvisos" type="button" aria-haspopup="dialog">Avisos<span class="badge" id="nAvisos" hidden></span></button><span id="quem">Carregando…</span><a id="lkPlan" href="#" target="_blank" rel="noopener">Abrir a planilha ↗</a><button class="btn" id="recarregar" type="button">Recarregar dados</button><button class="tema" id="tema" type="button">Tema escuro</button></div>
 </header>
 <main>
   <div class="filters">
@@ -129,6 +136,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </main>
 
 <div class="scrim" id="scrim" hidden></div>
+<aside id="pAvisos" class="avp" hidden aria-labelledby="tAvisos">
+  <div class="hd"><div><h2 id="tAvisos">Avisos para você</h2><div class="meta">Notas em que marcaram você e linhas que passaram para você, nos últimos 30 dias. Também chegam por e-mail.</div></div><button class="btn" id="fAvisos" type="button">Fechar</button></div>
+  <div class="bd" id="lAvisos"></div>
+</aside>
 <aside id="painel" hidden aria-labelledby="pTit">
   <div class="hd"><div><h2 id="pTit"></h2><div class="meta" id="pSub"></div></div><button class="btn" id="fechar" type="button">Fechar</button></div>
   <div class="bd">
@@ -156,7 +167,7 @@ function num(v){ var n=parseFloat(String(v==null?"":v).replace(/\./g,"").replace
 function diasPara(v){ var i=iso(v); if(!i) return null; return Math.round((new Date(i+"T12:00:00")-new Date(hoje()+"T12:00:00"))/864e5); }
 var VISTAS={
   clinicas:{ nome:"Clínica", item:"clínica", info:"Dados da clínica", dataTit:"Próximo toque", atraso:"só toques vencidos",
-    inat:{"Descartado":1,"Sem retorno":1,"Fechado":1},
+    inat:{"Descartado":1,"Sem retorno":1,"Em operacao":1},
     titulo:function(r){return r.Clinica;}, sub:function(r){return [r.Cidade,r.UF].filter(Boolean).join(" · ");},
     subPainel:function(r){return [r.Cidade,r.UF,r.Prioridade?"prioridade "+r.Prioridade.toLowerCase():""].filter(Boolean).join(" · ");},
     data:function(r){return r.Proximo_toque;}, acao:function(r){return r.Proxima_Acao;},
@@ -165,7 +176,7 @@ var VISTAS={
     pedido:function(r){return {chave:r.Clinica, chave2:r.Cidade};},
     detalhes:function(r){ return info("Gancho",r.Gancho)+info("Modalidades",r.Modalidades)+info("Notas (coluna da planilha)",r.Notas)+info("Score",r.Score?r.Score+" · "+r.Faixa+" · "+r.Cobertura+" eixos":"")+info("Sinal de compra",r.Sinal_de_compra)+info("Sinal operacional",r.Sinal_operacional)+info("Reclame Aqui",r.Nota_RA)+info("O que os pacientes reclamam",r.O_que_reclamam)+info("Última atualização",br(r.Ultima_atualizacao))+info("Linha na planilha",String(r._l)); } },
   licitacoes:{ nome:"Órgão e edital", item:"processo", info:"Dados do processo", dataTit:"Prazo", atraso:"só prazo em até 7 dias",
-    inat:{"Descartado":1,"Perdido":1,"Credenciado":1,"Ganho":1},
+    inat:{"Descartado":1,"Perdido":1,"Em operacao":1},
     titulo:function(r){return r.Orgao||r.ID;}, sub:function(r){return [r.Cidade,r.UF,r.Edital||r.Modalidade].filter(Boolean).join(" · ");},
     subPainel:function(r){return [r.Cidade,r.UF,r.Modalidade,r.Edital].filter(Boolean).join(" · ");},
     data:function(r){return r.Prazo;}, acao:function(r){return r["Proxima acao"];},
@@ -204,6 +215,7 @@ function carregar(){
 function opcoes(id, vals, primeira){ var s=$(id), v=s.value; s.innerHTML='<option value="">'+primeira+'</option>'; Array.from(new Set(vals.filter(Boolean))).sort(function(a,b){return a.localeCompare(b,"pt");}).forEach(function(x){ var o=document.createElement("option"); o.value=o.textContent=x; s.appendChild(o); }); s.value=v; }
 function iniciar(){
   $("#quem").textContent = D.usuario ? "Conectado como "+nomeEq(D.usuario) : "Conectado";
+  avisos(D.avisos);
   $("#abas").innerHTML=(D.frentes||[]).map(function(f){ return '<button type="button" data-f="'+f.id+'" aria-current="'+(f.id===FRENTE)+'">'+esc({clinicas:"Clínicas",licitacoes:"Licitações",quadro:"Quadro de credenciamento"}[f.id]||f.titulo)+'</button>'; }).join("");
   $("#thNome").textContent=V().nome; $("#thData").textContent=V().dataTit; $("#lbAtraso").textContent=V().atraso; $("#hInfo").textContent=V().info;
   $("#lkPlan").href = D.planilha+"#gid="+D.gid;
@@ -214,6 +226,15 @@ function iniciar(){
   if(sel){ var r=D.linhas.filter(function(x){return x._k===sel;})[0]; if(r) abrir(r); }
   else if(ABRIR.l && ABRIR.f===FRENTE){ var ra=D.linhas.filter(function(x){return String(x._l)===ABRIR.l;})[0]; ABRIR.l=""; if(ra) abrir(ra); }
 }
+var AV=null;
+function avisos(a){ AV=a||{avisos:[],novos:0}; var b=$("#nAvisos"); b.hidden=!AV.novos; b.textContent=AV.novos;
+  $("#lAvisos").innerHTML = AV.avisos.length ? AV.avisos.map(function(x,i){ return '<button class="avi'+(x.novo?' novo':'')+'" type="button" data-i="'+i+'"><span class="w">'+esc(x.quando)+' · '+esc(nomeEq(x.autor))+' · '+esc({clinicas:"Clínicas",licitacoes:"Licitações",quadro:"Quadro"}[x.frente]||x.frente)+'</span><span class="n" style="display:block">'+esc(x.nome)+'</span><span class="m">'+esc(x.msg)+'</span></button>'; }).join("") : '<p class="meta">Nenhum aviso nos últimos 30 dias.</p>'; }
+function abrirAvisos(){ $("#pAvisos").hidden=false; if(AV&&AV.novos){ google.script.run.withSuccessHandler(function(){ $("#nAvisos").hidden=true; }).marcarLidos(); } }
+$("#btAvisos").addEventListener("click",abrirAvisos);
+$("#fAvisos").addEventListener("click",function(){ $("#pAvisos").hidden=true; });
+$("#lAvisos").addEventListener("click",function(e){ var b=e.target.closest(".avi"); if(!b) return; var x=AV.avisos[+b.dataset.i]; $("#pAvisos").hidden=true;
+  if(x.frente===FRENTE){ var r=D.linhas.filter(function(y){return y._k===x.nome;})[0]||D.linhas.filter(function(y){return String(y._l)===String(x.linha);})[0]; if(r) abrir(r); return; }
+  FRENTE=x.frente; ABRIR.f=x.frente; ABRIR.l=String(x.linha); sel=null; carregar(); });
 function filtrar(){
   var q=norm($("#q").value.trim()), fa=$("#fFase").value, fr=$("#fResp").value, fu=$("#fUf").value, at=$("#fAtivas").checked, ve=$("#fAtraso").checked;
   return D.linhas.filter(function(r){
@@ -278,7 +299,10 @@ function abrir(r){
   $("#form").innerHTML=Object.keys(D.edicao).map(function(k){ return campo(k,D.edicao[k],r[k]); }).join("");
   $("#form").oninput=function(){ rotBox(r); }; rotBox(r);
   $("#nota").value=""; $("#msg").textContent=""; $("#msg").className="msg";
-  $("#menc").innerHTML=(D.equipe||[]).filter(function(e){return e.email && e.email.toLowerCase()!==String(D.usuario).toLowerCase();}).map(function(e){ return '<label><input type="checkbox" value="'+esc(e.email)+'"> @'+esc(e.apelido)+'</label>'; }).join("") || '<span class="meta">Cadastre a equipe na aba Equipe da planilha para poder marcar pessoas.</span>';
+  var eq=(D.equipe||[]).filter(function(e){return e.email;}), grupos={};
+  eq.forEach(function(e){ (e.papeis||[]).forEach(function(p){ (grupos[p]=grupos[p]||0); grupos[p]++; }); });
+  $("#menc").innerHTML=Object.keys(grupos).filter(function(p){return ["Gestor","Socios medicos","TI"].indexOf(p)>=0;}).map(function(p){ return '<label class="grp"><input type="checkbox" value="papel:'+esc(p)+'"> @'+esc(papel(p))+'</label>'; }).join("")+
+    eq.filter(function(e){return e.email.toLowerCase()!==String(D.usuario).toLowerCase();}).map(function(e){ return '<label><input type="checkbox" value="'+esc(e.email)+'"> @'+esc(e.apelido)+'</label>'; }).join("") || '<span class="meta">Cadastre a equipe na aba Equipe da planilha para poder marcar pessoas.</span>';
   var h=(D.historico[r._k]||[]).slice().reverse();
   $("#tl").innerHTML = h.length ? h.map(function(x){
     return x.tipo==="nota" ? '<div class="it nota"><span class="when">'+esc(x.quando)+' · '+esc(nomeEq(x.autor))+(x.menc?' → '+esc(x.menc.split(",").map(function(m){return nomeEq(m.trim());}).join(", ")):'')+'</span><span class="txt">'+esc(x.msg)+'</span></div>'
