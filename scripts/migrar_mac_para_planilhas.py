@@ -136,9 +136,10 @@ HD = ["Documento", "Nivel", "Orgao emissor", "Validade", "Dias", "Status", "Vali
       "Situacao", "Proxima acao", "Quando", "Notas da Carla"]
 LD = [HD]
 for i, x in enumerate(d["documentos"], start=2):
-    dias = f'=IF(D{i}="","",D{i}-TODAY())'
-    status = (f'=IF(D{i}="","SEM DATA",IF(E{i}<0,"VENCIDO",IF(E{i}<=15,"VENCE EM 15 DIAS",'
-              f'IF(E{i}<=30,"VENCE EM 30 DIAS","OK"))))')
+    dias = f'=IF(D{i}="";"";D{i}-TODAY())'
+    # planilha em pt_BR: separador de argumentos é ponto e vírgula
+    status = (f'=IF(D{i}="";"SEM DATA";IF(E{i}<0;"VENCIDO";IF(E{i}<=15;"VENCE EM 15 DIAS";'
+              f'IF(E{i}<=30;"VENCE EM 30 DIAS";"OK"))))')
     LD.append([x.get("Documento"), x.get("Nivel"), x.get("Orgao"), br(x.get("Validade")), dias, status,
                x.get("Validade_tipo"), x.get("Renovacao"), x.get("Responsavel"), x.get("Onde_renovar"), x.get("Arquivo"),
                x.get("Bloqueia"), x.get("Observacao"), "migrado do Mac em " + HOJE]
