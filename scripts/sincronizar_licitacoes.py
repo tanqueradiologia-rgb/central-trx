@@ -39,7 +39,10 @@ CONTROLE = ["Trilha", "ID", "Sincronizado em"]
 MEDICAO = ["Eixo Janela", "Sinal de compra", "Eixo Necessidade", "Sinal operacional", "Eixo Dor",
            "O que reclamam", "Cobertura", "Medido em", "Fonte da medicao"]
 CALCULADAS = ["Score", "Faixa"]
-ORIGENS_NUVEM = {"Radar PNCP (GitHub)"}
+ORIGENS_NUVEM = {"Radar PNCP (GitHub)", "Quadro (nuvem)"}
+# Desde 01/10/2026 o quadro público é mantido na nuvem (tarefa "Incremento quadro" e Monitor de e-mail
+# gravam direto na planilha). As linhas "quadro-..." do xlsx antigo deixam de sobrescrever a planilha.
+QUADRO_NA_NUVEM = True
 FASES_INICIAIS = {"", "mapeado", "lendo edital", "montando habilitacao", "em aberto"}
 
 
@@ -126,7 +129,7 @@ def _trilha_base(r):
     fase = str(r.get("Fase") or "").strip().lower()
     if fase.startswith(("descartad", "perdid", "sem interesse")):
         return "DESCARTADOS"
-    if str(r.get("Origem") or "") == "Quadro Nacional" and not str(r.get("Edital") or "").strip():
+    if str(r.get("Origem") or "").startswith("Quadro") and not str(r.get("Edital") or "").strip():
         return "SEM PROCESSO"
     m = slug(r.get("Modalidade"))
     if any(k in m for k in ("credenciament", "chamament", "inexigibil", "manifestacao")):
@@ -200,6 +203,8 @@ def main():
     dados_cols = [h for h in H if h not in CONTROLE and h not in MEDICAO]
 
     for rid, d in robo.items():
+        if QUADRO_NA_NUVEM and rid.startswith("quadro-"):
+            continue
         if rid in por_id:
             n, cur = por_id[rid]
             merged = dict(cur)
@@ -245,7 +250,7 @@ def main():
     for rid, (n, cur) in por_id.items():
         if rid in robo:
             continue
-        if str(cur.get("Origem") or "") in ORIGENS_NUVEM:
+        if str(cur.get("Origem") or "") in ORIGENS_NUVEM or (QUADRO_NA_NUVEM and rid.startswith("quadro-")):
             # linha criada na nuvem (radar_pncp.py): não depende do xlsx do Mac
             alt = {}
             t = trilha_de(cur)

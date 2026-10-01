@@ -35,7 +35,7 @@ const LEITURA_LIC = ['ID', 'Trilha', 'Fase', 'Situacao do envio', 'Encaixe', 'Sc
   'Cargo', 'Telefone', 'WhatsApp', 'E-mail', 'Proxima acao', 'Quando', 'Responsavel', 'Notas da Carla', 'Resultado',
   'Link edital', 'Link PNCP', 'Origem', 'Atualizado em'];
 
-function doQuadro_(r) { return r.Origem === 'Quadro Nacional' && !String(r.Edital || '').trim(); }
+function doQuadro_(r) { return String(r.Origem || '').indexOf('Quadro') === 0 && !String(r.Edital || '').trim(); }
 
 const FRENTES = {
   clinicas: {
@@ -284,7 +284,13 @@ function salvar(pedido) {
     let passagem = null;
     if (pedido.campos && cfg.edicao.Responsavel && idx.Responsavel !== undefined) {
       const novoResp = String(pedido.campos.Responsavel || '').trim();
-      if (novoResp && novoResp !== String(atual[idx.Responsavel] || '').trim()) {
+      // início do circuito (etapa 1 do roteiro, que já nasce com a Carla): passar para a Carla não gera aviso,
+      // senão ela recebe um aviso por linha nova e se perde (decisão do Marcos, 01/10/2026)
+      const faseNova = String((pedido.campos.Fase || atual[idx.Fase]) || '').trim();
+      const rot = ROTEIRO[{ clinicas: 'particulares', licitacoes: 'licitacoes', quadro: 'quadro' }[pedido.frente]];
+      const etapa = rot && rot.fases[faseNova] ? rot.fases[faseNova].e : 0;
+      const inicioDaCarla = novoResp.toLowerCase() === 'carla' && etapa <= 1;
+      if (novoResp && !inicioDaCarla && novoResp !== String(atual[idx.Responsavel] || '').trim()) {
         const para = emailsDe_(novoResp, eq).filter(function (x) { return x.toLowerCase() !== autor.toLowerCase(); });
         if (para.length) passagem = { para: para, quem: novoResp,
           fase: String((pedido.campos.Fase || atual[idx.Fase]) || '') };
