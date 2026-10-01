@@ -125,6 +125,36 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .links a{color:var(--accent);font-weight:600;text-decoration:none;font-size:14px}
 .links a:hover{text-decoration:underline}
+.agenda{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ag-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.ag-head h2{font-family:var(--f-display);font-size:20px;margin:0}
+.ag-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.ag-col{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:var(--surface2);min-width:0}
+.ag-col h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 8px;display:flex;justify-content:space-between;gap:6px}
+.ag-col h3 b{font-variant-numeric:tabular-nums}
+.ag-col.late h3{color:var(--bad)} .ag-col.today h3{color:var(--warn)}
+.ag-it{display:block;width:100%;text-align:left;font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c-sem);border-radius:6px;padding:6px 8px;margin-bottom:6px;cursor:pointer}
+.ag-it:hover{border-color:var(--accent)} .ag-it.pz{border-left-color:var(--bad)} .ag-it.tq{border-left-color:var(--accent)}
+.ag-it .t{font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ag-it .s{color:var(--muted);font-size:12px}
+.ag-more{font:inherit;font-size:13px;background:none;border:none;color:var(--accent);font-weight:600;cursor:pointer;padding:2px 0}
+.ag-vazio{color:var(--muted);font-size:13px}
+.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:8px}.cal-nav b{font-family:var(--f-display);font-size:16px;min-width:130px;text-transform:capitalize}
+.cal-nav button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:2px 10px;cursor:pointer}
+.cal-leg{margin-left:auto;display:flex;gap:12px;font-size:12px;color:var(--muted)}.cal-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.cal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-dw{font-size:11px;font-weight:600;color:var(--muted);text-align:center;text-transform:uppercase}
+.cal-d{min-height:58px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--surface);font:inherit;text-align:left;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.cal-d:disabled{cursor:default;opacity:.45}.cal-d.fora{visibility:hidden}
+.cal-d.hoje{outline:2px solid var(--accent);outline-offset:-2px}.cal-d.sel{background:var(--accent-soft)}
+.cal-d .n{font-size:12px;font-weight:600}.cal-d .b{font-size:11px;font-weight:700;border-radius:999px;padding:0 6px;align-self:flex-start;color:#fff}
+.cal-d .b.pz{background:var(--bad)}.cal-d .b.tq{background:var(--accent)}
+:root[data-theme="dark"] .cal-d .b{color:#0d1319}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cal-d .b{color:#0d1319}}
+.avisos{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px}
+.avisos h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
+.avisos ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}.avisos li.al{color:var(--bad);font-weight:600}
+.chipsel{display:flex;align-items:center;gap:8px;font-size:14px}.chipsel button{font:inherit;border:1px solid var(--accent);background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:3px 12px;cursor:pointer}
+@media (max-width:900px){.ag-cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.ag-cols{grid-template-columns:1fr}.cal-d{min-height:44px;padding:3px}.cal-d .b{padding:0 4px}.cal-leg{display:none}}
 .links a.btn-edit{background:var(--accent);color:var(--surface);border-radius:6px;padding:4px 12px}
 .links a.btn-edit:hover{text-decoration:none;filter:brightness(1.1)}
 .more{display:flex;justify-content:center;padding-block:12px}
@@ -161,6 +191,13 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 
 <main class="wrap">
   <section class="pane" id="pane-prioridades" hidden>
+    <div class="agenda">
+      <div class="ag-head"><h2>Agenda</h2><span class="meta">Prazos de licitação e toques combinados com clínicas. Clique num item ou num dia para ver na lista.</span></div>
+      <div class="ag-cols" id="ag-cols"></div>
+      <div class="cal" id="cal"></div>
+    </div>
+    <div class="avisos" id="avisos" hidden></div>
+    <div class="chipsel" id="sel-prioridades" hidden></div>
     <div class="kpis" id="k-prioridades"></div>
     <div class="band"><h3>Tudo o que está ativo, pela classificação da Dor</h3><div class="bar" id="bar-prioridades"></div><div class="legend" id="leg-prioridades"></div></div>
     <div class="filters">
@@ -277,7 +314,7 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
   const el=$("#fresh");
   $("#freshTxt").innerHTML = "Dados das planilhas de <b>"+esc(fData(D.gerado,true))+"</b>" + (h>8 ? " · <b>desatualizado há "+Math.floor(h)+"h</b>" : " · atualiza ao longo do dia");
   if(h>8) el.classList.add("stale");
-  try{ const S=window.SAUDE; if(S && (S.alertas||[]).length){ const el=$("#saude"); el.hidden=false;
+  if(false) try{ const S=window.SAUDE; if(S && (S.alertas||[]).length){ const el=$("#saude"); el.hidden=false;
     el.innerHTML="<details><summary>Verificação automática: "+S.alertas.length+" alerta(s)"+((S.avisos||[]).length?" e "+S.avisos.length+" aviso(s)":"")+"</summary><ul>"+
     S.alertas.map(a=>"<li><b>"+esc(a)+"</b></li>").join("")+(S.avisos||[]).map(a=>"<li>"+esc(a)+"</li>").join("")+"</ul></details>"; } }catch(e){}
   $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. Use o botão Editar em cada linha; a mudança aparece aqui em até 10 minutos.</div>";
@@ -513,6 +550,65 @@ const lPr = makeList({
     {key:"s",label:"Sem medição",value:cont["SEM MEDICAO"]||0,cls:"",test:p=>p.fx==="SEM MEDICAO"}
   ]);
   $("#limpar-prioridades").addEventListener("click",()=>{ clearBand(); clearK(); });
+})();
+
+/* ---------- AGENDA: colunas por urgência + calendário do mês ---------- */
+(function(){
+  const iso10 = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const COM = PR.filter(p=>p.dt).map(p=>({p, dia:p.dt.slice(0,10), d:dias(p.dt), pz:p.prazo}));
+  const sel = $("#sel-prioridades");
+  function filtrar(rotulo, fn, abrir){
+    lPr.setExtra("agenda", fn);
+    if(abrir){ lPr.st.open.add("prioridades:"+abrir.l); lPr.render(); }
+    sel.hidden=false; sel.innerHTML='<span>Mostrando: <b>'+esc(rotulo)+'</b></span><button type="button">✕ ver tudo</button>';
+    document.querySelectorAll(".cal-d.sel").forEach(x=>x.classList.remove("sel"));
+    $("#t-prioridades").closest(".tbl").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  sel.addEventListener("click",e=>{ if(!e.target.closest("button")) return; lPr.setExtra("agenda",null); sel.hidden=true; document.querySelectorAll(".cal-d.sel").forEach(x=>x.classList.remove("sel")); });
+  $("#limpar-prioridades").addEventListener("click",()=>{ sel.hidden=true; });
+  const ordem = (a,b)=> (a.pz===b.pz ? 0 : a.pz?-1:1) || (a.d-b.d) || ((FX_ORD[a.p.fx]??5)-(FX_ORD[b.p.fx]??5));
+  const grupos = [
+    {cls:"late", t:"Atrasado", sub:"toque vencido", f:x=>x.d<0},
+    {cls:"today", t:"Hoje", sub:"", f:x=>x.d===0},
+    {cls:"", t:"Amanhã", sub:"", f:x=>x.d===1},
+    {cls:"", t:"Próximos 7 dias", sub:"", f:x=>x.d>=2 && x.d<=7}
+  ];
+  const MAX=5;
+  $("#ag-cols").innerHTML = grupos.map((g,gi)=>{
+    const it = COM.filter(g.f).sort(ordem);
+    const h = it.slice(0,MAX).map(x=>'<button class="ag-it '+(x.pz?'pz':'tq')+'" type="button" data-i="'+COM.indexOf(x)+'"><span class="t">'+esc(x.p.n)+'</span><span class="s">'+(x.pz?'Prazo · '+esc(x.p.tp):'Toque · clínica')+' · '+fData(x.p.dt, x.pz)+(x.p.resp?' · '+esc(x.p.resp):'')+'</span></button>').join("");
+    return '<div class="ag-col '+g.cls+'"><h3><span>'+g.t+'</span><b>'+it.length+'</b></h3>'+(h||'<div class="ag-vazio">Nada aqui.</div>')+(it.length>MAX?'<button class="ag-more" type="button" data-g="'+gi+'">ver os '+it.length+' na lista</button>':'')+'</div>';
+  }).join("");
+  $("#ag-cols").addEventListener("click",e=>{
+    const b=e.target.closest(".ag-it"); if(b){ const x=COM[+b.dataset.i]; filtrar(x.p.n, p=>p===x.p, x.p); return; }
+    const m=e.target.closest(".ag-more"); if(m){ const g=grupos[+m.dataset.g]; const set=new Set(COM.filter(g.f).map(x=>x.p)); filtrar(g.t, p=>set.has(p)); }
+  });
+  // calendário
+  const porDia={}; COM.forEach(x=>{ (porDia[x.dia]=porDia[x.dia]||{pz:0,tq:0})[x.pz?"pz":"tq"]++; });
+  let ref=new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
+  const NOMES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  function cal(){
+    const ano=ref.getFullYear(), mes=ref.getMonth(), ini=(new Date(ano,mes,1).getDay()+6)%7, nd=new Date(ano,mes+1,0).getDate();
+    let h='<div class="cal-nav"><button type="button" data-m="-1" aria-label="Mês anterior">‹</button><b>'+NOMES[mes]+' '+ano+'</b><button type="button" data-m="1" aria-label="Próximo mês">›</button>'+
+      '<span class="cal-leg"><span><i style="background:var(--bad)"></i>prazos de licitação</span><span><i style="background:var(--accent)"></i>toques em clínicas</span></span></div><div class="cal-g">'+
+      ["seg","ter","qua","qui","sex","sáb","dom"].map(d=>'<div class="cal-dw">'+d+'</div>').join("");
+    for(let i=0;i<ini;i++) h+='<div class="cal-d fora"></div>';
+    for(let d=1; d<=nd; d++){
+      const k=iso10(new Date(ano,mes,d)), c=porDia[k], hoje=k===iso10(HOJE);
+      h+='<button type="button" class="cal-d'+(hoje?' hoje':'')+'" data-k="'+k+'"'+(c?'':' disabled')+' aria-label="'+d+' de '+NOMES[mes]+(c?': '+(c.pz||0)+' prazos, '+(c.tq||0)+' toques':'')+'"><span class="n">'+d+'</span>'+
+        (c&&c.pz?'<span class="b pz">'+c.pz+' prazo'+(c.pz>1?'s':'')+'</span>':'')+(c&&c.tq?'<span class="b tq">'+c.tq+' toque'+(c.tq>1?'s':'')+'</span>':'')+'</button>';
+    }
+    $("#cal").innerHTML=h+'</div>';
+  }
+  $("#cal").addEventListener("click",e=>{
+    const m=e.target.closest("[data-m]"); if(m){ ref=new Date(ref.getFullYear(), ref.getMonth()+(+m.dataset.m), 1); cal(); return; }
+    const d=e.target.closest(".cal-d[data-k]"); if(d && !d.disabled){ const k=d.dataset.k; filtrar("dia "+fData(k), p=>p.dt && p.dt.slice(0,10)===k); d.classList.add("sel"); }
+  });
+  cal();
+  // avisos da verificação automática, cada um numa linha (os prazos já aparecem na agenda)
+  try{ const S=window.SAUDE; if(S){ const al=(S.alertas||[]).filter(a=>!/vencem em até 7 dias/.test(a)), av=S.avisos||[];
+    if(al.length||av.length){ const el=$("#avisos"); el.hidden=false;
+      el.innerHTML='<h3>Avisos do sistema</h3><ul>'+al.map(a=>'<li class="al">'+esc(a)+'</li>').join("")+av.map(a=>'<li>'+esc(a)+'</li>').join("")+'</ul>'; } } }catch(e){}
 })();
 
 /* ---------- abas ---------- */
