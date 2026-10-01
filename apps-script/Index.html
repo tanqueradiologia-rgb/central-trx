@@ -88,6 +88,10 @@ textarea{min-height:84px;resize:vertical;width:100%}
 .menc{display:flex;flex-wrap:wrap;gap:6px}
 .menc label{flex-direction:row;align-items:center;gap:5px;text-transform:none;letter-spacing:0;font-family:var(--f-body);font-weight:400;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
 .save{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rot{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:10px 12px;background:var(--surface2)}
+.rot .et{font-weight:700}.rot p{margin:4px 0;font-size:14px}.rot .pr{font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px}
+.rot .pr.sem{background:var(--accent-soft);color:var(--accent)}.rot .pr.com{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.rot .alerta{color:var(--warn);font-weight:600}
 .msg{font-size:14px}.msg.ok{color:var(--ok)}.msg.err{color:var(--bad)}
 .info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px}
 .info div{min-width:0}.info h4{margin:0 0 2px;font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -128,6 +132,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <aside id="painel" hidden aria-labelledby="pTit">
   <div class="hd"><div><h2 id="pTit"></h2><div class="meta" id="pSub"></div></div><button class="btn" id="fechar" type="button">Fechar</button></div>
   <div class="bd">
+    <section class="sec rot" id="rot" hidden></section>
     <section class="sec"><h3>Atualizar</h3>
       <form id="form" class="form"></form>
     </section>
@@ -242,11 +247,36 @@ function campo(nome, cfg, valor){
   if(cfg.tipo==="data") return '<label'+full+'>'+lbl+'<input type="date" name="'+nome+'" value="'+esc(iso(valor))+'"></label>';
   return '<label'+full+'>'+lbl+'<input type="text" name="'+nome+'" value="'+esc(valor)+'"></label>';
 }
+var NOME_PAPEL={"Socios medicos":"sócios médicos","Gestor":"gestor do contrato"};
+function papel(x){ return NOME_PAPEL[x]||x||"—"; }
+function addDias(iso,n){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(iso||""); if(!m) return ""; var d=new Date(+m[1],+m[2]-1,+m[3]+n); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear(); }
+function rotBox(r){
+  var R=D.roteiro, el=$("#rot"); if(!R){ el.hidden=true; return; }
+  var f=$("#form").elements, fase=(f.Fase&&f.Fase.value)||r.Fase||"", resp=(f.Responsavel&&f.Responsavel.value)||r.Responsavel||"";
+  var F=R.fases[fase], h="";
+  if(!F){ el.hidden=true; return; }
+  var E=R.etapas.filter(function(e){return e.n===F.e;})[0];
+  if(E){ h+='<h3>Roteiro · etapa '+E.n+' de '+R.etapas.length+'</h3><p><span class="et">'+esc(E.nome)+'</span> · dono: '+esc(papel(E.dono))+'<span class="pr '+(E.preco?'com':'sem')+'">'+(E.preco?'com preço':'sem preço')+'</span></p>'; }
+  else h+='<h3>Roteiro</h3>';
+  h+='<p><b>Agora:</b> '+esc(F.faz)+'</p>';
+  if(E) h+='<p><b>A etapa vira quando:</b> '+esc(E.fecha)+'</p>';
+  if(FRENTE==="clinicas" && fase==="Em cadencia"){
+    var t=parseInt(f.Toque_atual?f.Toque_atual.value:r.Toque_atual,10); if(isNaN(t)) t=0;
+    var ini=f.Inicio_cadencia?f.Inicio_cadencia.value:iso(r.Inicio_cadencia);
+    var C=R.cadencia, nx=C.filter(function(c){return c.n===t+1;})[0];
+    if(nx) h+='<p><b>Próximo toque sugerido:</b> '+nx.n+'º, '+esc(nx.canal)+(ini?' em '+addDias(ini,nx.dia):' (preencha o Início da cadência)')+'. '+esc(nx.obj)+'</p>';
+    else h+='<p><b>Cadência completa.</b> Sem resposta, a Fase pode ir para Sem retorno.</p>';
+  }
+  if(F.resp && resp && resp!==F.resp) h+='<p class="alerta">Responsável na linha: '+esc(papel(resp))+'. Pelo roteiro esta fase é de '+esc(papel(F.resp))+'. Se a entrega ainda não aconteceu, o dono anterior continua responsável.</p>';
+  h+='<p class="meta">O roteiro orienta; quem decide é a equipe.</p>';
+  el.innerHTML=h; el.hidden=false;
+}
 function info(t,v){ return v? '<div><h4>'+t+'</h4><p>'+esc(v)+'</p></div>' : ""; }
 function abrir(r){
   sel=r._k; render();
   $("#pTit").textContent=V().titulo(r); $("#pSub").textContent=V().subPainel(r);
   $("#form").innerHTML=Object.keys(D.edicao).map(function(k){ return campo(k,D.edicao[k],r[k]); }).join("");
+  $("#form").oninput=function(){ rotBox(r); }; rotBox(r);
   $("#nota").value=""; $("#msg").textContent=""; $("#msg").className="msg";
   $("#menc").innerHTML=(D.equipe||[]).filter(function(e){return e.email && e.email.toLowerCase()!==String(D.usuario).toLowerCase();}).map(function(e){ return '<label><input type="checkbox" value="'+esc(e.email)+'"> @'+esc(e.apelido)+'</label>'; }).join("") || '<span class="meta">Cadastre a equipe na aba Equipe da planilha para poder marcar pessoas.</span>';
   var h=(D.historico[r._k]||[]).slice().reverse();

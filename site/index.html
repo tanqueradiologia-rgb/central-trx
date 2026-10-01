@@ -164,6 +164,31 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 @media (max-width:640px){.ag-cols{grid-template-columns:1fr}.cal-d{min-height:44px;padding:3px}.cal-d .b{padding:0 4px}.cal-leg{display:none}}
 .links a.btn-edit{background:var(--accent);color:var(--surface);border-radius:6px;padding:4px 12px}
 .links a.btn-edit:hover{text-decoration:none;filter:brightness(1.1)}
+:root{--e1:#0e3a5a;--e2:#5a3286;--e3:#0b5a50;--e4:#9a5a00;--e5:#2d7a4d;--e6:#0b4f6c;--e7:#334861}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--e1:#4cbecf;--e2:#c4a3e6;--e3:#6fd3c3;--e4:#f0a14a;--e5:#5fc48a;--e6:#7cc6e8;--e7:#a7b5c3}}
+:root[data-theme="dark"]{--e1:#4cbecf;--e2:#c4a3e6;--e3:#6fd3c3;--e4:#f0a14a;--e5:#5fc48a;--e6:#7cc6e8;--e7:#a7b5c3}
+.et-tag{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:0 5px;margin-left:6px;color:var(--surface);vertical-align:1px}
+.rotbox{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--r);background:var(--surface);padding:10px 12px;margin-bottom:12px;font-size:14px}
+.rotbox h4{margin:0 0 4px;font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.rotbox p{margin:3px 0}.rotbox .alerta{color:var(--warn);font-weight:600}
+.pz-tag{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px}.pz-tag.sem{background:var(--accent-soft);color:var(--accent)}.pz-tag.com{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.rt-top{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:14px;border:0;background:none;color:var(--muted);padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.rt-board{display:grid;grid-template-columns:repeat(var(--n,5),minmax(190px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px;align-items:start}
+.rt-col{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--e1);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.rt-col h3{margin:0;font-family:var(--f-display);font-size:16px;display:flex;justify-content:space-between;gap:8px}
+.rt-col h3 b{font-variant-numeric:tabular-nums}
+.rt-col .dono{font-size:13px;color:var(--muted)}
+.rt-col .vira{font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px}
+.rt-fases{display:flex;flex-wrap:wrap;gap:4px}.rt-fases span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:0 7px;background:var(--surface2)}
+.rt-it{display:block;text-decoration:none;color:var(--ink);font-size:13px;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.rt-it:hover{border-color:var(--accent)}.rt-it .t{font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rt-it .s{color:var(--muted);font-size:12px}
+.rt-it .al{color:var(--warn);font-size:12px;font-weight:600;display:block}
+.rt-extra{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.rt-extra .band ul{margin:0;padding-left:18px;font-size:14px;line-height:1.5}
+.rt-extra table{min-width:0;font-size:14px}
 .more{display:flex;justify-content:center;padding-block:12px}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direction:column;gap:4px}
@@ -191,6 +216,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <a href="#clinicas" data-tab="clinicas">Clínicas particulares<span class="n" id="n-clinicas"></span></a>
       <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
       <a href="#quadro" data-tab="quadro">Quadro nacional<span class="n" id="n-quadro"></span></a>
+      <a href="#roteiro" data-tab="roteiro">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
     </nav>
@@ -234,7 +260,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <label>UF<select id="uf-clinicas"><option value="">Todas</option></select></label>
       <label>Faixa<select id="fx-clinicas"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option></select></label>
       <label>Responsável<select id="resp-clinicas"><option value="">Todos</option></select></label>
-      <label class="chk"><input type="checkbox" id="ativas-clinicas" checked> só ativas (sem Descartado, Sem retorno e Fechado)</label>
+      <label class="chk"><input type="checkbox" id="ativas-clinicas" checked> só ativas (sem Descartado, Sem retorno e Em operação)</label>
       <button class="btn" id="limpar-clinicas" type="button">Limpar filtros</button>
       <span class="count" id="c-clinicas"></span>
     </div>
@@ -261,6 +287,16 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <th data-k="prazo">Prazo</th><th data-k="c">Órgão</th><th data-k="mod" class="hide-sm">Modalidade</th><th data-k="val">Valor estimado</th><th data-k="enc" class="hide-sm">Encaixe</th><th data-k="fase" class="hide-sm">Fase</th><th data-k="resp" class="hide-sm">Resp.</th>
     </tr></thead><tbody id="t-licitacoes"></tbody></table></div>
     <div class="more" id="m-licitacoes"></div>
+  </section>
+
+  <section class="pane" id="pane-roteiro" hidden>
+    <div class="rt-top">
+      <div class="seg" id="rt-fr" role="group" aria-label="Frente"><button type="button" data-v="particulares" aria-pressed="true">Clínicas e hospitais particulares</button><button type="button" data-v="licitacoes" aria-pressed="false">Licitações</button><button type="button" data-v="quadro" aria-pressed="false">Quadro público</button></div>
+      <div class="filters"><label>Fila de quem<select id="rt-pes"><option value="">Todos</option></select></label></div>
+    </div>
+    <p class="meta" id="rt-aviso"></p>
+    <div class="rt-board" id="rt-board"></div>
+    <div class="rt-extra" id="rt-extra"></div>
   </section>
 
   <section class="pane" id="pane-resultados" hidden>
@@ -301,6 +337,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 
 <script src="dados_central.js"></script>
 <script src="saude.js" onerror="window.SAUDE=null"></script>
+<script src="roteiro.js" onerror="window.ROTEIRO=null"></script>
 <script>
 (function(){
 "use strict";
@@ -405,12 +442,38 @@ function band(barId, legId, parts, list, test){
   leg.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; const on=b.getAttribute("aria-pressed")!=="true"; leg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed",on); list.setExtra("band", on ? (r=>test(r,b.dataset.v)) : null); });
   return ()=>leg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
 }
+/* ---------- ROTEIRO comercial (config/roteiro.json): orienta, não decide ---------- */
+const RT = window.ROTEIRO || null;
+const FRT = {clinicas:"particulares", licitacoes:"licitacoes", quadro:"quadro"};
+const NOME_PAPEL = {"Socios medicos":"sócios médicos","Gestor":"gestor do contrato"};
+const papel = x => NOME_PAPEL[x] || x || "—";
+const corEt = n => n>=1 && n<=7 ? "var(--e"+n+")" : "var(--c-sem)";
+function rotInfo(src, fase){ const R=RT&&RT[FRT[src]]; if(!R) return null; const F=R.fases[fase]; if(!F) return null; return {R, F, E:R.etapas.find(e=>e.n===F.e)||null}; }
+function etTag(src, fase){ const i=rotInfo(src,fase); return i&&i.E ? '<span class="et-tag" style="background:'+corEt(i.E.n)+'" title="Etapa '+i.E.n+': '+esc(i.E.nome)+'">E'+i.E.n+'</span>' : ""; }
+function isoMais(iso, n){ const d=parseD(iso); if(!d) return ""; d.setDate(d.getDate()+n); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+// próximo toque pela cadência de 6 toques (dia 0, 2, 5, 9, 14, 21 a partir do Início da cadência)
+function proxToque(r){ if(!RT || r.fase!=="Em cadencia") return null; const t=parseInt(r.toque,10)||0; const c=RT.particulares.cadencia.find(x=>x.n===t+1); if(!c) return {fim:true}; return Object.assign({}, c, {data: r.ini ? isoMais(r.ini, c.dia) : ""}); }
+function rotBox(src, r){
+  const i=rotInfo(src, r.fase); if(!i) return "";
+  const {R,F,E}=i; let h='<div class="rotbox" style="border-left-color:'+corEt(E?E.n:0)+'"><h4>Roteiro'+(E?' · etapa '+E.n+' de '+R.etapas.length:'')+'</h4>';
+  if(E) h+='<p><b>'+esc(E.nome)+'</b> · dono: '+esc(papel(E.dono))+'<span class="pz-tag '+(E.preco?'com':'sem')+'">'+(E.preco?'com preço':'sem preço')+'</span></p>';
+  h+='<p><b>Agora:</b> '+esc(F.faz)+'</p>';
+  if(E) h+='<p><b>A etapa vira quando:</b> '+esc(E.fecha)+'</p>';
+  if(src==="clinicas"){ const t=proxToque(r);
+    if(t&&t.fim) h+='<p><b>Cadência completa.</b> Sem resposta, a Fase pode ir para Sem retorno.</p>';
+    else if(t) h+='<p><b>Próximo toque sugerido:</b> '+t.n+'º, '+esc(t.canal)+(t.data?' em '+fData(t.data):' (falta o Início da cadência)')+'. '+esc(t.obj)+(r.prox&&t.data&&r.prox.slice(0,10)!==t.data?' A linha marca '+fData(r.prox)+'.':'')+'</p>'; }
+  if(F.resp && r.resp && r.resp!==F.resp && src==="clinicas") h+='<p class="alerta">Responsável na linha: '+esc(papel(r.resp))+'. Pelo roteiro esta fase é de '+esc(papel(F.resp))+'. Sem a entrega, o dono anterior continua responsável.</p>';
+  return h+'</div>';
+}
+
 const PAL = ["var(--accent)","var(--c-quente)","var(--c-frio)","var(--ok)","var(--c-morno)","var(--c-atacar)","var(--c-sem)"];
 
 /* ---------- CLÍNICAS ---------- */
-const INATIVAS = new Set(["Descartado","Sem retorno","Fechado"]);
-const ORDEM_FASE = ["Mapeando","Pesquisando decisor","Em cadencia","Decisor engajado","Handoff gestora","Diagnostico operacional","Fechado","Sem retorno","Descartado"];
-const COR_FASE = {"Mapeando":"var(--c-sem)","Pesquisando decisor":"var(--c-frio)","Em cadencia":"var(--accent)","Decisor engajado":"var(--ok)","Handoff gestora":"var(--c-morno)","Diagnostico operacional":"var(--c-quente)","Fechado":"var(--ok)","Sem retorno":"var(--warn)","Descartado":"var(--bad)"};
+const INATIVAS = new Set(["Descartado","Sem retorno","Em operacao"]);
+const ORDEM_FASE = RT ? Object.keys(RT.particulares.fases) : ["Mapeando","Pesquisando decisor","Em cadencia","Decisor engajado","Handoff gestor","Diagnostico operacional","Conversa clinica","Proposta escrita","Negociacao","Fechado","Implantacao","Em operacao","Sem retorno","Descartado"];
+const COR_FASE = {"Mapeando":"var(--c-sem)","Sem retorno":"var(--warn)","Descartado":"var(--bad)"};
+ORDEM_FASE.forEach(f=>{ if(!COR_FASE[f]){ const i=rotInfo("clinicas",f); COR_FASE[f]=corEt(i&&i.E?i.E.n:0); } });
+const EM_CONVERSA = new Set(ORDEM_FASE.filter(f=>{ const i=rotInfo("clinicas",f); return f==="Em cadencia"||f==="Decisor engajado"||(i&&i.E&&i.E.n>=2&&i.E.n<=5); }));
 const CL = D.clinicas;
 $("#n-clinicas").textContent = CL.filter(r=>!INATIVAS.has(r.fase)).length;
 fillSelect("uf-clinicas", CL.map(r=>r.uf)); fillSelect("resp-clinicas", CL.map(r=>r.resp));
@@ -423,14 +486,14 @@ const lCl = makeList({
   toggle:{el:"ativas-clinicas",def:true,test:r=>!INATIVAS.has(r.fase)},
   cells:r=>{ const dp=dias(r.prox); const late = dp!==null && dp<0 && !INATIVAS.has(r.fase);
     return '<td><div class="nm">'+esc(r.n)+'</div><div class="meta">'+esc(r.c)+(r.uf?" · "+esc(r.uf):"")+(r.pr?" · prioridade "+esc(r.pr.toLowerCase()):"")+'</div></td>'+
-      '<td><span class="pill" style="border-color:'+(COR_FASE[r.fase]||"var(--line)")+'">'+esc(r.fase)+'</span></td>'+
+      '<td><span class="pill" style="border-color:'+(COR_FASE[r.fase]||"var(--line)")+'">'+esc(r.fase)+'</span>'+etTag("clinicas",r.fase)+'</td>'+
       '<td>'+fxPill(r.fx,r.sc)+(r.cob?'<div class="meta">'+esc(r.cob)+' eixos</div>':'')+'</td>'+
       '<td class="hide-sm">'+esc(r.resp||"—")+'</td>'+
       '<td class="mono">'+(r.prox?(late?'<span class="d-bad">'+fData(r.prox)+' · atrasado</span>':fData(r.prox)):'—')+'</td>'+
       '<td class="clip meta hide-sm">'+esc(r.acao&&r.acao!=="-"?r.acao:"")+'</td>'; },
-  detail:r=>'<div class="axes">'+axis("Janela de compra",r.jan,r.sjan)+axis("Necessidade",r.nec,r.snec)+axis("Dor do paciente",r.dor,r.ra)+'</div>'+
+  detail:r=>rotBox("clinicas",r)+'<div class="axes">'+axis("Janela de compra",r.jan,r.sjan)+axis("Necessidade",r.nec,r.snec)+axis("Dor do paciente",r.dor,r.ra)+'</div>'+
      '<div class="det-grid" style="margin-top:14px">'+field("Gancho",r.g)+field("Modalidades",r.mod)+field("Notas",r.notas)+field("Resultado",r.res)+field("O que os pacientes reclamam",r.oq)+
-     field("Toque atual",r.toque)+field("Última atualização",r.ult?fData(r.ult):"")+field("Medido em",r.med?fData(r.med):"")+'</div>'+
+     field("Toque atual",r.toque)+field("Início da cadência",r.ini?fData(r.ini):"")+field("Última atualização",r.ult?fData(r.ult):"")+field("Medido em",r.med?fData(r.med):"")+'</div>'+
      '<div class="links">'+editBtn("clinicas",r.l)+'<a href="'+sheetLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
@@ -439,13 +502,13 @@ const lCl = makeList({
   const clearBand = band("bar-clinicas","leg-clinicas", fases.map((f,i)=>({label:f,value:f,n:cont[f],color:COR_FASE[f]||PAL[i%PAL.length]})), lCl, (r,v)=>r.fase===v);
   const at=CL.filter(r=>!INATIVAS.has(r.fase));
   const quentes=at.filter(r=>r.fx==="ATACAR AGORA"||r.fx==="QUENTE").length;
-  const cad=at.filter(r=>["Em cadencia","Decisor engajado","Handoff gestora","Diagnostico operacional"].includes(r.fase)).length;
+  const cad=at.filter(r=>EM_CONVERSA.has(r.fase)).length;
   const atras=at.filter(r=>{const d=dias(r.prox); return d!==null&&d<0;}).length;
   const semMed=at.filter(r=>r.fx==="SEM MEDICAO").length;
   const med7=CL.filter(r=>{const d=dias(r.med); return d!==null&&d>=-7;}).length;
   const clearK = wireKpis("k-clinicas", lCl, [
     {key:"q",label:"Atacar agora ou quentes",value:quentes,cls:quentes?"warn":"",test:r=>!INATIVAS.has(r.fase)&&(r.fx==="ATACAR AGORA"||r.fx==="QUENTE")},
-    {key:"c",label:"Em conversa",value:cad,cls:"ok",test:r=>["Em cadencia","Decisor engajado","Handoff gestora","Diagnostico operacional"].includes(r.fase)},
+    {key:"c",label:"Em conversa",value:cad,cls:"ok",test:r=>EM_CONVERSA.has(r.fase)},
     {key:"a",label:"Toques atrasados",value:atras,cls:atras?"bad":"",test:r=>{const d=dias(r.prox); return !INATIVAS.has(r.fase)&&d!==null&&d<0;}},
     {key:"s",label:"Sem retorno",value:cont["Sem retorno"]||0,cls:"",test:r=>r.fase==="Sem retorno"},
     {key:"m",label:"Ativas sem medição",value:semMed,cls:"",test:r=>!INATIVAS.has(r.fase)&&r.fx==="SEM MEDICAO"},
@@ -473,8 +536,8 @@ const lLi = makeList({
     '<td class="hide-sm">'+esc(r.mod)+'<div class="meta">'+esc(r.ed)+'</div></td>'+
     '<td class="mono">'+fMoeda(r.val)+'</td>'+
     '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
-    '<td class="hide-sm">'+esc(r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
-  detail:r=>'<div class="det-grid">'+field("Objeto",r.obj)+field("Onde disputa",r.onde)+field("Trava",r.bloq)+field("Próxima ação",r.acao)+field("Quando",r.qd?fData(r.qd):"")+field("Notas da Carla",r.notas)+field("Resultado",r.res)+field("Número de controle",r.id)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
+    '<td class="hide-sm">'+esc(r.fase)+etTag("licitacoes",r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
+  detail:r=>rotBox("licitacoes",r)+'<div class="det-grid">'+field("Objeto",r.obj)+field("Onde disputa",r.onde)+field("Trava",r.bloq)+field("Próxima ação",r.acao)+field("Quando",r.qd?fData(r.qd):"")+field("Notas da Carla",r.notas)+field("Resultado",r.res)+field("Número de controle",r.id)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
     '<div class="links">'+editBtn("licitacoes",r.l)+(r.pasta?'<a href="'+esc(r.pasta)+'" target="_blank" rel="noopener">Pasta do processo ↗</a>':'')+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
@@ -509,7 +572,7 @@ const lQd = makeList({
     '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
     '<td>'+fxPill(r.fx,r.sc)+'</td>'+
     '<td class="clip meta hide-sm">'+esc(r.acao)+'</td>',
-  detail:r=>'<div class="det-grid">'+field("Estrutura e oportunidade",r.obj)+field("Trava",r.bloq)+field("Cargo do contato",r.cargo)+field("Responsável",r.resp)+field("Notas da Carla",r.notas)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
+  detail:r=>rotBox("quadro",r)+'<div class="det-grid">'+field("Fase",r.fase)+field("Estrutura e oportunidade",r.obj)+field("Trava",r.bloq)+field("Cargo do contato",r.cargo)+field("Responsável",r.resp)+field("Notas da Carla",r.notas)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
     '<div class="links">'+editBtn("quadro",r.l)+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
 (function(){
@@ -534,7 +597,7 @@ const lQd = makeList({
 /* ---------- PRIORIDADES: tudo junto, pela Dor ---------- */
 const QD_INAT = /descart|sem interesse/i;
 const PR = [].concat(
-  CL.filter(r=>!INATIVAS.has(r.fase)).map(r=>({src:"clinicas", r, tp:"Clínica", n:r.n, sub:[r.c,r.uf].filter(Boolean).join(" · "), uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.fase, dt:r.prox, prazo:false, acao:r.acao&&r.acao!=="-"?r.acao:"", resp:r.resp, link:sheetLink(r.l)})),
+  CL.filter(r=>!INATIVAS.has(r.fase)).map(r=>{ const t=!r.prox?proxToque(r):null; return {src:"clinicas", r, tp:"Clínica", n:r.n, sub:[r.c,r.uf].filter(Boolean).join(" · "), uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.fase, dt:r.prox||(t&&t.data)||"", sug:!!(t&&t.data), prazo:false, acao:r.acao&&r.acao!=="-"?r.acao:"", resp:r.resp, link:sheetLink(r.l)}; }),
   LI.filter(aberta).map(r=>({src:"licitacoes", r, tp:r.aba==="CREDENCIAMENTO"?"Credenciamento":"Pregão", n:r.org||r.id, sub:[r.c,r.uf,r.ed||r.mod].filter(Boolean).join(" · "), uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.fase, dt:r.prazo, prazo:true, acao:r.acao, resp:r.resp, link:licLink(r.l)})),
   QD.filter(r=>!QD_INAT.test(r.sit)).map(r=>({src:"quadro", r, tp:"Sem processo", n:r.c+(r.uf?" · "+r.uf:""), sub:r.org, uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.sit, dt:"", prazo:false, acao:r.acao, resp:r.resp, link:licLink(r.l)}))
 );
@@ -559,7 +622,7 @@ const lPr = makeList({
       '<td class="hide-sm">'+esc(p.fase||"—")+'</td>'+
       '<td class="mono">'+(p.dt? (p.prazo? fData(p.dt,true)+'<div>'+fDiasP(p.dt)+'</div>' : (late?'<span class="d-bad">'+fData(p.dt)+' · atrasado</span>':fData(p.dt))) : '—')+'</td>'+
       '<td class="clip meta hide-sm">'+esc(p.acao||"")+'</td>'; },
-  detail:p=>(p.src!=="clinicas" && (p.r.jan!=null||p.r.nec!=null||p.r.dorx!=null) ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dorx,p.r.oq)+'</div>' : p.src==="clinicas" ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dor,p.r.ra)+'</div>' : '')+'<div class="det-grid" style="margin-top:14px">'+field("Frente",p.tp)+field("Responsável",p.resp)+field("Objeto ou gancho",p.r.obj||p.r.g)+field("Trava",p.r.bloq)+field("Notas",p.r.notas)+'</div>'+
+  detail:p=>rotBox(p.src,p.r)+(p.src!=="clinicas" && (p.r.jan!=null||p.r.nec!=null||p.r.dorx!=null) ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dorx,p.r.oq)+'</div>' : p.src==="clinicas" ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dor,p.r.ra)+'</div>' : '')+'<div class="det-grid" style="margin-top:14px">'+field("Frente",p.tp)+field("Responsável",p.resp)+field("Objeto ou gancho",p.r.obj||p.r.g)+field("Trava",p.r.bloq)+field("Notas",p.r.notas)+'</div>'+
     '<div class="links">'+editBtn(p.src,p.r.l)+(p.r.pasta?'<a href="'+esc(p.r.pasta)+'" target="_blank" rel="noopener">Pasta do processo ↗</a>':'')+(p.r.lpn?'<a href="'+esc(p.r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+'<a href="'+p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+p.src+'">Ver na aba da frente</a></div>'
 });
 (function(){
@@ -602,7 +665,7 @@ const lPr = makeList({
   const MAX=5;
   $("#ag-cols").innerHTML = grupos.map((g,gi)=>{
     const it = COM.filter(g.f).sort(ordem);
-    const h = it.slice(0,MAX).map(x=>'<button class="ag-it '+(x.pz?'pz':'tq')+'" type="button" data-i="'+COM.indexOf(x)+'"><span class="t">'+esc(x.p.n)+'</span><span class="s">'+(x.pz?'Prazo · '+esc(x.p.tp):'Toque · clínica')+' · '+fData(x.p.dt, x.pz)+(x.p.resp?' · '+esc(x.p.resp):'')+'</span></button>').join("");
+    const h = it.slice(0,MAX).map(x=>'<button class="ag-it '+(x.pz?'pz':'tq')+'" type="button" data-i="'+COM.indexOf(x)+'"><span class="t">'+esc(x.p.n)+'</span><span class="s">'+(x.pz?'Prazo · '+esc(x.p.tp):(x.p.sug?'Toque sugerido pela cadência':'Toque · clínica'))+' · '+fData(x.p.dt, x.pz)+(x.p.resp?' · '+esc(x.p.resp):'')+'</span></button>').join("");
     return '<div class="ag-col '+g.cls+'"><h3><span>'+g.t+'</span><b>'+it.length+'</b></h3>'+(h||'<div class="ag-vazio">Nada aqui.</div>')+(it.length>MAX?'<button class="ag-more" type="button" data-g="'+gi+'">ver os '+it.length+' na lista</button>':'')+'</div>';
   }).join("");
   $("#ag-cols").addEventListener("click",e=>{
@@ -680,13 +743,68 @@ const lRes = makeList({
   $("#limpar-resultados").addEventListener("click",()=>{ clearBand(); clearK(); });
 })();
 
+/* ---------- ROTEIRO: o funil em etapas, com o dono de cada uma ---------- */
+const lRot = (function(){
+  if(!RT){ $("#rt-aviso").textContent="O roteiro não carregou. Recarregue a página."; return {render(){}}; }
+  let fr="particulares";
+  const SRC={particulares:"clinicas", licitacoes:"licitacoes", quadro:"quadro"};
+  const pes=$("#rt-pes"); Object.keys(RT.papeis).forEach(k=>{ const o=document.createElement("option"); o.value=k; o.textContent=papel(k).replace(/^./,c=>c.toUpperCase()); pes.appendChild(o); });
+  function itens(){
+    const src=SRC[fr];
+    const base = src==="clinicas" ? CL : src==="licitacoes" ? LI : QD;
+    return base.map(r=>{ const i=rotInfo(src,r.fase); return i&&i.E ? {r,src,i} : null; }).filter(Boolean)
+      .filter(x=> src!=="licitacoes" || x.i.E.n>=3 || aberta(x.r));
+  }
+  function chave(x){
+    const r=x.r, fi=Object.keys(x.i.R.fases).indexOf(r.fase);
+    if(x.src==="licitacoes"){ const d=dias(r.prazo); return [d===null?999:d, -fi]; }
+    const t=x.src==="clinicas"?(r.prox||(proxToque(r)||{}).data||""):"";
+    const dd=t?dias(t):999;
+    return [-fi, dd, -(r.sc??-1)];
+  }
+  function cmp(a,b){ const x=chave(a), y=chave(b); for(let i=0;i<x.length;i++){ if(x[i]!==y[i]) return x[i]-y[i]; } return 0; }
+  function sub(x){
+    const r=x.r; const lugar=[r.c,r.uf].filter(Boolean).join(" · ");
+    if(x.src==="licitacoes") return esc(r.fase)+' · '+esc(lugar)+(r.prazo?' · prazo '+fData(r.prazo):'');
+    if(x.src==="clinicas"){ const t=r.prox||(proxToque(r)||{}).data; return esc(r.fase)+(lugar?' · '+esc(lugar):'')+(t?' · toque '+fData(t)+(dias(t)<0?' (atrasado)':''):''); }
+    return esc(r.fase)+' · '+esc(r.org||"");
+  }
+  function render(){
+    const R=RT[fr], p=pes.value, MAX=8;
+    $("#rt-aviso").textContent = (R.aviso? R.aviso+" " : "") + "O roteiro orienta; quem decide é a equipe. Clique num item para editar a linha.";
+    const todos=itens();
+    const lista = p ? todos.filter(x=>x.i.F.resp===p) : todos;
+    $("#rt-board").style.setProperty("--n", R.etapas.length);
+    $("#rt-board").innerHTML = R.etapas.map(E=>{
+      const it=lista.filter(x=>x.i.E.n===E.n).sort(cmp);
+      const cont={}; it.forEach(x=>cont[x.r.fase]=(cont[x.r.fase]||0)+1);
+      return '<div class="rt-col" style="border-top-color:'+corEt(E.n)+'"><h3><span>'+E.n+'. '+esc(E.nome)+'</span><b>'+it.length+'</b></h3>'+
+        '<div class="dono">Dono: '+esc(papel(E.dono))+'<span class="pz-tag '+(E.preco?'com':'sem')+'">'+(E.preco?'com preço':'sem preço')+'</span></div>'+
+        (Object.keys(cont).length?'<div class="rt-fases">'+Object.keys(cont).map(f=>'<span>'+esc(f)+' '+cont[f]+'</span>').join("")+'</div>':'')+
+        (it.slice(0,MAX).map(x=>{ const al = x.src==="clinicas" && x.r.resp && x.i.F.resp && x.r.resp!==x.i.F.resp;
+          return '<a class="rt-it" href="'+editLink(x.src,x.r.l)+'" target="_blank" rel="noopener" title="'+esc(x.i.F.faz)+'"><span class="t">'+esc(x.src==="quadro"?x.r.c+" · "+x.r.uf:(x.src==="licitacoes"?(x.r.org||x.r.id):x.r.n))+'</span><span class="s">'+sub(x)+'</span>'+(al?'<span class="al">Na linha: '+esc(papel(x.r.resp))+' · roteiro: '+esc(papel(x.i.F.resp))+'</span>':'')+'</a>'; }).join("") || '<div class="ag-vazio">Ninguém nesta etapa.</div>')+
+        (it.length>MAX?'<div class="meta">e mais '+(it.length-MAX)+' na aba da frente</div>':'')+
+        '<div class="vira"><b>Vira quando:</b> '+esc(E.fecha)+'</div></div>';
+    }).join("");
+    let ex='<div class="band"><h3>As quatro regras de mesa</h3><ul>'+RT.regras.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
+    if(fr==="particulares") ex+='<div class="band"><h3>Cadência de 6 toques da etapa 1 (cerca de 21 dias)</h3><div class="tbl"><table><thead><tr><th>Toque</th><th>Dia</th><th>Canal</th><th>Objetivo</th></tr></thead><tbody>'+
+      RT.particulares.cadencia.map(c=>'<tr><td class="mono">'+c.n+'</td><td class="mono">'+c.dia+'</td><td>'+esc(c.canal)+'</td><td>'+esc(c.obj)+'</td></tr>').join("")+'</tbody></table></div><p class="meta" style="margin:0">Se o decisor responder em qualquer toque, a cadência para e a Fase vira Decisor engajado.</p></div>';
+    ex+='<div class="band"><h3>Quem faz o quê</h3><ul>'+Object.keys(RT.papeis).map(k=>'<li><b>'+esc(papel(k).replace(/^./,c=>c.toUpperCase()))+':</b> '+esc(RT.papeis[k])+'</li>').join("")+'</ul><p class="meta" style="margin:0">Depois da implantação vêm a gestão do contrato, o faturamento e a distribuição de valores, que entram numa fase futura da Central.</p></div>';
+    $("#rt-extra").innerHTML=ex;
+  }
+  $("#rt-fr").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; fr=b.dataset.v; $("#rt-fr").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); render(); });
+  pes.addEventListener("input",render);
+  $("#n-roteiro").textContent = CL.filter(r=>{ const i=rotInfo("clinicas",r.fase); return i&&i.E&&i.E.n>=2&&i.E.n<=6; }).length;
+  return {render};
+})();
+
 /* ---------- abas ---------- */
-const TABS=["prioridades","clinicas","licitacoes","quadro","resultados"];
+const TABS=["prioridades","clinicas","licitacoes","quadro","roteiro","resultados"];
 const rendered={};
 function show(tab){
   if(!TABS.includes(tab)) tab="prioridades";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,quadro:lQd,resultados:lRes})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,quadro:lQd,roteiro:lRot,resultados:lRes})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));

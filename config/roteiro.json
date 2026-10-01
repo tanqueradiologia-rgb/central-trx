@@ -1,0 +1,123 @@
+{
+  "_sobre": "Fonte única do roteiro comercial da TRX. scripts/gerar_roteiro.py gera site/roteiro.js (Central) e o bloco ROTEIRO do apps-script/Codigo.gs (app de Edição). O roteiro orienta; quem decide é a equipe.",
+  "versao": "01/10/2026 · roteiro rev. 26/08/2026 + homologação e implantação",
+  "papeis": {
+    "Carla": "Prospecção: pescaria do decisor, cadência de toques, licitações e quadro público.",
+    "Gestor": "Gestor do contrato. É papel do contrato, não cargo fixo: cada cliente tem o seu.",
+    "Socios medicos": "Dois sócios médicos na conversa clínica: um traz o dado, o outro guarda o preço.",
+    "Marcos": "Monta a proposta com o gestor, decide participação em licitação e assina com o certificado A1.",
+    "Bruno": "Fechamento: negociação final e assinatura, com liberdade de canal, ritmo e formato.",
+    "TI": "Homologação e implantação: integração com o PACS e os sistemas do cliente."
+  },
+  "regras": [
+    "Preço só na etapa 4. Quando o número sai antes, a conversa vira comparação de tabela e a TRX perde onde é mais forte, porque a diferença dela é clínica.",
+    "A etapa vira com a entrega, não com a impressão. Sem a entrega, o dono anterior continua responsável.",
+    "Toda proposta sai com a TRX em cópia, para o grupo acompanhar a negociação sem precisar perguntar.",
+    "Os sócios nunca discordam na frente do cliente sobre o valor do serviço."
+  ],
+  "particulares": {
+    "titulo": "Clínicas e hospitais particulares",
+    "etapas": [
+      {"n": 1, "nome": "Pescaria do decisor", "dono": "Carla", "preco": false,
+       "objetivo": "Encontrar e engajar quem decide de verdade: o radiologista ou o responsável técnico, não só o administrador. A cadência de toques acontece toda aqui.",
+       "fecha": "O convite da reunião chega às mãos do gestor do contrato. Até o convite passar, o lead é da Carla."},
+      {"n": 2, "nome": "Reunião de diagnóstico", "dono": "Gestor", "preco": false,
+       "objetivo": "Ouvir a operação do cliente e mapear onde dói: tempo de laudo, plantão descoberto, PACS, fila parada. Sair da reunião com a conversa clínica marcada, com quem decide e, de preferência, com o radiologista.",
+       "fecha": "O gestor entrega aos sócios médicos a ata da reunião, com a lista de participantes."},
+      {"n": 3, "nome": "Conversa clínica", "dono": "Socios medicos", "preco": false,
+       "objetivo": "Médico falando com médico sobre o problema clínico. Combinem antes quem faz o quê: um traz o dado (tempo de laudo medido, risco, SLA, LGPD) e o outro guarda o preço. O guardião não diz número.",
+       "fecha": "O cliente diz que quer o serviço, ainda sem nenhum número na mesa."},
+      {"n": 4, "nome": "Proposta escrita", "dono": "Marcos", "preco": true,
+       "objetivo": "O preço entra, por escrito. Marcos e gestor montam a proposta, o Marcos manda ao gestor e o gestor encaminha ao cliente.",
+       "fecha": "O e-mail com a proposta é enviado ao cliente, com a TRX em cópia."},
+      {"n": 5, "nome": "Fechamento", "dono": "Bruno", "preco": true,
+       "objetivo": "Negociação final e assinatura. O responsável pelo fechamento tem liberdade total de canal, ritmo e formato.",
+       "fecha": "O contrato é assinado."},
+      {"n": 6, "nome": "Homologação e implantação", "dono": "Gestor", "preco": true,
+       "objetivo": "Integração com o PACS e os sistemas do cliente, acessos, VPN, testes de laudo e homologação pelo cliente, como no HNSA. O gestor do contrato conduz com a TI.",
+       "fecha": "O cliente homologa e o primeiro laudo sai em produção."}
+    ],
+    "fases": {
+      "Mapeando": {"e": 1, "resp": "Carla", "faz": "Conferir se a clínica tem perfil (modalidades, gancho e a Dor medida). Se tiver, passar para Pesquisando decisor."},
+      "Pesquisando decisor": {"e": 1, "resp": "Carla", "faz": "Achar o radiologista ou o responsável técnico e quem assina contratos (quadro de sócios no CNPJ, site, Instagram, LinkedIn). Preencher Decisor e Cargo e marcar o Início da cadência."},
+      "Em cadencia": {"e": 1, "resp": "Carla", "faz": "Rodar os 6 toques em cerca de 21 dias, alternando e-mail, telefone e WhatsApp. A cada contato, atualizar Toque atual e Próximo toque. Nenhum número de preço."},
+      "Decisor engajado": {"e": 1, "resp": "Carla", "faz": "O decisor topou conversar. Marcar a reunião de diagnóstico e entregar o convite ao gestor do contrato; aí a Fase vira Handoff gestor."},
+      "Handoff gestor": {"e": 2, "resp": "Gestor", "faz": "Convite nas mãos do gestor. Ele confirma a reunião e lê o histórico da linha (decisor, gancho, notas)."},
+      "Diagnostico operacional": {"e": 2, "resp": "Gestor", "faz": "Reunião de diagnóstico: tempo de laudo, plantão descoberto, PACS, fila parada. Sair com a conversa clínica marcada e entregar a ata, com participantes, aos sócios médicos."},
+      "Conversa clinica": {"e": 3, "resp": "Socios medicos", "faz": "Combinar antes quem traz o dado e quem guarda o preço. Ninguém diz número. Termina quando o cliente diz que quer o serviço."},
+      "Proposta escrita": {"e": 4, "resp": "Marcos", "faz": "Marcos e gestor montam a proposta; o Marcos manda ao gestor e o gestor envia ao cliente, com a TRX em cópia."},
+      "Negociacao": {"e": 5, "resp": "Bruno", "faz": "Negociação final e assinatura conduzidas pelo Bruno."},
+      "Fechado": {"e": 6, "resp": "Gestor", "faz": "Contrato assinado. Abrir a homologação e implantação com a TI e registrar o combinado em Resultado."},
+      "Implantacao": {"e": 6, "resp": "Gestor", "faz": "Integração com o PACS, acessos, testes de laudo e homologação pelo cliente."},
+      "Em operacao": {"e": 7, "resp": "Gestor", "faz": "Contrato em produção. A gestão do contrato, o faturamento e a distribuição de valores entram numa fase futura da Central."},
+      "Sem retorno": {"e": 0, "resp": "Carla", "faz": "A cadência terminou sem resposta. Pode voltar à etapa 1 se surgir sinal novo (vaga de radiologista, troca de dono, unidade nova)."},
+      "Descartado": {"e": 0, "resp": "", "faz": "Fora do funil. O motivo fica em Resultado."}
+    },
+    "cadencia": [
+      {"n": 1, "dia": 0, "canal": "E-mail", "obj": "Abertura: apresentar a TRX e o gancho específico da clínica."},
+      {"n": 2, "dia": 2, "canal": "Telefone", "obj": "Falar com o decisor ou descobrir quem responde por contratos."},
+      {"n": 3, "dia": 5, "canal": "WhatsApp", "obj": "Mensagem curta de valor, retomando o e-mail."},
+      {"n": 4, "dia": 9, "canal": "Telefone", "obj": "Nova tentativa, em horário ou turno diferente."},
+      {"n": 5, "dia": 14, "canal": "WhatsApp", "obj": "Benefícios concretos e convite para 15 minutos de conversa."},
+      {"n": 6, "dia": 21, "canal": "E-mail", "obj": "Encerramento educado, deixando a porta aberta."}
+    ]
+  },
+  "licitacoes": {
+    "titulo": "Licitações, credenciamentos e pregões",
+    "aviso": "No público o caminho é o edital: não há cadência nem conversa de preço antes da disputa. Mapa proposto pelo Claude a partir do que já funciona; ajuste com o Marcos.",
+    "etapas": [
+      {"n": 1, "nome": "Triagem", "dono": "Carla", "preco": false,
+       "objetivo": "Ler o resumo, conferir no mesmo dia o cadastro na plataforma da disputa (a TRX já perdeu processos por cadastro) e anotar travas: CNES, presencial, atestado, exclusividade ME/EPP.",
+       "fecha": "O Marcos decide participar, ou a linha vai para Descartado com o motivo em Resultado."},
+      {"n": 2, "nome": "Edital e habilitação", "dono": "Carla", "preco": false,
+       "objetivo": "Fase Montando habilitacao: a pasta do processo e o checklist saem sozinhos. A Carla adapta as declarações e o Marcos assina com o certificado A1.",
+       "fecha": "Documentos e proposta enviados na plataforma dentro do prazo."},
+      {"n": 3, "nome": "Disputa e julgamento", "dono": "Marcos", "preco": true,
+       "objetivo": "A Carla acompanha a sessão e as diligências. O Marcos define o lance, nunca abaixo do piso, e responde recursos.",
+       "fecha": "Resultado publicado: habilitado, credenciado, ganho ou perdido."},
+      {"n": 4, "nome": "Contrato", "dono": "Marcos", "preco": true,
+       "objetivo": "Assinar o contrato ou o termo de credenciamento e definir o gestor do contrato.",
+       "fecha": "Contrato ou termo assinado e gestor definido."},
+      {"n": 5, "nome": "Homologação e implantação", "dono": "Gestor", "preco": true,
+       "objetivo": "Integração com o PACS e os sistemas do órgão, acessos, testes de laudo e homologação, como no HNSA.",
+       "fecha": "Primeiro laudo em produção."}
+    ],
+    "fases": {
+      "Mapeado": {"e": 1, "resp": "Carla", "faz": "Ler o resumo, conferir o cadastro na plataforma hoje e levar ao Marcos a decisão de participar."},
+      "Lendo edital": {"e": 1, "resp": "Carla", "faz": "Levantar exigências e travas (CNES, presencial, atestado, índices, ME/EPP, preço por laudo contra o piso) e registrar em Trava."},
+      "Montando habilitacao": {"e": 2, "resp": "Carla", "faz": "A pasta e o checklist saem sozinhos. Adaptar as declarações e separar o que o Marcos assina com o A1."},
+      "Documentos enviados": {"e": 3, "resp": "Carla", "faz": "Acompanhar a plataforma e responder diligências no prazo."},
+      "Proposta enviada": {"e": 3, "resp": "Carla", "faz": "Acompanhar a sessão. Lance só com o Marcos e nunca abaixo do piso."},
+      "Em analise": {"e": 3, "resp": "Carla", "faz": "Acompanhar a análise e responder diligências."},
+      "Em julgamento": {"e": 3, "resp": "Marcos", "faz": "Acompanhar o julgamento e decidir sobre recurso."},
+      "Habilitado": {"e": 4, "resp": "Marcos", "faz": "Aguardar a homologação e preparar a assinatura."},
+      "Credenciado": {"e": 4, "resp": "Marcos", "faz": "Assinar o termo e definir o gestor do contrato."},
+      "Ganho": {"e": 4, "resp": "Marcos", "faz": "Assinar o contrato e definir o gestor do contrato."},
+      "Implantacao": {"e": 5, "resp": "Gestor", "faz": "Integração com o PACS, acessos, testes de laudo e homologação pelo órgão."},
+      "Em operacao": {"e": 6, "resp": "Gestor", "faz": "Contrato em produção. Gestão, faturamento e distribuição de valores entram numa fase futura."},
+      "Perdido": {"e": 0, "resp": "Carla", "faz": "Registrar em Resultado por que perdemos (preço, documentação, cadastro, prazo)."},
+      "Descartado": {"e": 0, "resp": "", "faz": "Fora do funil. O motivo fica em Resultado."}
+    }
+  },
+  "quadro": {
+    "titulo": "Quadro público (municípios sem processo aberto)",
+    "aviso": "Prospecção ativa no público: o objetivo é fazer o órgão abrir credenciamento. Quando abrir, a linha vira processo na aba Licitações.",
+    "etapas": [
+      {"n": 1, "nome": "Contato com o órgão", "dono": "Carla", "preco": false,
+       "objetivo": "Achar o secretário de saúde, o diretor da unidade ou o consórcio (CIS) e enviar a apresentação com o pacote de habilitação.",
+       "fecha": "O órgão responde."},
+      {"n": 2, "nome": "Reunião com o órgão", "dono": "Gestor", "preco": false,
+       "objetivo": "Apresentar a TRX e entender volume, equipamentos e a forma de contratar (credenciamento, dispensa, adesão a ata).",
+       "fecha": "O órgão abre o processo; a linha passa para Licitações."}
+    ],
+    "fases": {
+      "Em aberto": {"e": 1, "resp": "Carla", "faz": "Achar o contato certo e enviar a apresentação."},
+      "E-mail enviado": {"e": 1, "resp": "Carla", "faz": "Retomar em cerca de 7 dias por telefone ou WhatsApp."},
+      "Documentos enviados": {"e": 1, "resp": "Carla", "faz": "Confirmar o recebimento e perguntar se pretendem abrir credenciamento."},
+      "Respondeu": {"e": 2, "resp": "Carla", "faz": "Marcar a reunião e entregar o convite ao gestor."},
+      "Reuniao marcada": {"e": 2, "resp": "Gestor", "faz": "Reunião com o órgão: volume, equipamentos e forma de contratação."},
+      "Sem interesse": {"e": 0, "resp": "", "faz": "Registrar o motivo em Resultado."},
+      "Descartado": {"e": 0, "resp": "", "faz": "Fora do funil. O motivo fica em Resultado."}
+    }
+  }
+}
