@@ -222,6 +222,24 @@ def main():
     enc_rec = [licitacao(l, d, "ENCERRADO") for l, d in ab.get("ENCERRADO", [])]
     enc_rec = sorted([e for e in enc_rec if e["prazo"] and e["prazo"][:10] >= lim and not e["res"]],
                      key=lambda e: e["prazo"], reverse=True)
+    # tudo que tem Resultado registrado (licitações de qualquer trilha e clínicas)
+    resultados = []
+    pv2 = json.load(open(a.licitacoes, encoding="utf-8")) if da_planilha else None
+    if pv2:
+        rows = pv2["values"] if isinstance(pv2, dict) else pv2
+        H2 = [str(h).strip() for h in rows[0]]
+        for n, r in enumerate(rows[1:], start=2):
+            d = dict(zip(H2, r + [""] * (len(H2) - len(r))))
+            res = txt(d.get("Resultado"), 220)
+            if res and str(d.get("ID") or "").strip() and not res.startswith("Ruído do radar"):
+                resultados.append({"src": "quadro" if str(d.get("Trilha")) == "SEM PROCESSO" else "licitacoes",
+                                   "l": n, "n": txt(d.get("Orgao"), 140) or txt(d.get("ID")), "uf": txt(d.get("UF")),
+                                   "tp": txt(d.get("Modalidade")) or txt(d.get("Trilha")), "fase": txt(d.get("Fase")),
+                                   "res": res, "dt": data_iso(d.get("Prazo")), "resp": txt(d.get("Responsavel"))})
+    for c in cl:
+        if c.get("res"):
+            resultados.append({"src": "clinicas", "l": c["l"], "n": c["n"], "uf": c["uf"], "tp": "Clínica",
+                               "fase": c["fase"], "res": c["res"], "dt": c.get("ult", ""), "resp": c["resp"]})
     dados = {
         "gerado": agora.strftime("%Y-%m-%dT%H:%M"),
         "fontes": {
@@ -237,6 +255,7 @@ def main():
         "licitacoes": lic,
         "quadro": qd,
         "encerrados_recentes": enc_rec,
+        "resultados": resultados,
     }
     js = "window.CENTRAL=" + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n"
     open(a.saida, "w", encoding="utf-8").write(js)

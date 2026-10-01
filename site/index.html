@@ -191,6 +191,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <a href="#clinicas" data-tab="clinicas">Clínicas particulares<span class="n" id="n-clinicas"></span></a>
       <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
       <a href="#quadro" data-tab="quadro">Quadro nacional<span class="n" id="n-quadro"></span></a>
+      <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
     </nav>
     <div id="saude" class="saude" hidden></div>
@@ -262,6 +263,22 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
     <div class="more" id="m-licitacoes"></div>
   </section>
 
+  <section class="pane" id="pane-resultados" hidden>
+    <div class="kpis" id="k-resultados"></div>
+    <div class="band"><h3>Por que não fechou: motivos registrados nos resultados</h3><div class="bar" id="bar-resultados"></div><div class="legend" id="leg-resultados"></div></div>
+    <div class="filters">
+      <label>Buscar<input type="search" id="q-resultados" placeholder="órgão, clínica, motivo…"></label>
+      <label>Desfecho<select id="ds-resultados"><option value="">Todos</option><option>Ganhamos</option><option>Perdemos</option><option>Não participamos</option><option>Em andamento ou outro</option></select></label>
+      <label>Frente<select id="fr-resultados"><option value="">Todas</option><option>Clínica</option><option>Licitação</option><option>Quadro</option></select></label>
+      <label>UF<select id="uf-resultados"><option value="">Todas</option></select></label>
+      <button class="btn" id="limpar-resultados" type="button">Limpar filtros</button>
+      <span class="count" id="c-resultados"></span>
+    </div>
+    <div class="tbl"><table><thead><tr>
+      <th data-k="n">Quem</th><th data-k="ds">Desfecho</th><th data-k="mot" class="hide-sm">Motivo</th><th data-k="res">O que foi registrado</th><th data-k="dt" class="hide-sm">Data</th>
+    </tr></thead><tbody id="t-resultados"></tbody></table></div>
+    <div class="more" id="m-resultados"></div>
+  </section>
   <section class="pane" id="pane-quadro" hidden>
     <div class="kpis" id="k-quadro"></div>
     <div class="band"><h3>Municípios por UF</h3><div class="bar" id="bar-quadro"></div><div class="legend" id="leg-quadro"></div></div>
@@ -625,13 +642,51 @@ const lPr = makeList({
       el.innerHTML='<h3>Avisos do sistema</h3><ul>'+al.map(a=>'<li class="al">'+esc(a)+'</li>').join("")+av.map(a=>'<li>'+esc(a)+'</li>').join("")+'</ul>'; } } }catch(e){}
 })();
 
+
+/* ---------- RESULTADOS: o que aconteceu com cada oportunidade ---------- */
+const RES_DS=[["Ganhamos",/ganh|vencemos|vencedor|homolog|contratad|credenciad[ao]s? com|assinamos|fechad[oa] com|fechamos/i],
+  ["Perdemos",/perd|desclassific|inabilit|n[aã]o vencemos|outra empresa|concorrente venceu|fracassad/i],
+  ["Não participamos",/n[aã]o particip|descart|sem interesse|duplicat|n[aã]o vamos|desist|sem fit|n[aã]o atende|suspens|revogad|cancelad|deserto/i]];
+const RES_MOT=[["Preço",/pre[cç]o|valor|piso|barat|car[oa]|margem|lance/i],["Documentação",/document|certid|habilita|cnes|crm|atestado|balan[cç]/i],
+  ["Exige presencial ou local",/presencial|local|dist[aâ]ncia|deslocamento|plant[aã]o|sede/i],["Prazo",/prazo|venceu|perdemos a data|tarde|encerr/i],
+  ["Escopo ou objeto",/objeto|escopo|n[aã]o [eé] telelaudo|equipamento|ecg|veterin|odonto|m[oó]vel/i],["Duplicata",/duplicat/i],["Processo cancelado",/suspens|revogad|cancelad|deserto|fracassad/i]];
+const RESL=(D.resultados||[]).map((r,i)=>{ const ds=(RES_DS.find(([,re])=>re.test(r.res))||["Em andamento ou outro"])[0];
+  const mot=(RES_MOT.find(([,re])=>re.test(r.res))||["Não informado"])[0];
+  return Object.assign({}, r, {i, ds, mot, fr: r.src==="clinicas"?"Clínica":r.src==="quadro"?"Quadro":"Licitação"}); });
+$("#n-resultados").textContent = RESL.length;
+fillSelect("uf-resultados", RESL.map(r=>r.uf));
+const lRes = makeList({
+  id:"resultados", rows:RESL.map(r=>Object.assign(r,{l:r.i})), sort:"dt", dir:"desc", defDir:{dt:"desc"},
+  sortKey:(r,k)=> k==="dt" ? (r.dt? parseD(r.dt).getTime() : null) : r[k],
+  hay:r=>[r.n,r.uf,r.tp,r.fase,r.res,r.ds,r.mot,r.resp].join(" "),
+  filters:[{el:"ds-resultados",test:(r,v)=>r.ds===v},{el:"fr-resultados",test:(r,v)=>r.fr===v},{el:"uf-resultados",test:(r,v)=>r.uf===v}],
+  cells:r=>'<td><div class="nm">'+esc(r.n)+'</div><div class="meta">'+esc([r.fr,r.tp,r.uf].filter(Boolean).join(" · "))+'</div></td>'+
+    '<td><span class="pill">'+esc(r.ds)+'</span></td><td class="hide-sm">'+esc(r.mot)+'</td><td class="clip">'+esc(r.res)+'</td><td class="mono hide-sm">'+(r.dt?fData(r.dt):"—")+'</td>',
+  detail:r=>'<div class="meta">Fase: '+esc(r.fase||"—")+(r.resp?' · Responsável: '+esc(r.resp):'')+'</div><p>'+esc(r.res)+'</p><div class="links">'+editBtn(r.src,r.l)+'</div>'
+});
+(function(){
+  const cont={}; RESL.filter(r=>r.ds!=="Ganhamos").forEach(r=>cont[r.mot]=(cont[r.mot]||0)+1);
+  const pal=["var(--c-atacar)","var(--c-quente)","var(--c-morno)","var(--c-frio)","var(--accent)","var(--c-sem)","var(--ok)","var(--warn)"];
+  const clearBand = band("bar-resultados","leg-resultados", Object.keys(cont).sort((a,b)=>cont[b]-cont[a]).map((m,i)=>({label:m,value:m,n:cont[m],color:pal[i%pal.length]})), lRes, (r,v)=>r.ds!=="Ganhamos" && r.mot===v);
+  const n=ds=>RESL.filter(r=>r.ds===ds).length; const dec=n("Ganhamos")+n("Perdemos");
+  const clearK = wireKpis("k-resultados", lRes, [
+    {key:"t",label:"Com resultado registrado",value:RESL.length,cls:"",test:()=>true},
+    {key:"g",label:"Ganhamos",value:n("Ganhamos"),cls:"ok",test:r=>r.ds==="Ganhamos"},
+    {key:"p",label:"Perdemos",value:n("Perdemos"),cls:"bad",test:r=>r.ds==="Perdemos"},
+    {key:"x",label:"Não participamos",value:n("Não participamos"),cls:"warn",test:r=>r.ds==="Não participamos"},
+    {key:"tx",label:"Taxa de vitória nas disputas",value:dec? Math.round(100*n("Ganhamos")/dec)+"%" : "—",cls:"",test:r=>r.ds==="Ganhamos"||r.ds==="Perdemos"},
+    {key:"o",label:"Em andamento ou outro",value:n("Em andamento ou outro"),cls:"",test:r=>r.ds==="Em andamento ou outro"}
+  ]);
+  $("#limpar-resultados").addEventListener("click",()=>{ clearBand(); clearK(); });
+})();
+
 /* ---------- abas ---------- */
-const TABS=["prioridades","clinicas","licitacoes","quadro"];
+const TABS=["prioridades","clinicas","licitacoes","quadro","resultados"];
 const rendered={};
 function show(tab){
   if(!TABS.includes(tab)) tab="prioridades";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,quadro:lQd})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,quadro:lQd,resultados:lRes})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
