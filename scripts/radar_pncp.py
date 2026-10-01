@@ -59,7 +59,7 @@ def sem_acento(t):
 
 def buscar(termo):
     itens, pagina = [], 1
-    while pagina <= 3:
+    while pagina <= 2:
         q = urllib.parse.urlencode({"tipos_documento": "edital", "status": "recebendo_proposta",
                                     "q": termo, "tam_pagina": 100, "pagina": pagina,
                                     "ordenacao": "-data"})
@@ -125,14 +125,19 @@ def relevante(it):
 
 
 def encaixe_texto(it):
-    """Encaixe só pelo texto do edital: alta, media ou baixa (com motivo)."""
+    """Encaixe só pelo texto do edital: alta, media ou baixa (com motivo).
+    Laudo remoto de imagem = alta; laudo remoto junto com parte presencial = media;
+    só presencial (realização de exames, ultrassom, plantão) = baixa."""
     txt = " " + sem_acento(f"{it.get('title', '')} {it.get('description', '')}") + " "
     pres = [k for k in PRESENCIAL if k in txt]
+    img = any(k in txt for k in IMAGEM)
+    remoto = any(k in txt for k in FORTE) or (img and any(k in txt for k in REMOTO))
+    if remoto and not pres:
+        return "alta", ""
+    if remoto:
+        return "media", "laudo remoto com parte presencial: " + ", ".join(pres[:3])
     if pres:
         return "baixa", "presencial ou fora do telelaudo: " + ", ".join(pres[:3])
-    img = any(k in txt for k in IMAGEM)
-    if any(k in txt for k in FORTE) or (img and any(k in txt for k in REMOTO)):
-        return "alta", ""
     return "media", ""
 
 
@@ -183,10 +188,13 @@ def limpar_ruido(api, H, ix, agora):
         if relevante({"title": r[ix["Edital"]], "description": r[ix["Objeto"]]}):
             if "Responsavel" in ix and not str(r[ix["Responsavel"]]).strip():
                 mud.append({"range": f"{ABA}!{col(ix['Responsavel'] + 1)}{n}", "values": [["Carla"]]})
-            if "Encaixe" in ix and not str(r[ix["Encaixe"]]).strip():  # linhas antigas: encaixe pelo texto
+            bloq = str(r[ix["Bloqueio"]]).strip() if "Bloqueio" in ix else ""
+            auto = bloq.startswith("presencial ou fora") or bloq.startswith("laudo remoto com parte")
+            if "Encaixe" in ix and (not str(r[ix["Encaixe"]]).strip() or auto):  # encaixe pelo texto
                 enc, motivo = encaixe_texto({"title": r[ix["Edital"]], "description": r[ix["Objeto"]]})
-                mud.append({"range": f"{ABA}!{col(ix['Encaixe'] + 1)}{n}", "values": [[enc]]})
-                if motivo and "Bloqueio" in ix and not str(r[ix["Bloqueio"]]).strip():
+                if enc != str(r[ix["Encaixe"]]).strip():
+                    mud.append({"range": f"{ABA}!{col(ix['Encaixe'] + 1)}{n}", "values": [[enc]]})
+                if "Bloqueio" in ix and (not bloq or auto) and motivo != bloq:
                     mud.append({"range": f"{ABA}!{col(ix['Bloqueio'] + 1)}{n}", "values": [[motivo]]})
             continue
         mud += [{"range": f"{ABA}!{col(ix['Fase'] + 1)}{n}", "values": [[DESCARTE_FASE]]},
@@ -257,16 +265,18 @@ def main():
         print(f"::warning::Completar prazos falhou: {e}")
 
     achados, erros = {}, 0
-    for t in TERMOS:
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=4) as ex:  # 20 termos: em paralelo para caber no tempo do Actions
+        futuros = {t: ex.submit(buscar, t) for t in TERMOS}
+    for t, f in futuros.items():
         try:
-            for it in buscar(t):
+            for it in f.result():
                 rid = str(it.get("numero_controle_pncp") or "").strip()
                 if rid and relevante(it):
                     achados[rid] = it
         except Exception as e:  # um termo com erro não derruba os outros
             erros += 1
             print(f"::warning::PNCP falhou para '{t}': {e}")
-        time.sleep(2)
     if erros == len(TERMOS):
         print(f"Radar PNCP: {limpas} linhas de ruído descartadas; PNCP não respondeu a nenhum termo.")
         sys.exit(1)
