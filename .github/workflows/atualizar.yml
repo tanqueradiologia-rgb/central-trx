@@ -48,6 +48,7 @@ jobs:
       - name: Radar PNCP (editais abertos de telerradiologia)
         id: radar
         continue-on-error: true
+        timeout-minutes: 6
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
         run: |
