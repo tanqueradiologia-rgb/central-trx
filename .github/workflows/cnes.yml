@@ -1,0 +1,20 @@
+name: CNES mensal (equipamentos e serviços de imagem)
+on:
+  schedule:
+    - cron: "17 9 22 * *"   # dia 22 de cada mês, 06h17 de Brasília (o DATASUS publica o mês anterior por volta do dia 15)
+  workflow_dispatch:
+jobs:
+  cnes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Instalar dependências
+        run: pip install -q pyreaddbc dbfread google-auth google-api-python-client
+      - name: Montar a aba CNES
+        env:
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+        run: python scripts/cnes_mensal.py
