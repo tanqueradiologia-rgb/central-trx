@@ -151,7 +151,7 @@ def checar_piso(cnpj, ano, seq):
     for i in itens if isinstance(itens, list) else []:
         desc = " " + sem_acento(i.get("descricao") or "") + " "
         vu = i.get("valorUnitarioEstimado")
-        if not isinstance(vu, (int, float)) or vu <= 0:
+        if not isinstance(vu, (int, float)) or vu < 1:  # R$ 0,01 é valor simbólico, não preço
             continue
         for nome, chaves, piso in PISOS:
             if any(k in desc for k in chaves) and vu < piso:
