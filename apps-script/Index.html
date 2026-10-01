@@ -267,6 +267,9 @@ function campo(nome, cfg, valor){
   if(cfg.tipo==="lista"){ var ops=cfg.opcoes.slice(); if(valor && ops.indexOf(valor)<0) ops.unshift(valor); return '<label'+full+'>'+lbl+'<select name="'+nome+'">'+ops.map(function(o){return '<option'+(o===valor?' selected':'')+'>'+esc(o)+'</option>';}).join("")+'</select></label>'; }
   if(cfg.tipo==="equipe"){ var ns=(D.equipe||[]).map(function(e){return e.nome;}); if(valor && ns.indexOf(valor)<0) ns.unshift(valor); return '<label'+full+'>'+lbl+'<select name="'+nome+'"><option value="">—</option>'+ns.map(function(o){return '<option'+(o===valor?' selected':'')+'>'+esc(o)+'</option>';}).join("")+'</select></label>'; }
   if(cfg.tipo==="data") return '<label'+full+'>'+lbl+'<input type="date" name="'+nome+'" value="'+esc(iso(valor))+'"></label>';
+  if(cfg.tipo==="whats"){ var w=String(valor||"").replace(/\D/g,""); return '<label'+full+'>'+lbl+(w?' <a href="https://wa.me/'+esc(w)+'" target="_blank" rel="noopener">abrir</a>':'')+'<input type="tel" name="'+nome+'" value="'+esc(valor)+'" placeholder="(62) 99999-9999"></label>'; }
+  if(cfg.tipo==="tel") return '<label'+full+'>'+lbl+'<input type="tel" name="'+nome+'" value="'+esc(valor)+'"></label>';
+  if(cfg.tipo==="email") return '<label'+full+'>'+lbl.replace(/^Email$/,"E-mail")+'<input type="email" name="'+nome+'" value="'+esc(valor)+'"></label>';
   return '<label'+full+'>'+lbl+'<input type="text" name="'+nome+'" value="'+esc(valor)+'"></label>';
 }
 var NOME_PAPEL={"Socios medicos":"sócios médicos","Gestor":"gestor do contrato"};

@@ -46,7 +46,7 @@ const FRENTES = {
     chave2: 'Cidade',            // desempate quando há nomes repetidos
     // colunas mostradas na lista e no detalhe (só leitura)
     leitura: ['Clinica', 'Cidade', 'UF', 'Prioridade', 'Modalidades', 'Gancho', 'Responsavel', 'Fase',
-      'Decisor', 'Cargo', 'Toque_atual', 'Inicio_cadencia', 'Proximo_toque', 'Ultima_atualizacao',
+      'Decisor', 'Cargo', 'Telefone', 'WhatsApp', 'Email', 'LinkedIn', 'Toque_atual', 'Inicio_cadencia', 'Proximo_toque', 'Ultima_atualizacao',
       'Resultado', 'Notas', 'Proxima_Acao', 'Score', 'Faixa', 'Dor', 'Cobertura', 'Janela',
       'Sinal_de_compra', 'Necessidade', 'Sinal_operacional', 'Nota_RA', 'O_que_reclamam', 'Medido_em'],
     // colunas que a equipe pode mudar pelo app
@@ -59,7 +59,10 @@ const FRENTES = {
       Proximo_toque: { tipo: 'data' },
       Resultado: { tipo: 'texto' },
       Decisor: { tipo: 'texto' },
-      Cargo: { tipo: 'texto' }
+      Cargo: { tipo: 'texto' },
+      Telefone: { tipo: 'tel' },
+      WhatsApp: { tipo: 'whats' },
+      Email: { tipo: 'email' }
     },
     carimbo: 'Ultima_atualizacao'   // gravado com a data de hoje a cada edição
   },
@@ -78,6 +81,11 @@ const FRENTES = {
       Responsavel: { tipo: 'equipe' },
       'Proxima acao': { tipo: 'texto' },
       Quando: { tipo: 'data' },
+      Contato: { tipo: 'texto' },
+      Cargo: { tipo: 'texto' },
+      Telefone: { tipo: 'tel' },
+      WhatsApp: { tipo: 'whats' },
+      'E-mail': { tipo: 'email' },
       Resultado: { tipo: 'texto' }
     }
   },
@@ -97,6 +105,11 @@ const FRENTES = {
       Responsavel: { tipo: 'equipe' },
       'Proxima acao': { tipo: 'texto' },
       Quando: { tipo: 'data' },
+      Contato: { tipo: 'texto' },
+      Cargo: { tipo: 'texto' },
+      Telefone: { tipo: 'tel' },
+      WhatsApp: { tipo: 'whats' },
+      'E-mail': { tipo: 'email' },
       Resultado: { tipo: 'texto' }
     }
   }
@@ -262,12 +275,24 @@ function salvar(pedido) {
 
     Object.keys(pedido.campos || {}).forEach(function (c) {
       if (!cfg.edicao[c] || idx[c] === undefined) return;       // só colunas liberadas
-      const novo = String(pedido.campos[c] == null ? '' : pedido.campos[c]).trim();
+      const tipo = cfg.edicao[c].tipo;
+      let novo = String(pedido.campos[c] == null ? '' : pedido.campos[c]).trim();
+      if (tipo === 'whats' && novo) {           // WhatsApp só com dígitos e o 55 do Brasil
+        novo = novo.replace(/\D/g, '');
+        if (novo.length === 10 || novo.length === 11) novo = '55' + novo;
+        if (novo.length < 12 || novo.length > 13) throw new Error('WhatsApp inválido: use DDD e número, ex.: (62) 99430-7537');
+      }
+      if (tipo === 'email' && novo) {
+        novo = novo.toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(novo)) throw new Error('E-mail inválido: ' + novo);
+      }
       const velho = String(atual[idx[c]] || '').trim();
       if (novo === velho) return;
-      if (cfg.edicao[c].tipo === 'lista' && novo && cfg.edicao[c].opcoes.indexOf(novo) < 0)
+      if (tipo === 'lista' && novo && cfg.edicao[c].opcoes.indexOf(novo) < 0)
         throw new Error('Valor inválido para ' + c + ': ' + novo);
-      sh.getRange(linha, idx[c] + 1).setValue(novo);
+      const cel = sh.getRange(linha, idx[c] + 1);
+      if (tipo === 'whats' || tipo === 'tel') cel.setNumberFormat('@');   // não vira número nem perde o zero
+      cel.setValue(novo);
       hist.push([agora, autor, linha, nome, pedido.frente + ':mudança', c, velho, novo, '', '']);
       mudou = true;
     });
