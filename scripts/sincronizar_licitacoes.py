@@ -22,6 +22,7 @@ Regras (as mesmas do abastecer_licitacoes.py):
 
 Variável de ambiente GOOGLE_SA_JSON: chave da conta de serviço (editora da planilha).
 Uso: python3 sincronizar_licitacoes.py Pipeline_Licitacoes.xlsx
+     python3 sincronizar_licitacoes.py            (sem xlsx: só recalcula, desde 02/10/2026)
 """
 import datetime as dt, json, os, re, sys, unicodedata
 
@@ -167,10 +168,11 @@ def col(n):
 
 
 def main():
-    if len(sys.argv) < 2:
-        sys.exit("uso: sincronizar_licitacoes.py Pipeline_Licitacoes.xlsx")
-    robo = ler_xlsx(sys.argv[1])
-    if len(robo) < 100:
+    # Sem argumento (desde 02/10/2026, com o robô do Mac aposentado): não há xlsx.
+    # Só recalcula Trilha, Score, Faixa e Cobertura de todas as linhas e nunca arquiva nada.
+    sem_xlsx = len(sys.argv) < 2
+    robo = {} if sem_xlsx else ler_xlsx(sys.argv[1])
+    if not sem_xlsx and len(robo) < 100:
         sys.exit(f"ERRO: o xlsx trouxe só {len(robo)} linhas. Nada foi gravado.")
 
     from google.oauth2 import service_account
@@ -250,7 +252,7 @@ def main():
     for rid, (n, cur) in por_id.items():
         if rid in robo:
             continue
-        if str(cur.get("Origem") or "") in ORIGENS_NUVEM or (QUADRO_NA_NUVEM and rid.startswith("quadro-")):
+        if sem_xlsx or str(cur.get("Origem") or "") in ORIGENS_NUVEM or (QUADRO_NA_NUVEM and rid.startswith("quadro-")):
             # linha criada na nuvem (radar_pncp.py): não depende do xlsx do Mac
             alt = {}
             t = trilha_de(cur)

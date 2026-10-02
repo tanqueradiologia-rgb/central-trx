@@ -36,14 +36,13 @@ jobs:
         run: python scripts/buscar_planilhas.py
       # Se a sincronização falhar, a página continua sendo publicada com o que já está
       # na planilha Google de licitações; a falha aparece em vermelho no Actions.
-      - name: Levar o robô para a planilha Google de licitações
+      - name: Recalcular Trilha e Score na planilha Google de licitações
         id: sync
         continue-on-error: true
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
         run: |
-          python scripts/aplicar_medicoes.py
-          python scripts/sincronizar_licitacoes.py Pipeline_Licitacoes.xlsx
+          python scripts/sincronizar_licitacoes.py
       # Radar PNCP na nuvem: de hora em hora (e em toda rodada manual ou por push).
       - name: Radar PNCP (editais abertos de telerradiologia)
         id: radar

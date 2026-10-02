@@ -2,7 +2,7 @@
 """Baixa as planilhas-fonte da Central TRX com uma conta de serviço do Google (só leitura).
 
 Variável de ambiente GOOGLE_SA_JSON: conteúdo do arquivo JSON da chave da conta de serviço.
-Gera: pipeline.json, Pipeline_Licitacoes.xlsx e mods.env (datas de modificação em Brasília).
+Gera: pipeline.json e mods.env (datas de modificação em Brasília).
 Com --so-licitacoes: gera só licitacoes.json (aba Licitacoes da planilha Google), depois
 da sincronização, e acrescenta MOD_LICIT_SHEET ao mods.env.
 """
@@ -37,11 +37,7 @@ if "--so-licitacoes" in sys.argv:
 vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AO").execute()
 json.dump(vals, open("pipeline.json", "w", encoding="utf-8"), ensure_ascii=False)
 
-req = drive.files().get_media(fileId=LICIT_ID)
-buf = io.BytesIO(); dl = MediaIoBaseDownload(buf, req); done = False
-while not done:
-    _, done = dl.next_chunk()
-open("Pipeline_Licitacoes.xlsx", "wb").write(buf.getvalue())
-
-open("mods.env", "w").write(f"MOD_PIPELINE={mod(PIPELINE_ID)}\nMOD_LICIT={mod(LICIT_ID)}\n")
-print(f"OK: pipeline {len(vals.get('values', []))} linhas, xlsx {len(buf.getvalue())//1024} KB")
+# O xlsx do robô do Mac (LICIT_ID) deixou de ser baixado em 02/10/2026: o radar do Mac foi
+# aposentado e a planilha Google de licitações é a única fonte.
+open("mods.env", "w").write(f"MOD_PIPELINE={mod(PIPELINE_ID)}\n")
+print(f"OK: pipeline {len(vals.get('values', []))} linhas")

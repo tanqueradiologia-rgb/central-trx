@@ -2,7 +2,7 @@
 """Verificação automática da Central TRX. Roda no GitHub depois de gerar a página.
 
 Confere se os motores estão vivos e se os dados das duas planilhas batem com as regras:
-  - frescor: xlsx do robô do Mac, Pipeline e planilha de licitações;
+  - frescor: Pipeline e planilha de licitações;
   - clínicas: Score e Faixa pela régua privada, duplicadas, ativas sem medição;
   - licitações: IDs repetidos, Trilha, Score e Faixa pela régua pública, prazos perto
     de vencer sem ninguém cuidando (oportunidade em risco).
@@ -86,8 +86,7 @@ def main():
     m = env()
 
     # 1. Frescor dos motores
-    for chave, nome, limite in (("MOD_LICIT", "Pipeline_Licitacoes.xlsx (robô do Mac: radar, quadro, e-mail)", 30),
-                                ("MOD_PIPELINE", "Pipeline TRX (clínicas)", 72),
+    for chave, nome, limite in (("MOD_PIPELINE", "Pipeline TRX (clínicas)", 72),
                                 ("MOD_LICIT_SHEET", "Pipeline Licitações TRX (planilha Google)", 30)):
         h = horas_desde(m.get(chave, ""))
         info[chave] = m.get(chave, "")
