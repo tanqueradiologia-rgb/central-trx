@@ -106,7 +106,7 @@ def municipios():
 def main():
     ftp = ftplib.FTP(FTP_HOST, timeout=120)
     ftp.login()
-    lista = {t: set(ftp.nlst(f"{FTP_DIR}/{t}")) for t in ("EQ", "SR", "PF")}
+    lista = {t: set(ftp.nlst(f"{FTP_DIR}/{t}")) for t in ("EQ", "SR")}
     nomes = {t: {os.path.basename(p) for p in v} for t, v in lista.items()}
     est = {}
     comps = {}
@@ -168,16 +168,19 @@ def main():
                 e["s121"].add(cls)
         pf_nome = f"PF{uf}{aamm}.dbc"
         pf = None
-        if pf_nome in nomes["PF"]:
-            for tentativa in range(3):
-                try:
-                    pf = ler_dbc(ftp, f"{FTP_DIR}/PF/{pf_nome}", FILTRO_RADIOLOGISTA)
-                    break
-                except Exception as e:
-                    print(f"::warning::{uf}: PF tentativa {tentativa + 1} falhou ({e})")
-                    time.sleep(10)
-                    ftp = ftplib.FTP(FTP_HOST, timeout=120)
-                    ftp.login()
+        # A pasta PF é grande demais para listar (o NLST estoura o tempo); baixa direto pelo nome.
+        for tentativa in range(3):
+            try:
+                pf = ler_dbc(ftp, f"{FTP_DIR}/PF/{pf_nome}", FILTRO_RADIOLOGISTA)
+                break
+            except ftplib.error_perm as e:
+                print(f"::warning::{uf}: PF {pf_nome} indisponível ({e})")
+                break
+            except Exception as e:
+                print(f"::warning::{uf}: PF tentativa {tentativa + 1} falhou ({e})")
+                time.sleep(10)
+                ftp = ftplib.FTP(FTP_HOST, timeout=300)
+                ftp.login()
         if pf is None:
             print(f"::warning::{uf}: sem arquivo PF {aamm}; radiologistas da UF ficam em branco")
         else:
