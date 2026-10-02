@@ -34,6 +34,8 @@ def esfera_de(r):
     e = ESFERA.get(str(r.get("ESFERA_A") or "").strip(), "")
     return e or NATUREZA.get(str(r.get("NAT_JUR") or "").strip()[:1], "")
 TZ = dt.timezone(dt.timedelta(hours=-3))
+# Classes do serviço 121 feitas por telemedicina: 007 RX, 008 US, 009 TC, 010 RM, 011 intervencionista, 013 mamografia
+TELE = {"007", "008", "009", "010", "011", "013"}
 CBO_RADIOLOGISTA = "225320"   # Médico em radiologia e diagnóstico por imagem
 UF_COD = {"12": "AC", "27": "AL", "13": "AM", "16": "AP", "29": "BA", "23": "CE", "53": "DF", "32": "ES",
           "52": "GO", "21": "MA", "31": "MG", "50": "MS", "51": "MT", "15": "PA", "25": "PB", "26": "PE",
@@ -255,7 +257,7 @@ def main():
     leg = [["Coluna", "O que é"],
            ["TC, RM, MMG, RX, DO, US, PET", "Quantidade de aparelhos existentes (tipo 1 do CNES). MMG soma mamógrafo simples, estereotaxia e computadorizado; RX soma até 100 mA, 100 a 500 mA, mais de 500 mA e fluoroscopia."],
            ["... SUS", "Quantidade marcada como disponível ao SUS."],
-           ["Servico 121 classes", "Classificações do serviço especializado 121 (diagnóstico por imagem) declaradas pelo estabelecimento."],
+           ["Servico 121 classes", "Classificações do serviço especializado 121 (diagnóstico por imagem) declaradas pelo estabelecimento. Por telemedicina: 007 radiologia, 008 ultrassom, 009 tomografia, 010 ressonância, 011 intervencionista, 013 mamografia. Presenciais: 001 radiologia, 002 ultrassom, 003 tomografia, 004 ressonância, 006 intervencionista, 012 mamografia."],
            ["Servicos especializados", "Todos os códigos de serviço especializado do estabelecimento."],
            ["Competencia", "Mês do arquivo do DATASUS usado para a UF."],
            ["Radiologistas", "Profissionais distintos com CBO 225320 (médico em radiologia e diagnóstico por imagem) vinculados ao estabelecimento no arquivo PF. Em branco quando o PF da UF não foi lido; 0 quer dizer nenhum no quadro."],
@@ -277,15 +279,17 @@ def montar_municipios(linhas, mun, rad, rad_mun, pf_ok, comps, agora):
                                      "rx_sus": 0, "us": 0, "c007": 0, "tc_sem_007": 0, "rad_img": set()})
         b["fim"], b["n"] = i, b["n"] + 1
         tc, rm, mmg, rx, us, tc_sus, rx_sus = l[7], l[8], l[9], l[10], l[12], l[14], l[17]
-        tem007 = "007" in l[18].split()
+        cls = set(l[18].split())
+        tele = bool(cls & TELE)                      # alguma classe do 121 por telemedicina
+        tc_tele = "009" in cls                       # 009 = tomografia por telemedicina
         b["tc"] += tc; b["tc_sus"] += tc_sus; b["rm"] += rm; b["mmg"] += mmg; b["rx"] += rx
-        b["rx_sus"] += rx_sus; b["us"] += us; b["c007"] += int(tem007)
-        b["tc_sem_007"] += int(tc > 0 and not tem007)
+        b["rx_sus"] += rx_sus; b["us"] += us; b["c007"] += int(tele)
+        b["tc_sem_007"] += int(tc > 0 and not tc_tele)
         b["rad_img"] |= rad.get(l[0], set())
     codigos = set(mun) | set(blocos)
     H = ["UF", "Codigo municipio", "Municipio", "Estabelecimentos com imagem", "Primeira linha CNES",
-         "Ultima linha CNES", "TC", "TC SUS", "RM", "MMG", "RX", "RX SUS", "US", "Unidades com 007",
-         "Unidades com TC sem 007", "Radiologistas nos estab. com imagem", "Radiologistas no municipio",
+         "Ultima linha CNES", "TC", "TC SUS", "RM", "MMG", "RX", "RX SUS", "US", "Unidades com telemedicina (121)",
+         "Unidades com TC sem 009", "Radiologistas nos estab. com imagem", "Radiologistas no municipio",
          "Competencia", "Atualizado em"]
     out = []
     for c in codigos:
