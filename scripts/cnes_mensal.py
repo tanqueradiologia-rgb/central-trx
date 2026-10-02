@@ -104,9 +104,19 @@ def municipios():
 
 
 def main():
-    ftp = ftplib.FTP(FTP_HOST, timeout=120)
-    ftp.login()
-    lista = {t: set(ftp.nlst(f"{FTP_DIR}/{t}")) for t in ("EQ", "SR")}
+    lista = {}
+    for tentativa in range(6):   # o FTP do DATASUS às vezes não abre a conexão de dados; espera e tenta de novo
+        try:
+            ftp = ftplib.FTP(FTP_HOST, timeout=180)
+            ftp.login()
+            lista = {t: set(ftp.nlst(f"{FTP_DIR}/{t}")) for t in ("EQ", "SR")}
+            break
+        except Exception as e:
+            print(f"::warning::listagem do FTP, tentativa {tentativa + 1} falhou ({e})")
+            time.sleep(60)
+    else:
+        print("::error::FTP do DATASUS sem resposta; a planilha não foi tocada.")
+        sys.exit(1)
     nomes = {t: {os.path.basename(p) for p in v} for t, v in lista.items()}
     est = {}
     comps = {}
