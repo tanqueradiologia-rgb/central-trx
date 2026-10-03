@@ -64,15 +64,23 @@ def faixa(sc):
 
 
 def privada(r):
-    """Régua da clínica privada: 30% Janela, 45% Necessidade, 25% Dor; tetos 69/45/75."""
-    j, n, d = num(r.get("Janela")), num(r.get("Necessidade")), num(r.get("Dor"))
-    med = [(p, x) for p, x in ((0.30, j), (0.45, n), (0.25, d)) if x is not None]
+    """Régua da clínica privada.
+    v3 (03/10/2026, aprovada pelo Marcos): linha com Perfil preenchido usa 25% Perfil, 25% Janela,
+    40% Necessidade, 10% Dor; Sinal_de_compra começando com "J-NEG" (contato evoluiu mal) limita a 49.
+    v1 (linhas ainda sem Perfil): 30% Janela, 45% Necessidade, 25% Dor.
+    Tetos nas duas: sem Janela 69; só Dor 45; só Janela 75. Faixa "FORA DO ICP" não tem Score."""
+    if str(r.get("Faixa") or "").strip().upper() == "FORA DO ICP":
+        return "FORA"
+    p, j, n, d = num(r.get("Perfil")), num(r.get("Janela")), num(r.get("Necessidade")), num(r.get("Dor"))
+    pesos = ((0.25, p), (0.25, j), (0.40, n), (0.10, d)) if p is not None else ((0.30, j), (0.45, n), (0.25, d))
+    med = [(w, x) for w, x in pesos if x is not None]
     if not med:
         return None
-    sc = sum(p * x for p, x in med) / sum(p for p, _ in med)
+    sc = sum(w * x for w, x in med) / sum(w for w, _ in med)
     if j is None: sc = min(sc, 69)
-    if j is None and n is None: sc = min(sc, 45)
-    if j is not None and n is None and d is None: sc = min(sc, 75)
+    if j is None and n is None and p is None: sc = min(sc, 45)
+    if j is not None and n is None and d is None and p is None: sc = min(sc, 75)
+    if str(r.get("Sinal_de_compra") or "").strip().upper().startswith("J-NEG"): sc = min(sc, 49)
     return int(math.floor(sc + 0.5))
 
 
@@ -99,6 +107,8 @@ def main():
     cl = tabela("pipeline.json")
     ativas = [(n, r) for n, r in cl if str(r.get("Clinica") or "").strip()
               and not str(r.get("Fase") or "").strip().lower().startswith(INATIVAS)]
+    fora_icp = [n for n, r in ativas if privada(r) == "FORA"]
+    ativas = [(n, r) for n, r in ativas if privada(r) != "FORA"]
     sem_med = [n for n, r in ativas if privada(r) is None]
     divergentes = []
     for n, r in ativas:
@@ -113,7 +123,8 @@ def main():
             chaves.setdefault(k, []).append(n)
     dup = [v for v in chaves.values() if len(v) > 1]
     info["clinicas"] = {"total": len(cl), "ativas": len(ativas), "sem_medicao": len(sem_med),
-                        "score_divergente": len(divergentes), "duplicadas": len(dup)}
+                        "score_divergente": len(divergentes), "duplicadas": len(dup),
+                        "fora_icp": len(fora_icp)}
     if divergentes:
         alertas.append(f"{len(divergentes)} clínicas com Score ou Faixa fora da régua (linhas {', '.join(map(str, divergentes[:12]))}).")
     if dup:

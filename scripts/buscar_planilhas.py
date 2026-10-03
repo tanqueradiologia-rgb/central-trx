@@ -34,7 +34,7 @@ if "--so-licitacoes" in sys.argv:
     print(f"OK: licitacoes {len(lv.get('values', []))} linhas")
     sys.exit(0)
 
-vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AO").execute()
+vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AP").execute()
 json.dump(vals, open("pipeline.json", "w", encoding="utf-8"), ensure_ascii=False)
 
 # O xlsx do robô do Mac (LICIT_ID) deixou de ser baixado em 02/10/2026: o radar do Mac foi

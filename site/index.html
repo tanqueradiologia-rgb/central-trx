@@ -239,7 +239,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
     <div class="filters">
       <label>Buscar<input type="search" id="q-prioridades" placeholder="nome, cidade, órgão, edital…"></label>
       <label>Frente<select id="tp-prioridades"><option value="">Todas</option><option>Clínica</option><option>Credenciamento</option><option>Pregão</option><option>Sem processo</option></select></label>
-      <label>Faixa<select id="fx-prioridades"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option></select></label>
+      <label>Faixa<select id="fx-prioridades"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option><option>FORA DO ICP</option></select></label>
       <label>UF<select id="uf-prioridades"><option value="">Todas</option></select></label>
       <label>Responsável<select id="resp-prioridades"><option value="">Todos</option></select></label>
       <label class="chk"><input type="checkbox" id="med-prioridades"> só com medição</label>
@@ -258,7 +258,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
     <div class="filters">
       <label>Buscar<input type="search" id="q-clinicas" placeholder="clínica, cidade, gancho…"></label>
       <label>UF<select id="uf-clinicas"><option value="">Todas</option></select></label>
-      <label>Faixa<select id="fx-clinicas"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option></select></label>
+      <label>Faixa<select id="fx-clinicas"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option><option>FORA DO ICP</option></select></label>
       <label>Responsável<select id="resp-clinicas"><option value="">Todos</option></select></label>
       <label class="chk"><input type="checkbox" id="ativas-clinicas" checked> só ativas (sem Descartado, Sem retorno e Em operação)</label>
       <button class="btn" id="limpar-clinicas" type="button">Limpar filtros</button>
@@ -363,7 +363,7 @@ function passou(iso){ const d=parseD(iso); if(!d) return false; if(iso.length>10
 function fDiasP(iso){ if(iso && passou(iso) && dias(iso)===0) return '<span class="d-mut">encerrou hoje</span>'; return fDias(dias(iso)); }
 function fDias(n){ if(n===null) return '<span class="d-mut">sem data</span>'; if(n<0) return '<span class="d-mut">encerrado há '+(-n)+'d</span>'; if(n===0) return '<span class="d-bad">hoje</span>'; if(n<=3) return '<span class="d-bad">em '+n+'d</span>'; if(n<=10) return '<span class="d-warn">em '+n+'d</span>'; return '<span class="d-ok">em '+n+'d</span>'; }
 function fMoeda(v){ if(v===null||v===undefined) return "—"; if(v>=1e6) return "R$ "+(v/1e6).toFixed(2).replace(".",",")+" mi"; if(v>=1e3) return "R$ "+Math.round(v/1e3)+" mil"; return "R$ "+v.toFixed(0); }
-function fxPill(fx, sc){ const k=(fx||"SEM MEDICAO").split(" ")[0]; const cls={ATACAR:"ATACAR",QUENTE:"QUENTE",MORNO:"MORNO",FRIO:"FRIO"}[k]||"SEM"; const t = fx==="ATACAR AGORA"?"Atacar agora":fx==="SEM MEDICAO"||!fx?"Sem medição":fx.charAt(0)+fx.slice(1).toLowerCase(); return '<span class="pill fx fx-'+cls+'">'+(sc!=null&&sc!==""?Math.round(sc)+" · ":"")+esc(t)+'</span>'; }
+function fxPill(fx, sc){ const k=(fx||"SEM MEDICAO").split(" ")[0]; const cls={ATACAR:"ATACAR",QUENTE:"QUENTE",MORNO:"MORNO",FRIO:"FRIO"}[k]||"SEM"; const t = fx==="FORA DO ICP"?"Fora do ICP":fx==="ATACAR AGORA"?"Atacar agora":fx==="SEM MEDICAO"||!fx?"Sem medição":fx.charAt(0)+fx.slice(1).toLowerCase(); return '<span class="pill fx fx-'+cls+'">'+(sc!=null&&sc!==""?Math.round(sc)+" · ":"")+esc(t)+'</span>'; }
 function sheetLink(linha){ const p=D.fontes.pipeline; return "https://docs.google.com/spreadsheets/d/"+p.id+"/edit#gid="+p.gid+"&range=A"+linha; }
 const EDIT_URL = "https://script.google.com/macros/s/AKfycbyvrb5vdMCLLmK29GnQqZ_6RjDSIqtQj2g94NS_J6xKhX2cMLKPSBqrCwhnjcCemzZ7/exec";
 function editLink(f,l){ return EDIT_URL+"?f="+f+"&l="+l; }
@@ -601,7 +601,7 @@ const PR = [].concat(
   LI.filter(aberta).map(r=>({src:"licitacoes", r, tp:r.aba==="CREDENCIAMENTO"?"Credenciamento":"Pregão", n:r.org||r.id, sub:[r.c,r.uf,r.ed||r.mod].filter(Boolean).join(" · "), uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.fase, dt:r.prazo, prazo:true, acao:r.acao, resp:r.resp, link:licLink(r.l)})),
   QD.filter(r=>!QD_INAT.test(r.sit)).map(r=>({src:"quadro", r, tp:"Sem processo", n:r.c+(r.uf?" · "+r.uf:""), sub:r.org, uf:r.uf, sc:r.sc, fx:r.fx||"SEM MEDICAO", fase:r.sit, dt:"", prazo:false, acao:r.acao, resp:r.resp, link:licLink(r.l)}))
 );
-const FX_ORD = {"ATACAR AGORA":0,"QUENTE":1,"MORNO":2,"FRIO":3,"SEM MEDICAO":4};
+const FX_ORD = {"ATACAR AGORA":0,"QUENTE":1,"MORNO":2,"FRIO":3,"SEM MEDICAO":4,"FORA DO ICP":5};
 // Ordem: prazo de licitação em até 7 dias primeiro (perder a data custa o ano), depois a Dor (faixa e score).
 PR.forEach((p,i)=>{ const d=p.prazo?dias(p.dt):null; p.urg = d!==null && d>=0 && d<=7; p.ordk=[p.urg?0:1, p.urg?d:0, FX_ORD[p.fx]??5, -(p.sc??-1)]; p.l=i; });
 PR.sort((a,b)=>{ for(let i=0;i<4;i++){ if(a.ordk[i]!==b.ordk[i]) return a.ordk[i]-b.ordk[i]; } return 0; });

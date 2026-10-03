@@ -5,7 +5,7 @@ Uso:
   python3 build_central.py --pipeline PIPELINE.json --licitacoes Pipeline_Licitacoes.xlsx \
       --saida dados_central.js [--mod-pipeline ISO] [--mod-licitacoes ISO]
 
-PIPELINE.json: resultado de get_values("Pipeline!A1:AO") do conector Google Sheets
+PIPELINE.json: resultado de get_values("Pipeline!A1:AP") do conector Google Sheets
   (objeto com a chave "values", ou a própria lista de linhas).
 Pipeline_Licitacoes.xlsx: arquivo baixado do Drive (base64 já decodificado).
 
@@ -98,6 +98,7 @@ def clinicas(values):
             "dor": num(g(r, "Dor")),
             "cob": g(r, "Cobertura"),
             "jan": num(g(r, "Janela")),
+            "perf": num(g(r, "Perfil")),
             "sjan": g(r, "Sinal_de_compra", 300),
             "nec": num(g(r, "Necessidade")),
             "snec": g(r, "Sinal_operacional", 200),
