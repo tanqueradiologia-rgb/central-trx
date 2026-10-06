@@ -199,6 +199,37 @@ def quadro(linha, d):
     }
 
 
+DOCS_SHEET = "13nXaAsgQ4czDGnp6SZd2ConSeV_8_1exZG_lH4l9hD8"
+DOCS_GID = 423972086
+
+
+def documentos_alerta(path):
+    """Documentos TRX: so o que efetivamente VENCEU (Status VENCIDO) ou esta DESATUALIZADO
+    (coluna T preenchida). Vence em 15 ou 30 dias nao entra: o aviso e so para o que trava."""
+    try:
+        dv = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return []
+    rows = dv["values"] if isinstance(dv, dict) else dv
+    if not rows:
+        return []
+    H = [str(h).strip() for h in rows[0]]
+    out = []
+    for n, r in enumerate(rows[1:], start=2):
+        d = dict(zip(H, r + [""] * (len(H) - len(r))))
+        doc = txt(d.get("Documento"), 140)
+        if not doc:
+            continue
+        venc = str(d.get("Status") or "").strip().upper() == "VENCIDO"
+        desat = txt(d.get("Desatualizado (motivo)"), 220)
+        if not venc and not desat:
+            continue
+        out.append({"l": n, "doc": doc, "venc": venc, "val": data_iso(d.get("Validade")),
+                    "mot": desat, "resp": txt(d.get("Responsavel")), "sit": txt(d.get("Situacao"), 60)})
+    out.sort(key=lambda x: (0 if x["venc"] else 1, x["val"] or "9999"))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pipeline", required=True)
@@ -206,6 +237,7 @@ def main():
     ap.add_argument("--saida", required=True)
     ap.add_argument("--mod-pipeline", default="")
     ap.add_argument("--mod-licitacoes", default="")
+    ap.add_argument("--documentos", default="", help="documentos.json (aba Documentos da planilha Documentos TRX)")
     a = ap.parse_args()
 
     pv = json.load(open(a.pipeline, encoding="utf-8"))
@@ -260,6 +292,8 @@ def main():
         "quadro": qd,
         "encerrados_recentes": enc_rec,
         "resultados": resultados,
+        "documentos_alerta": documentos_alerta(a.documentos) if a.documentos else [],
+        "documentos_fonte": {"id": DOCS_SHEET, "gid": DOCS_GID},
     }
     js = "window.CENTRAL=" + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n"
     open(a.saida, "w", encoding="utf-8").write(js)

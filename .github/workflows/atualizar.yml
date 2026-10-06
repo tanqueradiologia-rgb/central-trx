@@ -65,7 +65,8 @@ jobs:
           set -a; . ./mods.env; set +a
           python scripts/gerar_roteiro.py
           python scripts/build_central.py --pipeline pipeline.json --licitacoes licitacoes.json \
-            --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET"
+            --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET" \
+            --documentos documentos.json
           # evita que o navegador mostre dados velhos guardados em cache
           sed -i "s#dados_central.js\"#dados_central.js?v=${GITHUB_RUN_ID}\"#; s#saude.js\"#saude.js?v=${GITHUB_RUN_ID}\"#; s#roteiro.js\"#roteiro.js?v=${GITHUB_RUN_ID}\"#" site/index.html
       - name: Verificação automática (motores e regras)

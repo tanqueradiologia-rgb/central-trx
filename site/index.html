@@ -159,6 +159,7 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .avisos{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px}
 .avisos h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
 .avisos ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}.avisos li.al{color:var(--bad);font-weight:600}
+.docs-al{border-color:var(--bad);margin-bottom:10px}.docs-al h3{color:var(--bad)}.docs-al li{margin:2px 0}.docs-al a{color:inherit}.docs-al .tag{font-weight:700}.docs-al .tag.v{color:var(--bad)}.docs-al .tag.d{color:var(--warn)}.docs-al .meta{color:var(--muted)}
 .chipsel{display:flex;align-items:center;gap:8px;font-size:14px}.chipsel button{font:inherit;border:1px solid var(--accent);background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:3px 12px;cursor:pointer}
 @media (max-width:900px){.ag-cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.ag-cols{grid-template-columns:1fr}.cal-d{min-height:44px;padding:3px}.cal-d .b{padding:0 4px}.cal-leg{display:none}}
@@ -232,6 +233,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <div class="ag-enc" id="ag-enc" hidden></div>
       <div class="cal" id="cal"></div>
     </div>
+    <div class="avisos docs-al" id="docs-al" hidden></div>
     <div class="avisos" id="avisos" hidden></div>
     <div class="chipsel" id="sel-prioridades" hidden></div>
     <div class="kpis" id="k-prioridades"></div>
@@ -699,6 +701,13 @@ const lPr = makeList({
     const d=e.target.closest(".cal-d[data-k]"); if(d && !d.disabled){ const k=d.dataset.k; filtrar("dia "+fData(k), p=>p.dt && p.dt.slice(0,10)===k); d.classList.add("sel"); }
   });
   cal();
+  // documentos: só os que efetivamente VENCERAM ou estão DESATUALIZADOS (planilha Documentos TRX, coluna T)
+  try{ const DA=D.documentos_alerta||[], DF=D.documentos_fonte||{};
+    if(DA.length){ const el=$("#docs-al"); el.hidden=false;
+      const url=l=>"https://docs.google.com/spreadsheets/d/"+DF.id+"/edit#gid="+DF.gid+"&range=A"+l;
+      el.innerHTML='<h3>Documentos para resolver · '+DA.length+'</h3><ul>'+DA.map(x=>'<li><a href="'+url(x.l)+'" target="_blank" rel="noopener"><b>'+esc(x.doc)+'</b></a> · '+
+        (x.venc?'<span class="tag v">VENCIDO'+(x.val?' em '+fData(x.val):'')+'</span>':'<span class="tag d">DESATUALIZADO</span>')+
+        (x.mot?' · '+esc(x.mot):'')+(x.resp?' <span class="meta">· '+esc(x.resp)+'</span>':'')+'</li>').join("")+'</ul>'; } }catch(e){}
   // avisos da verificação automática, cada um numa linha (os prazos já aparecem na agenda)
   try{ const S=window.SAUDE; if(S){ const al=(S.alertas||[]).filter(a=>!/vencem em até 7 dias/.test(a)), av=S.avisos||[];
     if(al.length||av.length){ const el=$("#avisos"); el.hidden=false;

@@ -14,6 +14,7 @@ from googleapiclient.http import MediaIoBaseDownload
 PIPELINE_ID = "1rdhgZ_ps8Ih-wwj1dF4WuQhVsz_CnCLJI8JJwTyK9u0"
 LICIT_ID = "1FTHl-0FePl8aSIwGEuzFAj-P1GWEx_H1"          # xlsx que o robô do Mac grava
 LICIT_SHEET = "1ReCnYKNThynTD6-xxvyuDKQ33pakPrZBDqg_1U0PPe8"  # planilha Google da equipe
+DOCS_SHEET = "13nXaAsgQ4czDGnp6SZd2ConSeV_8_1exZG_lH4l9hD8"   # Documentos TRX (fonte da verdade)
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly",
           "https://www.googleapis.com/auth/spreadsheets.readonly"]
 
@@ -32,6 +33,14 @@ if "--so-licitacoes" in sys.argv:
     json.dump(lv, open("licitacoes.json", "w", encoding="utf-8"), ensure_ascii=False)
     open("mods.env", "a").write(f"MOD_LICIT_SHEET={mod(LICIT_SHEET)}\n")
     print(f"OK: licitacoes {len(lv.get('values', []))} linhas")
+    # Documentos TRX: so para o aviso de vencidos e desatualizados. Falha aqui nao derruba a pagina.
+    try:
+        dv = sheets.spreadsheets().values().get(spreadsheetId=DOCS_SHEET, range="Documentos!A1:T").execute()
+        json.dump(dv, open("documentos.json", "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"OK: documentos {len(dv.get('values', []))} linhas")
+    except Exception as e:
+        json.dump({"values": []}, open("documentos.json", "w", encoding="utf-8"))
+        print(f"::warning::Nao consegui ler a planilha Documentos TRX: {e}")
     sys.exit(0)
 
 vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AP").execute()
