@@ -13,16 +13,18 @@ permissions:
   pages: write
   id-token: write
 
+# A rodada que gera os dados entra numa fila de uma só (nunca duas ao mesmo tempo).
+# A publicação fica num job separado, com o ambiente github-pages e cancel-in-progress:
+# se uma publicação ficar presa esperando o ambiente (aconteceu em 01/10 e 06/10), a
+# próxima a cancela sozinha e a Central não para mais.
 concurrency:
-  group: pages
+  group: central-dados
   cancel-in-progress: false
 
 jobs:
   atualizar:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -83,6 +85,18 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+
+  publicar:
+    needs: atualizar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: central-publicar
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - id: deploy
         uses: actions/deploy-pages@v4
 
