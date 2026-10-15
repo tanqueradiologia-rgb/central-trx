@@ -36,12 +36,23 @@ FORA = ["equipament", "mamografo", "aparelho de raio", "aquisicao", "compra de",
         "marcacao pre-cirurgica", "protecao radiologica", "odontolog", "veterinar", "eletrocardiograma",
         "ecg", "holter", "eletroencefalo", "analises clinicas", "esteriliza", "medicina do trabalho",
         "hospedagem", "hotel", "obra", "reforma", "engenharia", "pavimenta", "uniforme", "combustivel",
-        "colchao", "medicamento", "veicular", "vistoria", "unidade movel", "itinerante"]
+        "colchao", "medicamento", "veicular", "vistoria", "unidade movel", "itinerante",
+        # m61 (15/10/2026): compra de material, locação e serviço que não é laudo
+        "avental", "plumbif", "detector digital", "locacao de", "comodato", "espectrometro", "estadiometro",
+        "filme para raio", "filme de raio", "controle de qualidade", "levantamento radiometrico", "residuos",
+        "arboreo", "tomografia sonica", "termo aditivo", "farmaceutico", "material de consumo",
+        "material hospitalar", " epi ", " epis"]
+# Laudo de ECG sem exame de imagem não é da TRX, mesmo com "telerradiologia" no texto.
+ECG = ["eletrocardiogra", "eletrocardiograf", " ecg "]
+MODALIDADE = ["raio-x", "raio x", "raios x", "radiograf", "tomograf", "ressonanc", "mamograf", "densitometr",
+              "radiologic"]
 # Encaixe: alta = laudo remoto de imagem; baixa = trabalho presencial ou preço abaixo do piso.
 PRESENCIAL = ["plantoes", "plantao", "por quilometro", "r$/km", "deslocamento", "biopsia", "ultrassonografia",
               "ultrassom", "usg", "doppler", "carga horaria", "tecnico em radiologia", "tecnicos em radiologia",
               "operador de raio", "realizacao de exames", "com equipamento proprio", "consultorio movel",
-              "veiculo movel"]
+              "veiculo movel", "realizacao dos exames", "execucao de exames", "execucao dos exames",
+              "com sedacao", "contrastado", "clinicas medicas", "estrutura fisica", "locacao de", "comodato",
+              "instalacao, operacao"]
 # Piso de venda por laudo (nunca abaixo). RX: decisão do Marcos em 01/10/2026 (R$ 10,00).
 # TC, RM e MMG: repasse ao radiologista dividido por 0,81 (19% de impostos e comissões).
 PISOS = [("RX", ["raio-x", "raio x", "raios x", "radiograf", " rx "], 10.00),
@@ -117,8 +128,10 @@ def linha_de(it, agora):
 
 
 def relevante(it):
-    txt = sem_acento(f"{it.get('title', '')} {it.get('description', '')}")
+    txt = " " + sem_acento(f"{it.get('title', '')} {it.get('description', '')}") + " "
     img = any(k in txt for k in IMAGEM)
+    if any(k in txt for k in ECG) and not any(k in txt for k in MODALIDADE):
+        return False
     if any(k in txt for k in FORTE) or (img and any(k in txt for k in REMOTO)):
         return True
     return img and not any(k in txt for k in FORA)
