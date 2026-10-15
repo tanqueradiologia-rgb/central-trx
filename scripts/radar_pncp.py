@@ -143,6 +143,9 @@ def encaixe_texto(it):
     só presencial (realização de exames, ultrassom, plantão) = baixa."""
     txt = " " + sem_acento(f"{it.get('title', '')} {it.get('description', '')}") + " "
     pres = [k for k in PRESENCIAL if k in txt]
+    km = re.search(r"raio (?:maximo )?de (?:ate )?\d+ ?(?:km|quilometros)", txt)  # sede perto do órgão
+    if km:
+        pres.append(km.group(0))
     img = any(k in txt for k in IMAGEM)
     remoto = any(k in txt for k in FORTE) or (img and any(k in txt for k in REMOTO))
     if remoto and not pres:
