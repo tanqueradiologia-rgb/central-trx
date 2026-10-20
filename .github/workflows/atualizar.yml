@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Instalar dependências
-        run: pip install --quiet google-auth google-api-python-client openpyxl
+        run: pip install --quiet google-auth google-api-python-client openpyxl cryptography
       - name: Baixar as planilhas
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
@@ -69,12 +69,16 @@ jobs:
           python scripts/build_central.py --pipeline pipeline.json --licitacoes licitacoes.json \
             --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET" \
             --documentos documentos.json
-          # evita que o navegador mostre dados velhos guardados em cache
-          sed -i "s#dados_central.js\"#dados_central.js?v=${GITHUB_RUN_ID}\"#; s#saude.js\"#saude.js?v=${GITHUB_RUN_ID}\"#; s#roteiro.js\"#roteiro.js?v=${GITHUB_RUN_ID}\"#" site/index.html
       - name: Verificação automática (motores e regras)
         run: |
           set -a; . ./mods.env; set +a
           python scripts/verificar_central.py
+      # Os dados só saem cifrados: dados_central.js, saude.js e roteiro.js viram central.enc
+      # e são apagados de site/. Sem o segredo CENTRAL_SENHA a rodada falha e nada é publicado.
+      - name: Cifrar os dados da Central com a senha da equipe
+        env:
+          CENTRAL_SENHA: ${{ secrets.CENTRAL_SENHA }}
+        run: python scripts/cifrar_central.py
       - name: Avisar se a sincronização falhou
         if: steps.sync.outcome == 'failure'
         run: echo "::warning::A sincronização com a planilha de licitações falhou nesta rodada; a página saiu com os dados da planilha como estavam."

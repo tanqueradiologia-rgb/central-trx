@@ -14,8 +14,12 @@ Página de acompanhamento da TRX Diagnóstico Digital: clínicas particulares, l
 | `scripts/build_central.py` | transforma as planilhas no arquivo de dados da página |
 | `.github/workflows/atualizar.yml` | agenda e publica |
 
-## Segredo necessário
-`GOOGLE_SA_JSON` (Settings → Secrets and variables → Actions): conteúdo do arquivo JSON da chave da conta de serviço. As duas planilhas precisam estar compartilhadas com o e-mail dessa conta, como leitor.
+## Segredos necessários (Settings → Secrets and variables → Actions)
+- `GOOGLE_SA_JSON`: conteúdo do arquivo JSON da chave da conta de serviço. As planilhas precisam estar compartilhadas com o e-mail dessa conta, como leitor.
+- `CENTRAL_SENHA`: senha da equipe (8 caracteres ou mais). Desde 20/10/2026 a página publica só `central.enc`: `dados_central.js`, `saude.js` e `roteiro.js` são cifrados (PBKDF2 + AES-256-GCM, `scripts/cifrar_central.py`) e apagados antes da publicação. A página pede a senha uma vez e a guarda no navegador; o botão Sair apaga. Para trocar a senha: trocar o segredo, rodar o workflow e avisar a equipe. Sem o segredo a rodada falha e nada é publicado.
+
+## O que continua público
+O repositório é público: `config/roteiro.json`, `apps-script/Codigo.gs` (com o roteiro embutido) e os IDs das planilhas ficam visíveis no GitHub, mesmo com a página cifrada. Para esconder também isso, o repositório precisa virar privado (GitHub Pages em repositório privado exige plano pago) ou o roteiro precisa sair do repositório.
 
 ## Central TRX · Edição (Apps Script)
 A pasta `apps-script/` tem o app de edição das clínicas. Ele é um projeto Apps Script próprio (separado dos scripts que já existem na planilha) e abre a Pipeline TRX pelo ID:

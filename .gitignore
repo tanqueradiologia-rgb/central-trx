@@ -2,3 +2,7 @@ pipeline.json
 Pipeline_Licitacoes.xlsx
 mods.env
 __pycache__/
+site/roteiro.js
+site/dados_central.js
+site/saude.js
+site/central.enc

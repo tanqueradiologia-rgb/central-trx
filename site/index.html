@@ -43,7 +43,7 @@
   --c-atacar:#f5868c; --c-quente:#f0a14a; --c-morno:#d4c24d; --c-frio:#8fb0cf; --c-sem:#7f8b97;
   --ok:#5fc48a; --warn:#f0a14a; --bad:#f5868c; color-scheme:dark}
 *{box-sizing:border-box}
-.tema{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:3px 10px;cursor:pointer}.tema-nav{margin:auto 0 8px auto;flex:none}.tema:hover{border-color:var(--accent);color:var(--ink)}
+.tema{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:3px 10px;cursor:pointer}#sair{margin:auto 0 8px 6px}.tema-nav{margin:auto 0 8px auto;flex:none}.tema:hover{border-color:var(--accent);color:var(--ink)}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 .wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
@@ -220,6 +220,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <a href="#roteiro" data-tab="roteiro">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
+      <button class="tema" id="sair" type="button" hidden title="Apaga a senha guardada neste aparelho">Sair</button>
     </nav>
     <div id="saude" class="saude" hidden></div>
   </div>
@@ -337,10 +338,75 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
   <footer id="rodape"></footer>
 </main>
 
-<script src="dados_central.js"></script>
-<script src="saude.js" onerror="window.SAUDE=null"></script>
-<script src="roteiro.js" onerror="window.ROTEIRO=null"></script>
+<!-- Acesso: os dados da Central viajam cifrados (central.enc) e só abrem com a senha da equipe.
+     A senha fica guardada neste navegador depois do primeiro acesso; "Sair" apaga. -->
+<style>
+.gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+.gate form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;width:min(360px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.gate h2{margin:0;font-family:var(--f-display);font-size:20px;color:var(--accent)}
+.gate p{margin:0;font-size:14px;color:var(--muted)}
+.gate input{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface2);color:var(--ink)}
+.gate button{font:inherit;font-weight:600;padding:10px 14px;border:0;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer}
+.gate button[disabled]{opacity:.6;cursor:wait}
+.gate .err{color:var(--bad);font-size:14px;min-height:1.2em}
+</style>
+<div class="gate" id="gate" hidden>
+  <form id="gateForm" autocomplete="off">
+    <h2>Central TRX</h2>
+    <p>Digite a senha da equipe para abrir os dados. Ela fica guardada neste aparelho.</p>
+    <input type="password" id="gateSenha" placeholder="Senha" autocomplete="current-password" required>
+    <button type="submit" id="gateBtn">Entrar</button>
+    <div class="err" id="gateErr" aria-live="polite"></div>
+  </form>
+</div>
 <script>
+(function(){
+"use strict";
+const KEY="trx-senha";
+const gate=document.getElementById("gate"), form=document.getElementById("gateForm"),
+      inp=document.getElementById("gateSenha"), btn=document.getElementById("gateBtn"), err=document.getElementById("gateErr");
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+let pacote=null;
+async function carregar(){
+  if(pacote) return pacote;
+  const r=await fetch("central.enc?v="+Date.now(),{cache:"no-store"});
+  if(!r.ok) throw new Error("central.enc "+r.status);
+  pacote=await r.json(); return pacote;
+}
+async function decifrar(senha){
+  const p=await carregar(), enc=new TextEncoder();
+  const base=await crypto.subtle.importKey("raw",enc.encode(senha),"PBKDF2",false,["deriveKey"]);
+  const chave=await crypto.subtle.deriveKey({name:"PBKDF2",hash:"SHA-256",salt:b64(p.salt),iterations:p.iter},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const claro=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(p.iv)},chave,b64(p.ct));
+  return new TextDecoder().decode(claro);
+}
+function rodar(js){
+  const dados=document.createElement("script"); dados.textContent=js; document.body.appendChild(dados);
+  const app=document.getElementById("trx-app");
+  const s=document.createElement("script"); s.textContent=app.textContent; document.body.appendChild(s);
+  gate.hidden=true; gate.remove();
+  const sair=document.getElementById("sair"); if(sair){ sair.hidden=false; sair.addEventListener("click",()=>{ try{localStorage.removeItem(KEY);}catch(e){} location.reload(); }); }
+}
+async function tentar(senha,guardar){
+  btn.disabled=true; err.textContent="";
+  try{
+    const js=await decifrar(senha);
+    if(guardar){ try{localStorage.setItem(KEY,senha);}catch(e){} }
+    rodar(js);
+  }catch(e){
+    btn.disabled=false; gate.hidden=false; inp.focus();
+    err.textContent = /central\.enc/.test(String(e)) ? "Os dados não carregaram. Recarregue a página." : "Senha incorreta.";
+    try{localStorage.removeItem(KEY);}catch(x){}
+  }
+}
+form.addEventListener("submit",e=>{ e.preventDefault(); tentar(inp.value,true); });
+let guardada=""; try{ guardada=localStorage.getItem(KEY)||""; }catch(e){}
+if(!window.crypto||!crypto.subtle){ gate.hidden=false; err.textContent="Este navegador não suporta a abertura segura. Use Chrome, Safari ou Firefox atualizados."; }
+else if(guardada) tentar(guardada,false);
+else { gate.hidden=false; inp.focus(); }
+})();
+</script>
+<script type="text/plain" id="trx-app">
 (function(){
 "use strict";
 const D = window.CENTRAL;

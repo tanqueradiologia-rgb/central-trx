@@ -119,7 +119,25 @@ const ABA_HIST = 'Historico';
 const ABA_EQUIPE = 'Equipe';
 const TZ = 'America/Sao_Paulo';
 
+/** Só entra quem está na aba Equipe com e-mail e Ativo diferente de "não" (além do acesso à planilha). */
+function permitido_() {
+  const eu = String(Session.getActiveUser().getEmail() || '').toLowerCase();
+  if (!eu) return false;
+  try {
+    return equipe_().some(function (p) { return p.email.toLowerCase() === eu; });
+  } catch (err) { return false; }  // sem acesso à planilha = sem acesso ao app
+}
+
 function doGet(e) {
+  if (!permitido_()) {
+    return HtmlService.createHtmlOutput(
+      '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<body style="font-family:Open Sans,Segoe UI,system-ui,sans-serif;color:#28313e;background:#f4f2f2;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px">' +
+      '<div style="background:#fff;border:1px solid #dfe0e2;border-radius:8px;padding:24px;max-width:380px">' +
+      '<h2 style="margin:0 0 8px;color:#0e3a5a">Central TRX · Edição</h2>' +
+      '<p style="margin:0;font-size:14px;color:#334861">Esta conta Google não está na equipe da TRX. Se você faz parte da equipe, peça ao Marcos para incluir seu e-mail na aba Equipe da Pipeline TRX.</p>' +
+      '</div></body>').setTitle('Central TRX · Edição');
+  }
   // Link vindo da Central (GitHub): ?f=clinicas|licitacoes|quadro&l=<linha da planilha> abre a linha direto.
   const t = HtmlService.createTemplateFromFile('Index');
   const p = (e && e.parameter) || {};
