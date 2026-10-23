@@ -117,6 +117,10 @@ def classificar_publico(r, trilha):
     if w is None: sc = min(sc, 60)
     if w is None and n is None: sc = min(sc, 45)
     if w is not None and n is None and d is None: sc = min(sc, 75)
+    # m81 (23/10/2026): encaixe baixa (presencial, fora do telelaudo ou sem laudo no objeto) não herda
+    # a Faixa do órgão: no máximo MORNO, para não subir para ATACAR AGORA na fila da Carla.
+    if str(r.get("Encaixe") or "").strip().lower() == "baixa":
+        sc = min(sc, 45)
     sc = int(round(sc))
     fx = "ATACAR AGORA" if sc >= 70 else "QUENTE" if sc >= 50 else "MORNO" if sc >= 30 else "FRIO"
     return sc, fx, "%d/3" % len(med)

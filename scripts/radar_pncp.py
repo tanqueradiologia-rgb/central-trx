@@ -29,7 +29,8 @@ IMAGEM = ["raio-x", "raio x", "raios x", "radiolog", "radiograf", "tomograf", "r
           "densitometr", "diagnostico por imagem", "exames de imagem", "imagens radiolog"]
 # Pedido de laudo remoto de imagem: entra mesmo com palavra da lista de descarte (ex.: ECG junto).
 FORTE = ["telerradiolog", "laudos de exames radiolog", "laudos radiolog", "laudos de raio", "laudo de raio",
-         "laudos de tomograf", "laudos de imagens"]
+         "laudos de tomograf", "laudos de imagens", "telelaudo", "telediagnost", "laudo a distancia",
+         "laudos a distancia", "laudos de rx", "laudo de rx", "laudagem de rx"]
 REMOTO = ["telemedicina", "a distancia", "remot", "telelaudo", "pacs"]
 FORA = ["equipament", "mamografo", "aparelho de raio", "aquisicao", "compra de", "insumo", "filme radiograf",
         "filme radiolog", "konica", "manutencao", "calibracao", "dosimetr", "contraste", "gadolin",
@@ -41,7 +42,17 @@ FORA = ["equipament", "mamografo", "aparelho de raio", "aquisicao", "compra de",
         "avental", "plumbif", "detector digital", "locacao de", "comodato", "espectrometro", "estadiometro",
         "filme para raio", "filme de raio", "controle de qualidade", "levantamento radiometrico", "residuos",
         "arboreo", "tomografia sonica", "termo aditivo", "farmaceutico", "material de consumo",
-        "material hospitalar", " epi ", " epis"]
+        "material hospitalar", " epi ", " epis",
+        # m81 (23/10/2026): obra e mobiliário da sala, material, software e equipamento
+        "janela", "vidro", "guiche", "adesivo", "mobiliario", "blindagem", "fornecimento de materia",
+        "materiais radiolog", "filmes radiolog", "software", "vale-transporte", "vale transporte",
+        "emissor de raio", "eletrodo", "insalubridade", "periculosidade", "locacao e manutencao",
+        "locacao de sistema", "medicina nuclear", "cintilograf", "pet-ct", "odonto", "filme", "lavanderia",
+        "coleta e analise"]
+# Objeto que fala de laudo ou leitura remota. Sem nenhum destes, a linha entra com encaixe baixa
+# ("sem laudo no objeto") para a Carla conferir, em vez de herdar a Faixa do órgão (m81).
+LAUDO = ["laudo", "telerradiolog", "teleradiolog", "telediagnost", "a distancia", "remot", "interpretacao",
+         "pacs", "telemedicina"]
 # Laudo de ECG sem exame de imagem não é da TRX, mesmo com "telerradiologia" no texto.
 ECG = ["eletrocardiogra", "eletrocardiograf", " ecg "]
 MODALIDADE = ["raio-x", "raio x", "raios x", "radiograf", "tomograf", "ressonanc", "mamograf", "densitometr",
@@ -143,6 +154,9 @@ def encaixe_texto(it):
     só presencial (realização de exames, ultrassom, plantão) = baixa."""
     txt = " " + sem_acento(f"{it.get('title', '')} {it.get('description', '')}") + " "
     pres = [k for k in PRESENCIAL if k in txt]
+    for k in ("dedicacao exclusiva", "unidade movel", "carreta"):
+        if k in txt and k not in pres:
+            pres.append(k)
     km = re.search(r"raio (?:maximo )?de (?:ate )?\d+ ?(?:km|quilometros)", txt)  # sede perto do órgão
     if km:
         pres.append(km.group(0))
@@ -154,6 +168,8 @@ def encaixe_texto(it):
         return "media", "laudo remoto com parte presencial: " + ", ".join(pres[:3])
     if pres:
         return "baixa", "presencial ou fora do telelaudo: " + ", ".join(pres[:3])
+    if not any(k in txt for k in LAUDO):
+        return "baixa", "sem laudo no objeto: conferir se aceita telelaudo"
     return "media", ""
 
 
@@ -205,7 +221,7 @@ def limpar_ruido(api, H, ix, agora):
             if "Responsavel" in ix and not str(r[ix["Responsavel"]]).strip():
                 mud.append({"range": f"{ABA}!{col(ix['Responsavel'] + 1)}{n}", "values": [["Carla"]]})
             bloq = str(r[ix["Bloqueio"]]).strip() if "Bloqueio" in ix else ""
-            auto = bloq.startswith("presencial ou fora") or bloq.startswith("laudo remoto com parte")
+            auto = not bloq or bloq.startswith(("presencial ou fora", "laudo remoto com parte", "sem laudo no objeto"))
             if "Encaixe" in ix and (not str(r[ix["Encaixe"]]).strip() or auto):  # encaixe pelo texto
                 enc, motivo = encaixe_texto({"title": r[ix["Edital"]], "description": r[ix["Objeto"]]})
                 if enc != str(r[ix["Encaixe"]]).strip():
