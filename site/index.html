@@ -62,6 +62,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
 .fresh.stale .dot{background:var(--warn)}
 .fresh.stale b{color:var(--warn)}
+.fresh.stale{background:color-mix(in srgb,var(--warn) 16%,transparent);border:1px solid var(--warn);border-radius:8px;padding:6px 10px;color:var(--ink)}
 nav.tabs{display:flex;gap:4px;overflow-x:auto}
 nav.tabs a{font-family:var(--f-display);font-weight:600;font-size:16px;letter-spacing:.03em;color:var(--muted);text-decoration:none;padding:8px 14px 10px;border-bottom:3px solid transparent;white-space:nowrap}
 nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
@@ -441,10 +442,18 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
 
 /* ---------- frescor ---------- */
 (function(){
-  const g=parseD(D.gerado); const h = g ? (Date.now()-g.getTime())/36e5 : 99;
-  const el=$("#fresh");
-  $("#freshTxt").innerHTML = "Dados das planilhas de <b>"+esc(fData(D.gerado,true))+"</b>" + (h>8 ? " · <b>desatualizado há "+Math.floor(h)+"h</b>" : " · atualiza ao longo do dia");
-  if(h>8) el.classList.add("stale");
+  /* Aviso de dado velho (m90, 28/10/2026): a Central roda a cada 10 min no GitHub, mas o agendador do GitHub
+     atrasa e já ficou 2h30 sem rodar. Passou de 30 min, a faixa fica amarela e mostra há quanto tempo. */
+  const g=parseD(D.gerado); const el=$("#fresh");
+  function pinta(){
+    const min = g ? Math.floor((Date.now()-g.getTime())/6e4) : 9999;
+    let atraso="";
+    if(min>30){ atraso = min<120 ? min+" min" : Math.floor(min/60)+"h"+String(min%60).padStart(2,"0"); }
+    $("#freshTxt").innerHTML = "Última atualização: <b>"+esc(fData(D.gerado,true))+"</b>" +
+      (atraso ? " · <b>⚠️ sem atualizar há "+atraso+"</b>. O GitHub atrasou a rodada; o dado abaixo pode estar velho. Recarregue a página em alguns minutos." : " · atualiza a cada 10 minutos");
+    el.classList.toggle("stale", !!atraso);
+  }
+  pinta(); setInterval(pinta, 60000);
   if(false) try{ const S=window.SAUDE; if(S && (S.alertas||[]).length){ const el=$("#saude"); el.hidden=false;
     el.innerHTML="<details><summary>Verificação automática: "+S.alertas.length+" alerta(s)"+((S.avisos||[]).length?" e "+S.avisos.length+" aviso(s)":"")+"</summary><ul>"+
     S.alertas.map(a=>"<li><b>"+esc(a)+"</b></li>").join("")+(S.avisos||[]).map(a=>"<li>"+esc(a)+"</li>").join("")+"</ul></details>"; } }catch(e){}
