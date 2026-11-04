@@ -204,8 +204,9 @@ DOCS_GID = 423972086
 
 
 def documentos_alerta(path):
-    """Documentos TRX: so o que efetivamente VENCEU (Status VENCIDO) ou esta DESATUALIZADO
-    (coluna T preenchida). Vence em 15 ou 30 dias nao entra: o aviso e so para o que trava."""
+    """Documentos TRX: tudo que tem validade e pede acao. Vermelho: VENCEU (Status VENCIDO)
+    ou DESATUALIZADO (coluna T preenchida). Laranja: Status VENCE EM ... (15/30/45 dias),
+    para a Carla renovar antes de travar (decisao do Marcos em 04/11/2026)."""
     try:
         dv = json.load(open(path, encoding="utf-8"))
     except Exception:
@@ -220,13 +221,15 @@ def documentos_alerta(path):
         doc = txt(d.get("Documento"), 140)
         if not doc:
             continue
-        venc = str(d.get("Status") or "").strip().upper() == "VENCIDO"
+        status = str(d.get("Status") or "").strip().upper()
+        venc = status == "VENCIDO"
+        breve = status if status.startswith("VENCE EM") else ""
         desat = txt(d.get("Desatualizado (motivo)"), 220)
-        if not venc and not desat:
+        if not venc and not desat and not breve:
             continue
-        out.append({"l": n, "doc": doc, "venc": venc, "val": data_iso(d.get("Validade")),
+        out.append({"l": n, "doc": doc, "venc": venc, "breve": breve, "val": data_iso(d.get("Validade")),
                     "mot": desat, "resp": txt(d.get("Responsavel")), "sit": txt(d.get("Situacao"), 60)})
-    out.sort(key=lambda x: (0 if x["venc"] else 1, x["val"] or "9999"))
+    out.sort(key=lambda x: (0 if x["venc"] else (1 if x["mot"] else 2), x["val"] or "9999"))
     return out
 
 
