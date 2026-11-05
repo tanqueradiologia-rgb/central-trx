@@ -3,7 +3,7 @@
 Página de acompanhamento da TRX Diagnóstico Digital: clínicas particulares, licitações e prazos, quadro nacional.
 
 - **Fonte da verdade:** as planilhas "Pipeline TRX — Prospecção (fonte da verdade)" (Google Sheets) e "Pipeline_Licitacoes.xlsx" (Google Drive). Toda edição é feita nelas.
-- **Atualização:** a automação `.github/workflows/atualizar.yml` é agendada nos horários fixos 06h13, 08h13, 10h13, 12h13, 14h13, 16h13 e 18h13 de Brasília, mais uma rodada de hora em hora (minuto 37) que também roda o radar PNCP. O agendador do GitHub descarta parte dos gatilhos em repositório público, então nem todo horário dispara; o aviso amarelo da página só acende depois de 90 minutos sem rodada (m120, 05/11/2026). Ela lê as planilhas com uma conta de serviço do Google só de leitura, gera `dados_central.js` e publica no GitHub Pages.
+- **Atualização:** a automação `.github/workflows/atualizar.yml` é agendada nos horários fixos 06h13, 08h13, 10h13, 12h13, 14h13, 16h13 e 18h13 de Brasília, mais uma rodada de hora em hora (minuto 37) que também roda o radar PNCP. O agendador do GitHub descarta parte dos gatilhos em repositório público, então nem todo horário dispara; o aviso amarelo da página só acende depois de 90 minutos sem rodada (m120, 05/11/2026). Quem garante a rodação é a tarefa agendada do Claude "TRX: disparar a Central no GitHub", que chama workflow_dispatch a cada hora no minuto 8, das 06h às 20h de Brasília; o cron do próprio workflow é a segunda via. Ela lê as planilhas com uma conta de serviço do Google só de leitura, gera `dados_central.js` e publica no GitHub Pages.
 - **Telefone e e-mail não entram na página.** O contato fica na planilha.
 
 ## Arquivos

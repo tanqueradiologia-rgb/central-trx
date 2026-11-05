@@ -187,7 +187,7 @@
         "nome": "Triagem",
         "dono": "Carla",
         "preco": false,
-        "objetivo": "Ler o resumo, conferir no mesmo dia o cadastro na plataforma da disputa (a TRX já perdeu processos por cadastro) e anotar travas: CNES, presencial, atestado, exclusividade ME/EPP.",
+        "objetivo": "Ler o resumo, conferir no mesmo dia o cadastro na plataforma da disputa (a TRX já perdeu processos por cadastro) e anotar travas: alvara sanitario, presencial, atestado, exclusividade ME/EPP. CNES nao e trava: a TRX tem CNES 8596204 desde 25/10/2026 e anexa a ficha.",
         "fecha": "O Marcos decide participar, ou a linha vai para Descartado com o motivo em Resultado."
       },
       {
@@ -232,7 +232,7 @@
       "Lendo edital": {
         "e": 1,
         "resp": "Carla",
-        "faz": "Levantar exigências e travas (CNES, presencial, atestado, índices, ME/EPP, preço por laudo contra o piso) e registrar em Trava."
+        "faz": "Levantar exigências e travas (alvará sanitário, presencial, atestado, índices, ME/EPP, preço por laudo contra o piso) e registrar em Trava. CNES não entra: a TRX tem CNES 8596204 desde 25/10/2026."
       },
       "Montando habilitacao": {
         "e": 2,

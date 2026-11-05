@@ -5,7 +5,8 @@
 Por que existe: as tarefas do Mac (quadro nacional, radar de licitações, monitor de
 e-mail) continuam gravando o .xlsx do jeito de sempre. A equipe passa a trabalhar na
 planilha Google (direto ou pelo app Central TRX · Edição). Este script roda no GitHub
-a cada 10 minutos e junta as duas coisas.
+nos horarios fixos do atualizar.yml (06h13 as 18h13, de 2 em 2 horas) e na rodada de
+hora em hora, e junta as duas coisas.
 
 Regras (as mesmas do abastecer_licitacoes.py):
   - A chave é a coluna ID.
