@@ -2,7 +2,11 @@ name: Atualizar Central TRX
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # a cada 10 min, o dia todo (o GitHub pode atrasar alguns minutos)
+    # Horários fixos em minuto quebrado (m120, 05/11/2026): o agendador do GitHub descarta
+    # a maior parte dos gatilhos de alta frequência em repositório público (o */10 rodava
+    # 7 a 8 vezes por dia, não 144). Pedir pouco e fora do minuto cheio aumenta a chance
+    # de cada rodada ser atendida. 06h13 às 18h13 de Brasília, de 2 em 2 horas (UTC-3).
+    - cron: "13 9,11,13,15,17,19,21 * * *"
     - cron: "37 * * * *"     # rodada de hora em hora que também roda o radar PNCP
   workflow_dispatch: {}
   push:

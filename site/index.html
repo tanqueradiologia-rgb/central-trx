@@ -442,22 +442,23 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
 
 /* ---------- frescor ---------- */
 (function(){
-  /* Aviso de dado velho (m90, 28/10/2026): a Central roda a cada 10 min no GitHub, mas o agendador do GitHub
-     atrasa e já ficou 2h30 sem rodar. Passou de 30 min, a faixa fica amarela e mostra há quanto tempo. */
+  /* Aviso de dado velho (m90 28/10/2026, revisto m120 05/11/2026): o agendador do GitHub descarta a maior
+     parte das rodadas, então o normal é a Central ficar até ~2h sem atualizar. A faixa só fica amarela
+     depois de 90 min, para não gritar no funcionamento normal. */
   const g=parseD(D.gerado); const el=$("#fresh");
   function pinta(){
     const min = g ? Math.floor((Date.now()-g.getTime())/6e4) : 9999;
     let atraso="";
-    if(min>30){ atraso = min<120 ? min+" min" : Math.floor(min/60)+"h"+String(min%60).padStart(2,"0"); }
+    if(min>90){ atraso = min<120 ? min+" min" : Math.floor(min/60)+"h"+String(min%60).padStart(2,"0"); }
     $("#freshTxt").innerHTML = "Última atualização: <b>"+esc(fData(D.gerado,true))+"</b>" +
-      (atraso ? " · <b>⚠️ sem atualizar há "+atraso+"</b>. O GitHub atrasou a rodada; o dado abaixo pode estar velho. Recarregue a página em alguns minutos." : " · atualiza a cada 10 minutos");
+      (atraso ? " · <b>⚠️ sem atualizar há "+atraso+"</b>. O GitHub atrasou a rodada; o dado abaixo pode estar velho. Recarregue a página mais tarde." : "");
     el.classList.toggle("stale", !!atraso);
   }
   pinta(); setInterval(pinta, 60000);
   if(false) try{ const S=window.SAUDE; if(S && (S.alertas||[]).length){ const el=$("#saude"); el.hidden=false;
     el.innerHTML="<details><summary>Verificação automática: "+S.alertas.length+" alerta(s)"+((S.avisos||[]).length?" e "+S.avisos.length+" aviso(s)":"")+"</summary><ul>"+
     S.alertas.map(a=>"<li><b>"+esc(a)+"</b></li>").join("")+(S.avisos||[]).map(a=>"<li>"+esc(a)+"</li>").join("")+"</ul></details>"; } }catch(e){}
-  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. Use o botão Editar em cada linha; a mudança aparece aqui em até 10 minutos.</div>";
+  $("#rodape").innerHTML = "<div>Fonte das clínicas: "+esc(D.fontes.pipeline.nome)+" ("+D.fontes.pipeline.linhas+" linhas). Fonte de licitações e quadro: "+esc(D.fontes.licitacoes.nome)+" ("+D.fontes.licitacoes.linhas+" processos, "+D.fontes.licitacoes.quadro+" municípios, "+D.fontes.licitacoes.descartados+" descartados"+(D.fontes.licitacoes.encerrados?", "+D.fontes.licitacoes.encerrados+" encerrados sem avanço":"")+").</div><div>Para mudar Fase, próxima ação ou notas, use o app Central TRX · Edição ou a planilha. Use o botão Editar em cada linha; a mudança aparece aqui na próxima rodada.</div>";
 })();
 
 /* ---------- motor genérico de lista ---------- */
