@@ -272,7 +272,11 @@ function campo(nome, cfg, valor){
   if(cfg.tipo==="email") return '<label'+full+'>'+lbl.replace(/^Email$/,"E-mail")+'<input type="email" name="'+nome+'" value="'+esc(valor)+'"></label>';
   return '<label'+full+'>'+lbl+'<input type="text" name="'+nome+'" value="'+esc(valor)+'"></label>';
 }
-var NOME_PAPEL={"Socios medicos":"sócios médicos","Gestor":"gestor do contrato"};
+var NOME_PAPEL={"Socios medicos":"sócios médicos","Gestor":"gestor do contrato","Gestor Bruno":"gestor Bruno","Gestora Thalyta":"gestora Thalyta"};
+// Gestor Bruno e Gestora Thalyta sao o mesmo papel do roteiro ("Gestor"): nao sao divergencia de responsavel.
+var PAPEL_BASE={"Gestor Bruno":"Gestor","Gestora Thalyta":"Gestor"};
+function base(x){ return PAPEL_BASE[x]||x; }
+function mesmoPapel(a,b){ return base(a)===base(b); }
 function papel(x){ return NOME_PAPEL[x]||x||"—"; }
 function addDias(iso,n){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(iso||""); if(!m) return ""; var d=new Date(+m[1],+m[2]-1,+m[3]+n); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear(); }
 function rotBox(r){
@@ -292,7 +296,7 @@ function rotBox(r){
     if(nx) h+='<p><b>Próximo toque sugerido:</b> '+nx.n+'º, '+esc(nx.canal)+(ini?' em '+addDias(ini,nx.dia):' (preencha o Início da cadência)')+'. '+esc(nx.obj)+'</p>';
     else h+='<p><b>Cadência completa.</b> Sem resposta, a Fase pode ir para Sem retorno.</p>';
   }
-  if(F.resp && resp && resp!==F.resp) h+='<p class="alerta">Responsável na linha: '+esc(papel(resp))+'. Pelo roteiro esta fase é de '+esc(papel(F.resp))+'. Se a entrega ainda não aconteceu, o dono anterior continua responsável.</p>';
+  if(F.resp && resp && !mesmoPapel(resp,F.resp)) h+='<p class="alerta">Responsável na linha: '+esc(papel(resp))+'. Pelo roteiro esta fase é de '+esc(papel(F.resp))+'. Se a entrega ainda não aconteceu, o dono anterior continua responsável.</p>';
   h+='<p class="meta">O roteiro orienta; quem decide é a equipe.</p>';
   el.innerHTML=h; el.hidden=false;
 }

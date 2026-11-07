@@ -523,7 +523,11 @@ function band(barId, legId, parts, list, test){
 /* ---------- ROTEIRO comercial (config/roteiro.json): orienta, não decide ---------- */
 const RT = window.ROTEIRO || null;
 const FRT = {clinicas:"particulares", licitacoes:"licitacoes", quadro:"quadro"};
-const NOME_PAPEL = {"Socios medicos":"sócios médicos","Gestor":"gestor do contrato"};
+const NOME_PAPEL = {"Socios medicos":"sócios médicos","Gestor":"gestor do contrato","Gestor Bruno":"gestor Bruno","Gestora Thalyta":"gestora Thalyta"};
+// Gestor Bruno e Gestora Thalyta sao o mesmo papel do roteiro ("Gestor"): nao sao divergencia de responsavel.
+const PAPEL_BASE = {"Gestor Bruno":"Gestor","Gestora Thalyta":"Gestor"};
+const base = x => PAPEL_BASE[x] || x;
+const mesmoPapel = (a,b) => base(a) === base(b);
 const papel = x => NOME_PAPEL[x] || x || "—";
 const corEt = n => n>=1 && n<=7 ? "var(--e"+n+")" : "var(--c-sem)";
 function rotInfo(src, fase){ const R=RT&&RT[FRT[src]]; if(!R) return null; const F=R.fases[fase]; if(!F) return null; return {R, F, E:R.etapas.find(e=>e.n===F.e)||null}; }
@@ -540,7 +544,7 @@ function rotBox(src, r){
   if(src==="clinicas"){ const t=proxToque(r);
     if(t&&t.fim) h+='<p><b>Cadência completa.</b> Sem resposta, a Fase pode ir para Sem retorno.</p>';
     else if(t) h+='<p><b>Próximo toque sugerido:</b> '+t.n+'º, '+esc(t.canal)+(t.data?' em '+fData(t.data):' (falta o Início da cadência)')+'. '+esc(t.obj)+(r.prox&&t.data&&r.prox.slice(0,10)!==t.data?' A linha marca '+fData(r.prox)+'.':'')+'</p>'; }
-  if(F.resp && r.resp && r.resp!==F.resp && src==="clinicas") h+='<p class="alerta">Responsável na linha: '+esc(papel(r.resp))+'. Pelo roteiro esta fase é de '+esc(papel(F.resp))+'. Sem a entrega, o dono anterior continua responsável.</p>';
+  if(F.resp && r.resp && !mesmoPapel(r.resp,F.resp) && src==="clinicas") h+='<p class="alerta">Responsável na linha: '+esc(papel(r.resp))+'. Pelo roteiro esta fase é de '+esc(papel(F.resp))+'. Sem a entrega, o dono anterior continua responsável.</p>';
   return h+'</div>';
 }
 
@@ -868,7 +872,7 @@ const lRot = (function(){
       return '<div class="rt-col" style="border-top-color:'+corEt(E.n)+'"><h3><span>'+E.n+'. '+esc(E.nome)+'</span><b>'+it.length+'</b></h3>'+
         '<div class="dono">Dono: '+esc(papel(E.dono))+'<span class="pz-tag '+(E.preco?'com':'sem')+'">'+(E.preco?'com preço':'sem preço')+'</span></div>'+
         (Object.keys(cont).length?'<div class="rt-fases">'+Object.keys(cont).map(f=>'<span>'+esc(f)+' '+cont[f]+'</span>').join("")+'</div>':'')+
-        (it.slice(0,MAX).map(x=>{ const al = x.src==="clinicas" && x.r.resp && x.i.F.resp && x.r.resp!==x.i.F.resp;
+        (it.slice(0,MAX).map(x=>{ const al = x.src==="clinicas" && x.r.resp && x.i.F.resp && !mesmoPapel(x.r.resp,x.i.F.resp);
           return '<a class="rt-it" href="'+editLink(x.src,x.r.l)+'" target="_blank" rel="noopener" title="'+esc(x.i.F.faz)+'"><span class="t">'+esc(x.src==="quadro"?x.r.c+" · "+x.r.uf:(x.src==="licitacoes"?(x.r.org||x.r.id):x.r.n))+'</span><span class="s">'+sub(x)+'</span>'+(al?'<span class="al">Na linha: '+esc(papel(x.r.resp))+' · roteiro: '+esc(papel(x.i.F.resp))+'</span>':'')+'</a>'; }).join("") || '<div class="ag-vazio">Ninguém nesta etapa.</div>')+
         (it.length>MAX?'<div class="meta">e mais '+(it.length-MAX)+' na aba da frente</div>':'')+
         '<div class="vira"><b>Vira quando:</b> '+esc(E.fecha)+'</div></div>';
