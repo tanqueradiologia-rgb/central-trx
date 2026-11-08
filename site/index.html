@@ -160,6 +160,13 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .avisos{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px}
 .avisos h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
 .avisos ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}.avisos li.al{color:var(--bad);font-weight:600}
+.isgh-band{margin:14px 0 4px;border:2px solid var(--accent);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.isgh-band>h2{margin:0;padding:8px 14px;background:var(--accent);color:#fff;font-family:var(--f-display);font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+.isgh-band .ig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;padding:12px 14px}
+.isgh-band h3{font-family:var(--f-display);font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
+.isgh-band ul{margin:0;padding-left:16px;font-size:13px;line-height:1.5}.isgh-band li{margin:2px 0}
+.isgh-band .pz{color:var(--bad);font-weight:700;white-space:nowrap}.isgh-band .resp{color:var(--muted)}
+@media (max-width:640px){.isgh-band .ig-grid{grid-template-columns:1fr}}
 .docs-al{border-color:var(--bad);margin-bottom:10px}.docs-al h3{color:var(--bad)}.docs-al li{margin:2px 0}.docs-al a{color:inherit}.docs-al .tag{font-weight:700}.docs-al .tag.v{color:var(--bad)}.docs-al .tag.d{color:var(--warn)}.docs-al .tag.b{color:var(--warn)}.docs-al .meta{color:var(--muted)}
 .chipsel{display:flex;align-items:center;gap:8px;font-size:14px}.chipsel button{font:inherit;border:1px solid var(--accent);background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:3px 12px;cursor:pointer}
 @media (max-width:900px){.ag-cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -228,6 +235,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 </header>
 
 <main class="wrap">
+<div id="isgh" class="isgh-band" hidden></div>
   <section class="pane" id="pane-prioridades" hidden>
     <div class="agenda">
       <div class="ag-head"><h2>Agenda</h2><span class="meta">Prazos de licitação e toques combinados com clínicas. Clique num item ou num dia para ver na lista.</span></div>
@@ -422,6 +430,32 @@ if(!D){
   document.querySelectorAll(".pane").forEach(p=>p.hidden=false);
   return;
 }
+
+/* ---------- destaque ISGH (prioridade máxima, Marcos 08/11/2026; conteúdo na aba Destaque_ISGH da Pipeline Licitações) ---------- */
+(function(){
+  const it = D.destaque_isgh || [];
+  if(!it.length) return;
+  const SECS = [["contrato","Contrato HRVJ em execução"],["funil","Funil das 8 unidades"],["pendencias","Pendências com prazo"],["riscos","Riscos"]];
+  const by = {};
+  it.forEach(i => { const k = norm(i.sec); (by[k] = by[k] || []).push(i); });
+  let h = '<h2>Prioridade máxima · ISGH</h2><div class="ig-grid">';
+  let tem = false;
+  for(const [k, titulo] of SECS){
+    const l = by[k] || [];
+    if(!l.length) continue;
+    tem = true;
+    h += '<div><h3>' + esc(titulo) + '</h3><ul>' + l.map(i => {
+      let s = '<li><b>' + esc(i.t) + '</b>' + (i.x ? ' — ' + esc(i.x) : '');
+      if(i.dt){ const dd = dias(i.dt); s += ' <span class="pz">' + fData(i.dt) + (dd !== null && dd <= 3 ? (dd < 0 ? ' · vencido' : dd === 0 ? ' · hoje' : ' · ' + dd + 'd') : '') + '</span>'; }
+      if(i.resp) s += ' <span class="resp">· ' + esc(i.resp) + '</span>';
+      return s + '</li>';
+    }).join('') + '</ul></div>';
+  }
+  h += '</div>';
+  if(!tem) return;
+  const el = document.getElementById('isgh');
+  if(el){ el.innerHTML = h; el.hidden = false; }
+})();
 
 /* ---------- formatos ---------- */
 const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];

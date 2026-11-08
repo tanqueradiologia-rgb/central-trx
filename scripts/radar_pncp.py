@@ -153,6 +153,9 @@ def encaixe_texto(it):
     Laudo remoto de imagem = alta; laudo remoto junto com parte presencial = media;
     só presencial (realização de exames, ultrassom, plantão) = baixa."""
     txt = " " + sem_acento(f"{it.get('title', '')} {it.get('description', '')}") + " "
+    # Prioridade maxima ISGH (Marcos, 08/11/2026): qualquer processo do Instituto sobe direto.
+    if " isgh " in txt or "instituto de saude e gestao hospitalar" in txt:
+        return "alta", ""
     pres = [k for k in PRESENCIAL if k in txt]
     for k in ("dedicacao exclusiva", "unidade movel", "carreta"):
         if k in txt and k not in pres:

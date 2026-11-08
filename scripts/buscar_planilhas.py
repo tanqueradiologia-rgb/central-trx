@@ -41,6 +41,15 @@ if "--so-licitacoes" in sys.argv:
     except Exception as e:
         json.dump({"values": []}, open("documentos.json", "w", encoding="utf-8"))
         print(f"::warning::Nao consegui ler a planilha Documentos TRX: {e}")
+    # Destaque ISGH (prioridade maxima definida pelo Marcos em 08/11/2026): aba Destaque_ISGH da
+    # Pipeline Licitacoes. Falha aqui nao derruba a pagina; sem a aba, a faixa simplesmente nao aparece.
+    try:
+        gv = sheets.spreadsheets().values().get(spreadsheetId=LICIT_SHEET, range="Destaque_ISGH!A1:E80").execute()
+        json.dump(gv, open("destaque_isgh.json", "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"OK: destaque_isgh {len(gv.get('values', []))} linhas")
+    except Exception as e:
+        json.dump({"values": []}, open("destaque_isgh.json", "w", encoding="utf-8"))
+        print(f"::warning::Nao consegui ler a aba Destaque_ISGH: {e}")
     sys.exit(0)
 
 vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AP").execute()

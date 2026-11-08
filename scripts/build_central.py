@@ -203,6 +203,28 @@ DOCS_SHEET = "13nXaAsgQ4czDGnp6SZd2ConSeV_8_1exZG_lH4l9hD8"
 DOCS_GID = 423972086
 
 
+def destaque_isgh(path):
+    """Aba Destaque_ISGH da Pipeline Licitacoes (Secao|Titulo|Texto|Prazo|Dono).
+    Prioridade maxima ISGH definida pelo Marcos em 08/11/2026. Sem aba ou vazia, devolve []."""
+    try:
+        pv = json.load(open(path, encoding="utf-8"))
+        rows = pv["values"] if isinstance(pv, dict) else pv
+    except Exception:
+        return []
+    if not rows or len(rows) < 2:
+        return []
+    H = [str(h).strip() for h in rows[0]]
+    out = []
+    for r in rows[1:]:
+        d = dict(zip(H, list(r) + [""] * (len(H) - len(r))))
+        sec = txt(d.get("Secao"))
+        if not sec:
+            continue
+        out.append({"sec": sec, "t": txt(d.get("Titulo"), 160), "x": txt(d.get("Texto"), 300),
+                    "dt": data_iso(d.get("Prazo")) or "", "resp": txt(d.get("Dono"), 40)})
+    return out
+
+
 def documentos_alerta(path):
     """Documentos TRX: tudo que tem validade e pede acao. Vermelho: VENCEU (Status VENCIDO)
     ou DESATUALIZADO (coluna T preenchida). Laranja: Status VENCE EM ... (15/30/45 dias),
@@ -241,6 +263,7 @@ def main():
     ap.add_argument("--mod-pipeline", default="")
     ap.add_argument("--mod-licitacoes", default="")
     ap.add_argument("--documentos", default="", help="documentos.json (aba Documentos da planilha Documentos TRX)")
+    ap.add_argument("--destaque", default="", help="destaque_isgh.json (aba Destaque_ISGH da Pipeline Licitacoes)")
     a = ap.parse_args()
 
     pv = json.load(open(a.pipeline, encoding="utf-8"))
@@ -296,6 +319,7 @@ def main():
         "encerrados_recentes": enc_rec,
         "resultados": resultados,
         "documentos_alerta": documentos_alerta(a.documentos) if a.documentos else [],
+        "destaque_isgh": destaque_isgh(a.destaque) if a.destaque else [],
         "documentos_fonte": {"id": DOCS_SHEET, "gid": DOCS_GID},
     }
     js = "window.CENTRAL=" + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n"
