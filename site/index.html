@@ -160,6 +160,15 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .avisos{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px}
 .avisos h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
 .avisos ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}.avisos li.al{color:var(--bad);font-weight:600}
+.dossie h2{font-family:var(--f-display);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.dossie h2::before{content:"";width:8px;height:8px;background:var(--accent);flex:none}
+.dossie h2::after{content:"";height:1px;background:var(--line);flex:1}
+.dossie .dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.dossie .dc{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:12px 14px}
+.dossie .dc h3{font-size:14px;margin:0 0 5px;color:var(--ink)}
+.dossie .dc p{margin:0;font-size:13px;line-height:1.55;color:var(--ink)}
+.dossie .dc a{display:inline-block;margin-top:7px;font-size:12px;color:var(--accent)}
+.dossie .vazio{color:var(--muted);font-size:13px}
 .hoje-band{margin:14px 0 4px;border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:var(--r);background:var(--surface);overflow:hidden}
 .hoje-band .hj-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--surface2)}
 .hoje-band h2{margin:0;font-family:var(--f-display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
@@ -241,6 +250,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <a href="#clinicas" data-tab="clinicas">Clínicas particulares<span class="n" id="n-clinicas"></span></a>
       <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
       <a href="#quadro" data-tab="quadro">Quadro nacional<span class="n" id="n-quadro"></span></a>
+      <a href="#isgh" data-tab="isgh">ISGH<span class="n" id="n-isgh"></span></a>
       <a href="#roteiro" data-tab="roteiro">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
@@ -361,6 +371,10 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
     <div class="more" id="m-quadro"></div>
   </section>
 
+  <section class="pane dossie" id="pane-isgh" hidden>
+    <div id="isgh-dossie"></div>
+  </section>
+
   <footer id="rodape"></footer>
 </main>
 
@@ -465,6 +479,7 @@ if(!D){
       let s = '<li><b>' + esc(i.t) + '</b>' + (i.x ? ' — ' + esc(i.x) : '');
       if(i.dt){ const dd = dias(i.dt); s += ' <span class="pz">' + fData(i.dt) + (dd !== null && dd <= 3 ? (dd < 0 ? ' · vencido' : dd === 0 ? ' · hoje' : ' · ' + dd + 'd') : '') + '</span>'; }
       if(i.resp) s += ' <span class="resp">· ' + esc(i.resp) + '</span>';
+      if(i.lk) s += ' <a href="' + esc(i.lk) + '" target="_blank" rel="noopener">Detalhe ↗</a>';
       return s + '</li>';
     }).join('') + '</ul></div>';
   }
@@ -796,7 +811,7 @@ const lPr = makeList({
   const meu = (s,k) => donos(s).some(d=>sa(d)===k);
   function itens(pessoa){
     const k=sa(pessoa), out=[];
-    IG.forEach(i=>{ if(meu(i.resp,k)) out.push({of:"ISGH", t:i.t, x:i.x, dt:i.dt||""}); });
+    IG.forEach(i=>{ if(meu(i.resp,k)) out.push({of:"ISGH", t:i.t, x:i.x, dt:i.dt||"", lk:i.lk||""}); });
     PR.forEach(p=>{ if(!meu(p.resp,k)) return; const d=p.dt?dias(p.dt):null;
       if(d===null||d>7) return; out.push({of:p.tp, t:p.n, x:p.acao, dt:p.dt, p}); });
     out.sort((a,b)=>{ const A=a.dt||"9999-99-99", B=b.dt||"9999-99-99"; return A<B?-1:A>B?1:0; });
@@ -806,7 +821,9 @@ const lPr = makeList({
     const pz = it.dt ? fDias(dias(it.dt))+' <span class="d-mut">'+fData(it.dt)+'</span>' : '<span class="d-mut">sem data</span>';
     let ac='';
     if(it.p) ac = editBtn(it.p.src,it.p.r.l)+'<a href="'+it.p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+it.p.src+'">Ver na aba</a>';
-    else if(it.x && it.x.length>60) ac = '<button type="button" data-c="'+n+'">Copiar o texto</button>';
+    else { if(it.x && it.x.length>60) ac = '<button type="button" data-c="'+n+'">Copiar o texto</button>';
+           if(it.lk) ac += '<a href="'+esc(it.lk)+'" target="_blank" rel="noopener">Detalhe ↗</a>';
+           ac += '<a href="#isgh">Ver o dossiê do ISGH</a>'; }
     return '<li><div class="hj-l1"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span></div>'
       + (it.x?'<div class="hj-x">'+esc(it.x)+'</div>':'')
       + (ac?'<div class="hj-ac">'+ac+'</div>':'') + '</li>';
@@ -942,6 +959,29 @@ const lRes = makeList({
   $("#limpar-resultados").addEventListener("click",()=>{ clearBand(); clearK(); });
 })();
 
+/* ---------- ISGH: o dossiê do contrato dentro da Central (aba ISGH_Dossie da planilha) ---------- */
+const lIsgh = (function(){
+  const el=$("#isgh-dossie");
+  const SEC=[["situacao","Situação"],["quem","Quem é quem"],["aceito","O que foi aceito"],
+             ["producao","Produção"],["faturamento","Faturamento e cobrança"],["economia","Economia do contrato"],
+             ["crescimento","Como crescer"],["rede","A rede ISGH"],["arquivos","Onde ficam os arquivos"]];
+  const DS = D.isgh_dossie||[];
+  $("#n-isgh").textContent = DS.length || "";
+  return { render(){
+    if(!DS.length){ el.innerHTML='<p class="vazio">O dossiê do ISGH ainda não tem conteúdo. Ele é escrito na aba ISGH_Dossie da Pipeline Licitações.</p>'; return; }
+    const by={}; DS.forEach(i=>{ const k=norm(i.sec); (by[k]=by[k]||[]).push(i); });
+    const vistas=new Set(SEC.map(x=>x[0]));
+    const ordem=SEC.concat(Object.keys(by).filter(k=>!vistas.has(k)).map(k=>[k,k]));
+    let h='';
+    ordem.forEach(([k,titulo])=>{ const l=by[k]; if(!l||!l.length) return;
+      h+='<h2>'+esc(titulo)+'</h2><div class="dg">'+l.map(i=>
+        '<div class="dc"><h3>'+esc(i.t)+'</h3>'+(i.x?'<p>'+esc(i.x)+'</p>':'')
+        +(i.lk?'<a href="'+esc(i.lk)+'" target="_blank" rel="noopener">Abrir ↗</a>':'')+'</div>').join('')+'</div>';
+    });
+    el.innerHTML=h;
+  }};
+})();
+
 /* ---------- ROTEIRO: o funil em etapas, com o dono de cada uma ---------- */
 const lRot = (function(){
   if(!RT){ $("#rt-aviso").textContent="O roteiro não carregou. Recarregue a página."; return {render(){}}; }
@@ -998,12 +1038,12 @@ const lRot = (function(){
 })();
 
 /* ---------- abas ---------- */
-const TABS=["prioridades","clinicas","licitacoes","quadro","roteiro","resultados"];
+const TABS=["prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados"];
 const rendered={};
 function show(tab){
   if(!TABS.includes(tab)) tab="prioridades";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,quadro:lQd,roteiro:lRot,resultados:lRes})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));

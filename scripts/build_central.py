@@ -203,6 +203,45 @@ DOCS_SHEET = "13nXaAsgQ4czDGnp6SZd2ConSeV_8_1exZG_lH4l9hD8"
 DOCS_GID = 423972086
 
 
+def link_http(v):
+    """So deixa passar link http(s). Celula com texto solto vira vazio."""
+    u = txt(v, 600)
+    return u if u.startswith("http://") or u.startswith("https://") else ""
+
+
+def isgh_dossie(path):
+    """Aba ISGH_Dossie da Pipeline Licitacoes (Secao|Titulo|Texto|Link|Ordem), 09/11/2026.
+    O detalhe do contrato HRVJ/ISGH dentro da propria Central: a equipe abre a aba ISGH em vez
+    de depender de um artefato fora dela. Dentro de cada secao vale a coluna Ordem e, empatando,
+    a ordem das linhas. Sem aba ou vazia, devolve [] e a aba nao aparece."""
+    try:
+        pv = json.load(open(path, encoding="utf-8"))
+        rows = pv["values"] if isinstance(pv, dict) else pv
+    except Exception:
+        return []
+    if not rows or len(rows) < 2:
+        return []
+    H = [str(h).strip() for h in rows[0]]
+    out = []
+    for i, r in enumerate(rows[1:]):
+        d = dict(zip(H, list(r) + [""] * (len(H) - len(r))))
+        sec = txt(d.get("Secao"))
+        ttl = txt(d.get("Titulo"), 160)
+        if not sec or not ttl:
+            continue
+        try:
+            ordem = int(float(str(d.get("Ordem", "")).replace(",", ".").strip()))
+        except (TypeError, ValueError):
+            ordem = 9999
+        out.append({"sec": sec, "t": ttl, "x": txt(d.get("Texto"), 1400),
+                    "lk": link_http(d.get("Link")), "_o": ordem, "_i": i})
+    out.sort(key=lambda it: (it["_o"], it["_i"]))
+    for it in out:
+        it.pop("_o", None)
+        it.pop("_i", None)
+    return out
+
+
 def destaque_isgh(path):
     """Aba Destaque_ISGH da Pipeline Licitacoes (Secao|Titulo|Texto|Prazo|Dono|Ordem).
     Prioridade maxima ISGH definida pelo Marcos em 08/11/2026. Sem aba ou vazia, devolve [].
@@ -230,7 +269,7 @@ def destaque_isgh(path):
             ordem = 9999
         out.append({"sec": sec, "t": txt(d.get("Titulo"), 160), "x": txt(d.get("Texto"), 700),
                     "dt": data_iso(d.get("Prazo")) or "", "resp": txt(d.get("Dono"), 40),
-                    "_o": ordem, "_i": i})
+                    "lk": link_http(d.get("Link")), "_o": ordem, "_i": i})
     out.sort(key=lambda it: (it["_o"], it["dt"] or "9999-12-31", it["_i"]))
     for it in out:
         it.pop("_o", None)
@@ -277,6 +316,7 @@ def main():
     ap.add_argument("--mod-licitacoes", default="")
     ap.add_argument("--documentos", default="", help="documentos.json (aba Documentos da planilha Documentos TRX)")
     ap.add_argument("--destaque", default="", help="destaque_isgh.json (aba Destaque_ISGH da Pipeline Licitacoes)")
+    ap.add_argument("--dossie", default="", help="isgh_dossie.json (aba ISGH_Dossie da Pipeline Licitacoes)")
     a = ap.parse_args()
 
     pv = json.load(open(a.pipeline, encoding="utf-8"))
@@ -333,6 +373,7 @@ def main():
         "resultados": resultados,
         "documentos_alerta": documentos_alerta(a.documentos) if a.documentos else [],
         "destaque_isgh": destaque_isgh(a.destaque) if a.destaque else [],
+        "isgh_dossie": isgh_dossie(a.dossie) if a.dossie else [],
         "documentos_fonte": {"id": DOCS_SHEET, "gid": DOCS_GID},
     }
     js = "window.CENTRAL=" + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n"

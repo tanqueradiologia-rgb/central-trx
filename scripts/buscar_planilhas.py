@@ -50,6 +50,15 @@ if "--so-licitacoes" in sys.argv:
     except Exception as e:
         json.dump({"values": []}, open("destaque_isgh.json", "w", encoding="utf-8"))
         print(f"::warning::Nao consegui ler a aba Destaque_ISGH: {e}")
+    # Dossie do ISGH (aba ISGH_Dossie da Pipeline Licitacoes, 09/11/2026): o detalhe do contrato
+    # dentro da Central, para a equipe nao depender de artefato fora dela.
+    try:
+        dv2 = sheets.spreadsheets().values().get(spreadsheetId=LICIT_SHEET, range="ISGH_Dossie!A1:E200").execute()
+        json.dump(dv2, open("isgh_dossie.json", "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"OK: isgh_dossie {len(dv2.get('values', []))} linhas")
+    except Exception as e:
+        json.dump({"values": []}, open("isgh_dossie.json", "w", encoding="utf-8"))
+        print(f"::warning::Nao consegui ler a aba ISGH_Dossie: {e}")
     sys.exit(0)
 
 vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AP").execute()
