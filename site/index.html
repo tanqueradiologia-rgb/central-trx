@@ -160,6 +160,22 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .avisos{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px}
 .avisos h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
 .avisos ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}.avisos li.al{color:var(--bad);font-weight:600}
+.hoje-band{margin:14px 0 4px;border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.hoje-band .hj-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--surface2)}
+.hoje-band h2{margin:0;font-family:var(--f-display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.hoje-band .hj-top select{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+.hoje-band .hj-n{color:var(--muted);font-size:13px;margin-left:auto}
+.hoje-band ul{list-style:none;margin:0;padding:6px 14px 12px}
+.hoje-band li{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.5}
+.hoje-band li:last-child{border-bottom:0}
+.hoje-band .hj-l1{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.hoje-band .hj-pz{font-weight:700;white-space:nowrap;min-width:92px}
+.hoje-band .hj-of{color:var(--muted);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.hoje-band .hj-x{color:var(--ink);margin:2px 0 0 100px}
+.hoje-band .hj-ac{margin:4px 0 0 100px;display:flex;gap:10px;flex-wrap:wrap}
+.hoje-band .hj-ac a,.hoje-band .hj-ac button{font:inherit;font-size:12px;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.hoje-band .hj-vazio{padding:12px 14px;color:var(--muted);font-size:13px}
+@media (max-width:640px){.hoje-band .hj-x,.hoje-band .hj-ac{margin-left:0}}
 .isgh-band{margin:14px 0 4px;border:2px solid var(--accent);border-radius:var(--r);background:var(--surface);overflow:hidden}
 .isgh-band>h2{margin:0;padding:8px 14px;background:var(--accent);color:#fff;font-family:var(--f-display);font-size:15px;letter-spacing:.06em;text-transform:uppercase}
 .isgh-band .ig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;padding:12px 14px}
@@ -235,6 +251,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 </header>
 
 <main class="wrap">
+<div id="hoje" class="hoje-band" hidden></div>
 <div id="isgh" class="isgh-band" hidden></div>
   <section class="pane" id="pane-prioridades" hidden>
     <div class="agenda">
@@ -758,6 +775,60 @@ const lPr = makeList({
     {key:"s",label:"Sem medição",value:cont["SEM MEDICAO"]||0,cls:"",test:p=>p.fx==="SEM MEDICAO"}
   ]);
   $("#limpar-prioridades").addEventListener("click",()=>{ clearBand(); clearK(); });
+})();
+
+/* ---------- HOJE: a fila de uma pessoa só, juntando a faixa do ISGH e as abas ----------
+   A Central é protegida por senha compartilhada e não sabe quem está olhando, então quem
+   escolhe é a própria pessoa, e a escolha fica guardada neste aparelho. */
+(function(){
+  const el=$("#hoje"); if(!el) return;
+  const IG = D.destaque_isgh||[];
+  const sa = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const PESSOA = {"gestor bruno":"Bruno","gestora thalyta":"Thalyta"};
+  const donos = s => String(s||"").replace(/\([^)]*\)/g," ").split(/,| e |;|\/|&/i)
+      .map(x=>x.trim()).filter(Boolean).map(x=>PESSOA[sa(x)]||x);
+  const nomes=new Map();
+  PR.forEach(p=>donos(p.resp).forEach(d=>nomes.set(sa(d),d)));
+  IG.forEach(i=>donos(i.resp).forEach(d=>nomes.set(sa(d),d)));
+  const pessoas=[...nomes.values()].sort((a,b)=>a.localeCompare(b,"pt"));
+  if(!pessoas.length) return;
+
+  const meu = (s,k) => donos(s).some(d=>sa(d)===k);
+  function itens(pessoa){
+    const k=sa(pessoa), out=[];
+    IG.forEach(i=>{ if(meu(i.resp,k)) out.push({of:"ISGH", t:i.t, x:i.x, dt:i.dt||""}); });
+    PR.forEach(p=>{ if(!meu(p.resp,k)) return; const d=p.dt?dias(p.dt):null;
+      if(d===null||d>7) return; out.push({of:p.tp, t:p.n, x:p.acao, dt:p.dt, p}); });
+    out.sort((a,b)=>{ const A=a.dt||"9999-99-99", B=b.dt||"9999-99-99"; return A<B?-1:A>B?1:0; });
+    return out;
+  }
+  function linha(it,n){
+    const pz = it.dt ? fDias(dias(it.dt))+' <span class="d-mut">'+fData(it.dt)+'</span>' : '<span class="d-mut">sem data</span>';
+    let ac='';
+    if(it.p) ac = editBtn(it.p.src,it.p.r.l)+'<a href="'+it.p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+it.p.src+'">Ver na aba</a>';
+    else if(it.x && it.x.length>60) ac = '<button type="button" data-c="'+n+'">Copiar o texto</button>';
+    return '<li><div class="hj-l1"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span></div>'
+      + (it.x?'<div class="hj-x">'+esc(it.x)+'</div>':'')
+      + (ac?'<div class="hj-ac">'+ac+'</div>':'') + '</li>';
+  }
+  let atual=null;
+  function render(){
+    const it=itens(atual).slice(0,14);
+    const opts=pessoas.map(p=>'<option'+(p===atual?' selected':'')+'>'+esc(p)+'</option>').join("");
+    el.innerHTML='<div class="hj-top"><h2>Hoje</h2><select id="hj-quem">'+opts+'</select>'
+      +'<span class="hj-n">'+(it.length?it.length+(it.length===1?' item':' itens'):'nada em aberto')+'</span></div>'
+      +(it.length?'<ul>'+it.map(linha).join("")+'</ul>':'<div class="hj-vazio">Nada com prazo nos próximos 7 dias para '+esc(atual)+'.</div>');
+    el.hidden=false;
+    $("#hj-quem").addEventListener("change",e=>{ atual=e.target.value; try{localStorage.setItem("central-quem",atual);}catch(_){} render(); });
+    el.querySelectorAll("button[data-c]").forEach(b=>b.addEventListener("click",async()=>{
+      const t=itens(atual)[+b.dataset.c]; if(!t) return;
+      try{ await navigator.clipboard.writeText(t.x); b.textContent="Copiado"; setTimeout(()=>{b.textContent="Copiar o texto";},1500); }
+      catch(_){ b.textContent="Selecione e copie à mão"; }
+    }));
+  }
+  let guardado=null; try{ guardado=localStorage.getItem("central-quem"); }catch(_){}
+  atual = pessoas.find(p=>p===guardado) || pessoas.find(p=>sa(p)==="carla") || pessoas[0];
+  render();
 })();
 
 /* ---------- AGENDA: colunas por urgência + calendário do mês ---------- */
