@@ -79,6 +79,7 @@
         "faz": "Achar o radiologista ou o responsável técnico e quem assina contratos (quadro de sócios no CNPJ, site, Instagram, LinkedIn). Preencher Decisor e Cargo e marcar o Início da cadência."
       },
       "Em cadencia": {
+        "rot": "Em cadência",
         "e": 1,
         "resp": "Carla",
         "faz": "Rodar os 6 toques em cerca de 21 dias, alternando e-mail, telefone e WhatsApp. A cada contato, atualizar Toque atual e Próximo toque. Nenhum número de preço."
@@ -94,11 +95,13 @@
         "faz": "Convite nas mãos do gestor. Ele confirma a reunião e lê o histórico da linha (decisor, gancho, notas)."
       },
       "Diagnostico operacional": {
+        "rot": "Diagnóstico operacional",
         "e": 2,
         "resp": "Gestor",
         "faz": "Reunião de diagnóstico: tempo de laudo, plantão descoberto, PACS, fila parada. Sair com a conversa clínica marcada e entregar a ata, com participantes, aos sócios médicos."
       },
       "Conversa clinica": {
+        "rot": "Conversa clínica",
         "e": 3,
         "resp": "Socios medicos",
         "faz": "Combinar antes quem traz o dado e quem guarda o preço. Ninguém diz número. Termina quando o cliente diz que quer o serviço."
@@ -109,6 +112,7 @@
         "faz": "Marcos e gestor montam a proposta; o Marcos manda ao gestor e o gestor envia ao cliente, com a TRX em cópia."
       },
       "Negociacao": {
+        "rot": "Negociação",
         "e": 5,
         "resp": "Bruno Sato",
         "faz": "Negociação final e assinatura conduzidas pelo Bruno Sato."
@@ -119,11 +123,13 @@
         "faz": "Contrato assinado. Abrir a homologação e implantação com a TI e registrar o combinado em Resultado."
       },
       "Implantacao": {
+        "rot": "Implantação",
         "e": 6,
         "resp": "Gestor",
         "faz": "Integração com o PACS, acessos, testes de laudo e homologação pelo cliente."
       },
       "Em operacao": {
+        "rot": "Em operação",
         "e": 7,
         "resp": "Gestor",
         "faz": "Contrato em produção. A gestão do contrato, o faturamento e a distribuição de valores entram numa fase futura da Central."
@@ -235,6 +241,7 @@
         "faz": "Levantar exigências e travas (alvará sanitário, presencial, atestado, índices, ME/EPP, preço por laudo contra o piso) e registrar em Trava. CNES não entra: a TRX tem CNES 8596204 desde 25/10/2026."
       },
       "Montando habilitacao": {
+        "rot": "Montando habilitação",
         "e": 2,
         "resp": "Carla",
         "faz": "A pasta e o checklist saem sozinhos. Adaptar as declarações e separar o que o Marcos assina com o A1."
@@ -250,6 +257,7 @@
         "faz": "Acompanhar a sessão. Lance só com o Marcos e nunca abaixo do piso."
       },
       "Em analise": {
+        "rot": "Em análise",
         "e": 3,
         "resp": "Carla",
         "faz": "Acompanhar a análise e responder diligências."
@@ -275,11 +283,13 @@
         "faz": "Assinar o contrato e definir o gestor do contrato."
       },
       "Implantacao": {
+        "rot": "Implantação",
         "e": 5,
         "resp": "Gestor",
         "faz": "Integração com o PACS, acessos, testes de laudo e homologação pelo órgão."
       },
       "Em operacao": {
+        "rot": "Em operação",
         "e": 6,
         "resp": "Gestor",
         "faz": "Contrato em produção. Gestão, faturamento e distribuição de valores entram numa fase futura."
@@ -339,6 +349,7 @@
         "faz": "Marcar a reunião e entregar o convite ao gestor."
       },
       "Reuniao marcada": {
+        "rot": "Reunião marcada",
         "e": 2,
         "resp": "Gestor",
         "faz": "Reunião com o órgão: volume, equipamentos e forma de contratação."

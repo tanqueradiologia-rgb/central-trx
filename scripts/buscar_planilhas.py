@@ -44,7 +44,7 @@ if "--so-licitacoes" in sys.argv:
     # Destaque ISGH (prioridade maxima definida pelo Marcos em 08/11/2026): aba Destaque_ISGH da
     # Pipeline Licitacoes. Falha aqui nao derruba a pagina; sem a aba, a faixa simplesmente nao aparece.
     try:
-        gv = sheets.spreadsheets().values().get(spreadsheetId=LICIT_SHEET, range="Destaque_ISGH!A1:E80").execute()
+        gv = sheets.spreadsheets().values().get(spreadsheetId=LICIT_SHEET, range="Destaque_ISGH!A1:G80").execute()
         json.dump(gv, open("destaque_isgh.json", "w", encoding="utf-8"), ensure_ascii=False)
         print(f"OK: destaque_isgh {len(gv.get('values', []))} linhas")
     except Exception as e:

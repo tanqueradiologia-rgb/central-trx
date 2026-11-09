@@ -538,7 +538,7 @@ function makeList(cfg){
   $("#limpar-"+cfg.id).addEventListener("click",()=>{ $("#q-"+cfg.id).value=""; cfg.filters.forEach(f=>$("#"+f.el).value=""); st.extra={}; if(cfg.toggle) $("#"+cfg.toggle.el).checked=cfg.toggle.def; st.limit=PAGE; cfg.onClear&&cfg.onClear(); render(); });
   return {render, st, setExtra(k,fn){ st.extra[k]=fn; st.limit=PAGE; render(); }};
 }
-function fillSelect(id, vals){ const s=$("#"+id); [...new Set(vals.filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt")).forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; s.appendChild(o); }); }
+function fillSelect(id, vals, rot){ const s=$("#"+id); const lab=v=>rot?rot(v):v; [...new Set(vals.filter(Boolean))].sort((a,b)=>lab(a).localeCompare(lab(b),"pt")).forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=lab(v); s.appendChild(o); }); }
 function kpiBtn(label, value, cls, key){ return '<button class="kpi '+(cls||"")+'" type="button" data-key="'+key+'" aria-pressed="false"><span class="v">'+value+'</span><span class="k">'+esc(label)+'</span></button>'; }
 function wireKpis(boxId, list, defs){
   const box=$("#"+boxId);
@@ -565,6 +565,9 @@ const mesmoPapel = (a,b) => base(a) === base(b);
 const papel = x => NOME_PAPEL[x] || x || "—";
 const corEt = n => n>=1 && n<=7 ? "var(--e"+n+")" : "var(--c-sem)";
 function rotInfo(src, fase){ const R=RT&&RT[FRT[src]]; if(!R) return null; const F=R.fases[fase]; if(!F) return null; return {R, F, E:R.etapas.find(e=>e.n===F.e)||null}; }
+/* rotulo da fase: o valor gravado na planilha continua sem acento (e a chave de comparacao
+   em todo o codigo); o acento vem do campo "rot" de config/roteiro.json e vale so para a tela. */
+function rotFase(src, fase){ const i=rotInfo(src,fase); return (i&&i.F&&i.F.rot)||fase||""; }
 function etTag(src, fase){ const i=rotInfo(src,fase); return i&&i.E ? '<span class="et-tag" style="background:'+corEt(i.E.n)+'" title="Etapa '+i.E.n+': '+esc(i.E.nome)+'">E'+i.E.n+'</span>' : ""; }
 function isoMais(iso, n){ const d=parseD(iso); if(!d) return ""; d.setDate(d.getDate()+n); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 // próximo toque pela cadência de 6 toques (dia 0, 2, 5, 9, 14, 21 a partir do Início da cadência)
@@ -602,7 +605,7 @@ const lCl = makeList({
   toggle:{el:"ativas-clinicas",def:true,test:r=>!INATIVAS.has(r.fase)},
   cells:r=>{ const dp=dias(r.prox); const late = dp!==null && dp<0 && !INATIVAS.has(r.fase);
     return '<td><div class="nm">'+esc(r.n)+'</div><div class="meta">'+esc(r.c)+(r.uf?" · "+esc(r.uf):"")+(r.pr?" · prioridade "+esc(r.pr.toLowerCase()):"")+'</div></td>'+
-      '<td><span class="pill" style="border-color:'+(COR_FASE[r.fase]||"var(--line)")+'">'+esc(r.fase)+'</span>'+etTag("clinicas",r.fase)+'</td>'+
+      '<td><span class="pill" style="border-color:'+(COR_FASE[r.fase]||"var(--line)")+'">'+esc(rotFase("clinicas",r.fase))+'</span>'+etTag("clinicas",r.fase)+'</td>'+
       '<td>'+fxPill(r.fx,r.sc)+(r.cob?'<div class="meta">'+esc(r.cob)+' eixos</div>':'')+'</td>'+
       '<td class="hide-sm">'+esc(r.resp||"—")+'</td>'+
       '<td class="mono">'+(r.prox?(late?'<span class="d-bad">'+fData(r.prox)+' · atrasado</span>':fData(r.prox)):'—')+'</td>'+
@@ -615,7 +618,7 @@ const lCl = makeList({
 (function(){
   const cont={}; CL.forEach(r=>cont[r.fase]=(cont[r.fase]||0)+1);
   const fases = ORDEM_FASE.filter(f=>cont[f]).concat(Object.keys(cont).filter(f=>!ORDEM_FASE.includes(f)));
-  const clearBand = band("bar-clinicas","leg-clinicas", fases.map((f,i)=>({label:f,value:f,n:cont[f],color:COR_FASE[f]||PAL[i%PAL.length]})), lCl, (r,v)=>r.fase===v);
+  const clearBand = band("bar-clinicas","leg-clinicas", fases.map((f,i)=>({label:rotFase("clinicas",f),value:f,n:cont[f],color:COR_FASE[f]||PAL[i%PAL.length]})), lCl, (r,v)=>r.fase===v);
   const at=CL.filter(r=>!INATIVAS.has(r.fase));
   const quentes=at.filter(r=>r.fx==="ATACAR AGORA"||r.fx==="QUENTE").length;
   const cad=at.filter(r=>EM_CONVERSA.has(r.fase)).length;
@@ -640,7 +643,7 @@ const LI = D.licitacoes;
 const FECHADAS = /perdid|descart|desist|encerr|n[aã]o particip/i;
 const aberta = r => !FECHADAS.test(r.fase) && !passou(r.prazo);
 $("#n-licitacoes").textContent = LI.filter(aberta).length;
-fillSelect("uf-licitacoes", LI.map(r=>r.uf)); fillSelect("mod-licitacoes", LI.map(r=>r.mod)); fillSelect("fase-licitacoes", LI.map(r=>r.fase));
+fillSelect("uf-licitacoes", LI.map(r=>r.uf)); fillSelect("mod-licitacoes", LI.map(r=>r.mod)); fillSelect("fase-licitacoes", LI.map(r=>r.fase), f=>rotFase("licitacoes",f));
 const lLi = makeList({
   id:"licitacoes", rows:LI, sort:"prazo", dir:"asc", defDir:{val:"desc",prazo:"asc"},
   sortKey:(r,k)=> k==="prazo" ? (r.prazo? parseD(r.prazo).getTime() : null) : k==="enc" ? ({alta:0,media:1,baixa:2}[r.enc] ?? 3) : r[k],
@@ -652,7 +655,7 @@ const lLi = makeList({
     '<td class="hide-sm">'+esc(r.mod)+'<div class="meta">'+esc(r.ed)+'</div></td>'+
     '<td class="mono">'+fMoeda(r.val)+'</td>'+
     '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
-    '<td class="hide-sm">'+esc(r.fase)+etTag("licitacoes",r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
+    '<td class="hide-sm">'+esc(rotFase("licitacoes",r.fase))+etTag("licitacoes",r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
   detail:r=>rotBox("licitacoes",r)+'<div class="det-grid">'+field("Objeto",r.obj)+field("Onde disputa",r.onde)+field("Trava",r.bloq)+field("Próxima ação",r.acao)+field("Quando",r.qd?fData(r.qd):"")+field("Notas da Carla",r.notas)+field("Resultado",r.res)+field("Número de controle",r.id)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
     '<div class="links">'+editBtn("licitacoes",r.l)+(r.pasta?'<a href="'+esc(r.pasta)+'" target="_blank" rel="noopener">Pasta do processo ↗</a>':'')+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
@@ -675,7 +678,7 @@ const lLi = makeList({
 /* ---------- QUADRO ---------- */
 const QD = D.quadro;
 $("#n-quadro").textContent = QD.length;
-fillSelect("uf-quadro", QD.map(r=>r.uf)); fillSelect("sit-quadro", QD.map(r=>r.sit));
+fillSelect("uf-quadro", QD.map(r=>r.uf)); fillSelect("sit-quadro", QD.map(r=>r.sit), f=>rotFase("quadro",f));
 const COR_SIT = {"Rascunho gerado":"var(--accent)","Sem e-mail (achar contato)":"var(--warn)","Aguardando envio":"var(--c-quente)","Enviado":"var(--ok)","Respondeu":"var(--ok)"};
 const lQd = makeList({
   id:"quadro", rows:QD, sort:"sc", dir:"desc", defDir:{sc:"desc"},
@@ -684,7 +687,7 @@ const lQd = makeList({
   filters:[{el:"uf-quadro",test:(r,v)=>r.uf===v},{el:"sit-quadro",test:(r,v)=>r.sit===v},{el:"enc-quadro",test:(r,v)=>r.enc===v}],
   cells:r=>'<td><div class="nm">'+esc(r.c)+'</div><div class="meta">'+esc(r.uf)+'</div></td>'+
     '<td class="clip hide-sm">'+esc(r.org)+'</td>'+
-    '<td><span class="pill" style="border-color:'+(COR_SIT[r.sit]||"var(--line)")+'">'+esc(r.sit)+'</span></td>'+
+    '<td><span class="pill" style="border-color:'+(COR_SIT[r.sit]||"var(--line)")+'">'+esc(rotFase("quadro",r.sit))+'</span></td>'+
     '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
     '<td>'+fxPill(r.fx,r.sc)+'</td>'+
     '<td class="clip meta hide-sm">'+esc(r.acao)+'</td>',
@@ -735,7 +738,7 @@ const lPr = makeList({
       '<td><div class="nm">'+esc(p.n)+'</div><div class="meta">'+esc(p.sub||"")+'</div></td>'+
       '<td class="hide-sm"><span class="pill">'+esc(p.tp)+'</span></td>'+
       '<td>'+fxPill(p.fx,p.sc)+'</td>'+
-      '<td class="hide-sm">'+esc(p.fase||"—")+'</td>'+
+      '<td class="hide-sm">'+esc(rotFase(p.src,p.fase)||"—")+'</td>'+
       '<td class="mono">'+(p.dt? (p.prazo? fData(p.dt,true)+'<div>'+fDiasP(p.dt)+'</div>' : (late?'<span class="d-bad">'+fData(p.dt)+' · atrasado</span>':fData(p.dt))) : '—')+'</td>'+
       '<td class="clip meta hide-sm">'+esc(p.acao||"")+'</td>'; },
   detail:p=>rotBox(p.src,p.r)+(p.src!=="clinicas" && (p.r.jan!=null||p.r.nec!=null||p.r.dorx!=null) ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dorx,p.r.oq)+'</div>' : p.src==="clinicas" ? '<div class="axes">'+axis("Janela de compra",p.r.jan,p.r.sjan)+axis("Necessidade",p.r.nec,p.r.snec)+axis("Dor do paciente",p.r.dor,p.r.ra)+'</div>' : '')+'<div class="det-grid" style="margin-top:14px">'+field("Frente",p.tp)+field("Responsável",p.resp)+field("Objeto ou gancho",p.r.obj||p.r.g)+field("Trava",p.r.bloq)+field("Notas",p.r.notas)+'</div>'+
@@ -850,7 +853,7 @@ const lRes = makeList({
   filters:[{el:"ds-resultados",test:(r,v)=>r.ds===v},{el:"fr-resultados",test:(r,v)=>r.fr===v},{el:"uf-resultados",test:(r,v)=>r.uf===v}],
   cells:r=>'<td><div class="nm">'+esc(r.n)+'</div><div class="meta">'+esc([r.fr,r.tp,r.uf].filter(Boolean).join(" · "))+'</div></td>'+
     '<td><span class="pill">'+esc(r.ds)+'</span></td><td class="hide-sm">'+esc(r.mot)+'</td><td class="clip">'+esc(r.res)+'</td><td class="mono hide-sm">'+(r.dt?fData(r.dt):"—")+'</td>',
-  detail:r=>'<div class="meta">Fase: '+esc(r.fase||"—")+(r.resp?' · Responsável: '+esc(r.resp):'')+'</div><p>'+esc(r.res)+'</p><div class="links">'+editBtn(r.src,r.l)+'</div>'
+  detail:r=>'<div class="meta">Fase: '+esc(rotFase(r.src,r.fase)||"—")+(r.resp?' · Responsável: '+esc(r.resp):'')+'</div><p>'+esc(r.res)+'</p><div class="links">'+editBtn(r.src,r.l)+'</div>'
 });
 (function(){
   const cont={}; RESL.filter(r=>r.ds!=="Ganhamos").forEach(r=>cont[r.mot]=(cont[r.mot]||0)+1);
@@ -890,9 +893,9 @@ const lRot = (function(){
   function cmp(a,b){ const x=chave(a), y=chave(b); for(let i=0;i<x.length;i++){ if(x[i]!==y[i]) return x[i]-y[i]; } return 0; }
   function sub(x){
     const r=x.r; const lugar=[r.c,r.uf].filter(Boolean).join(" · ");
-    if(x.src==="licitacoes") return esc(r.fase)+' · '+esc(lugar)+(r.prazo?' · prazo '+fData(r.prazo):'');
-    if(x.src==="clinicas"){ const t=r.prox||(proxToque(r)||{}).data; return esc(r.fase)+(lugar?' · '+esc(lugar):'')+(t?' · toque '+fData(t)+(dias(t)<0?' (atrasado)':''):''); }
-    return esc(r.fase)+' · '+esc(r.org||"");
+    if(x.src==="licitacoes") return esc(rotFase("licitacoes",r.fase))+' · '+esc(lugar)+(r.prazo?' · prazo '+fData(r.prazo):'');
+    if(x.src==="clinicas"){ const t=r.prox||(proxToque(r)||{}).data; return esc(rotFase("clinicas",r.fase))+(lugar?' · '+esc(lugar):'')+(t?' · toque '+fData(t)+(dias(t)<0?' (atrasado)':''):''); }
+    return esc(rotFase("quadro",r.fase))+' · '+esc(r.org||"");
   }
   function render(){
     const R=RT[fr], p=pes.value, MAX=8;

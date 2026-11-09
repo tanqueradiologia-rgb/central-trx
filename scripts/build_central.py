@@ -204,8 +204,12 @@ DOCS_GID = 423972086
 
 
 def destaque_isgh(path):
-    """Aba Destaque_ISGH da Pipeline Licitacoes (Secao|Titulo|Texto|Prazo|Dono).
-    Prioridade maxima ISGH definida pelo Marcos em 08/11/2026. Sem aba ou vazia, devolve []."""
+    """Aba Destaque_ISGH da Pipeline Licitacoes (Secao|Titulo|Texto|Prazo|Dono|Ordem).
+    Prioridade maxima ISGH definida pelo Marcos em 08/11/2026. Sem aba ou vazia, devolve [].
+    Ordem (09/11/2026): dentro de cada secao vale primeiro a coluna Ordem, depois o Prazo mais
+    proximo; item sem prazo vai para o fim. Antes a lista saia na ordem das linhas da planilha e
+    as datas apareciam embaralhadas. O Texto vai ate 700 caracteres: as mensagens prontas para a
+    equipe enviar nao cabiam em 300 e apareciam cortadas no meio da frase."""
     try:
         pv = json.load(open(path, encoding="utf-8"))
         rows = pv["values"] if isinstance(pv, dict) else pv
@@ -215,13 +219,22 @@ def destaque_isgh(path):
         return []
     H = [str(h).strip() for h in rows[0]]
     out = []
-    for r in rows[1:]:
+    for i, r in enumerate(rows[1:]):
         d = dict(zip(H, list(r) + [""] * (len(H) - len(r))))
         sec = txt(d.get("Secao"))
         if not sec:
             continue
-        out.append({"sec": sec, "t": txt(d.get("Titulo"), 160), "x": txt(d.get("Texto"), 300),
-                    "dt": data_iso(d.get("Prazo")) or "", "resp": txt(d.get("Dono"), 40)})
+        try:
+            ordem = int(float(str(d.get("Ordem", "")).replace(",", ".").strip()))
+        except (TypeError, ValueError):
+            ordem = 9999
+        out.append({"sec": sec, "t": txt(d.get("Titulo"), 160), "x": txt(d.get("Texto"), 700),
+                    "dt": data_iso(d.get("Prazo")) or "", "resp": txt(d.get("Dono"), 40),
+                    "_o": ordem, "_i": i})
+    out.sort(key=lambda it: (it["_o"], it["dt"] or "9999-12-31", it["_i"]))
+    for it in out:
+        it.pop("_o", None)
+        it.pop("_i", None)
     return out
 
 

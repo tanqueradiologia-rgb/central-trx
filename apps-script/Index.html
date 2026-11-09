@@ -213,14 +213,14 @@ function carregar(){
     $("#tb").innerHTML='<tr><td colspan="6"><div class="empty">Não consegui ler a planilha: '+esc(e.message)+'. Confira se você tem acesso a ela e recarregue.</div></td></tr>';
   }).getDados(FRENTE);
 }
-function opcoes(id, vals, primeira){ var s=$(id), v=s.value; s.innerHTML='<option value="">'+primeira+'</option>'; Array.from(new Set(vals.filter(Boolean))).sort(function(a,b){return a.localeCompare(b,"pt");}).forEach(function(x){ var o=document.createElement("option"); o.value=o.textContent=x; s.appendChild(o); }); s.value=v; }
+function opcoes(id, vals, primeira, rot){ var s=$(id), v=s.value, lab=function(x){ return rot?rot(x):x; }; s.innerHTML='<option value="">'+primeira+'</option>'; Array.from(new Set(vals.filter(Boolean))).sort(function(a,b){return lab(a).localeCompare(lab(b),"pt");}).forEach(function(x){ var o=document.createElement("option"); o.value=x; o.textContent=lab(x); s.appendChild(o); }); s.value=v; }
 function iniciar(){
   $("#quem").textContent = D.usuario ? "Conectado como "+nomeEq(D.usuario) : "Conectado";
   avisos(D.avisos);
   $("#abas").innerHTML=(D.frentes||[]).map(function(f){ return '<button type="button" data-f="'+f.id+'" aria-current="'+(f.id===FRENTE)+'">'+esc({clinicas:"Clínicas",licitacoes:"Licitações",quadro:"Quadro de credenciamento"}[f.id]||f.titulo)+'</button>'; }).join("");
   $("#thNome").textContent=V().nome; $("#thData").textContent=V().dataTit; $("#lbAtraso").textContent=V().atraso; $("#hInfo").textContent=V().info;
   $("#lkPlan").href = D.planilha+"#gid="+D.gid;
-  opcoes("#fFase", D.edicao.Fase.opcoes.concat(D.linhas.map(function(r){return r.Fase;})), "Todas");
+  opcoes("#fFase", D.edicao.Fase.opcoes.concat(D.linhas.map(function(r){return r.Fase;})), "Todas", rotFase);
   opcoes("#fResp", D.linhas.map(function(r){return r.Responsavel;}), "Todos");
   opcoes("#fUf", D.linhas.map(function(r){return r.UF;}), "Todas");
   render();
@@ -256,7 +256,7 @@ function render(){
   $("#tb").innerHTML=rows.slice(0,limite).map(function(r){
     var n=(D.historico[r._k]||[]).length;
     return '<tr class="row'+(r._k===sel?' sel':'')+'" tabindex="0" data-k="'+esc(r._k)+'"><td><div class="nm">'+esc(V().titulo(r))+(n?'<span class="badge" title="registros no histórico">'+n+'</span>':'')+'</div><div class="meta">'+esc(V().sub(r))+'</div></td>'+
-      '<td>'+esc(r.Fase||"—")+'</td><td class="hide-sm">'+fx(r.Faixa,r.Score)+'</td><td class="hide-sm">'+esc(r.Responsavel||"—")+'</td>'+
+      '<td>'+esc(rotFase(r.Fase)||"—")+'</td><td class="hide-sm">'+fx(r.Faixa,r.Score)+'</td><td class="hide-sm">'+esc(r.Responsavel||"—")+'</td>'+
       '<td class="mono'+(vencido(r)?' late':'')+'">'+br(V().data(r))+(vencido(r)?' · '+V().marca:'')+'</td><td class="hide-sm meta">'+esc(V().acao(r)&&V().acao(r)!=="-"?V().acao(r):"")+'</td></tr>';
   }).join("");
   $("#mais").innerHTML = rows.length>limite ? '<button class="btn" type="button">Mostrar mais</button>' : "";
@@ -264,7 +264,7 @@ function render(){
 function campo(nome, cfg, valor){
   var lbl=nome.replace(/_/g," ").replace(/Proxima [Aa]cao/,"Próxima ação").replace("Proximo toque","Próximo toque").replace("Responsavel","Responsável").replace("Situacao do envio","Situação do envio");
   var full = (/^Proxima.[Aa]cao$/.test(nome)||nome==="Resultado") ? ' class="full"' : '';
-  if(cfg.tipo==="lista"){ var ops=cfg.opcoes.slice(); if(valor && ops.indexOf(valor)<0) ops.unshift(valor); return '<label'+full+'>'+lbl+'<select name="'+nome+'">'+ops.map(function(o){return '<option'+(o===valor?' selected':'')+'>'+esc(o)+'</option>';}).join("")+'</select></label>'; }
+  if(cfg.tipo==="lista"){ var ops=cfg.opcoes.slice(); if(valor && ops.indexOf(valor)<0) ops.unshift(valor); var rl=(nome==="Fase")?rotFase:function(o){return o;}; return '<label'+full+'>'+lbl+'<select name="'+nome+'">'+ops.map(function(o){return '<option value="'+esc(o)+'"'+(o===valor?' selected':'')+'>'+esc(rl(o))+'</option>';}).join("")+'</select></label>'; }
   if(cfg.tipo==="equipe"){ var ns=(D.equipe||[]).map(function(e){return e.nome;}); if(valor && ns.indexOf(valor)<0) ns.unshift(valor); return '<label'+full+'>'+lbl+'<select name="'+nome+'"><option value="">—</option>'+ns.map(function(o){return '<option'+(o===valor?' selected':'')+'>'+esc(o)+'</option>';}).join("")+'</select></label>'; }
   if(cfg.tipo==="data") return '<label'+full+'>'+lbl+'<input type="date" name="'+nome+'" value="'+esc(iso(valor))+'"></label>';
   if(cfg.tipo==="whats"){ var w=String(valor||"").replace(/\D/g,""); return '<label'+full+'>'+lbl+(w?' <a href="https://wa.me/'+esc(w)+'" target="_blank" rel="noopener">abrir</a>':'')+'<input type="tel" name="'+nome+'" value="'+esc(valor)+'" placeholder="(62) 99999-9999"></label>'; }
@@ -278,6 +278,9 @@ var PAPEL_BASE={"Gestor Bruno":"Gestor","Gestora Thalyta":"Gestor"};
 function base(x){ return PAPEL_BASE[x]||x; }
 function mesmoPapel(a,b){ return base(a)===base(b); }
 function papel(x){ return NOME_PAPEL[x]||x||"—"; }
+// Rotulo da fase: a planilha e o codigo continuam com o valor sem acento; o acento vem do
+// campo "rot" do roteiro (config/roteiro.json) e vale so para a tela.
+function rotFase(f){ var R=D&&D.roteiro, F=R&&R.fases&&R.fases[f]; return (F&&F.rot)||f||""; }
 function addDias(iso,n){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(iso||""); if(!m) return ""; var d=new Date(+m[1],+m[2]-1,+m[3]+n); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear(); }
 function rotBox(r){
   var R=D.roteiro, el=$("#rot"); if(!R){ el.hidden=true; return; }
