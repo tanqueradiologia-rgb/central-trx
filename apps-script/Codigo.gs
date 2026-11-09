@@ -121,12 +121,13 @@ const ABA_HIST = 'Historico';
 const ABA_EQUIPE = 'Equipe';
 const TZ = 'America/Sao_Paulo';
 
-/** Só entra quem está na aba Equipe com e-mail e Ativo diferente de "não" (além do acesso à planilha). */
+/** Só entra quem está na aba Equipe com e-mail, Ativo diferente de "não" e Edicao diferente de "não"
+ *  (além do acesso à planilha). Edicao em branco vale como sim: a coluna só serve para barrar. */
 function permitido_() {
   const eu = String(Session.getActiveUser().getEmail() || '').toLowerCase();
   if (!eu) return false;
   try {
-    return equipe_().some(function (p) { return p.email.toLowerCase() === eu; });
+    return equipe_().some(function (p) { return p.email.toLowerCase() === eu && p.edicao; });
   } catch (err) { return false; }  // sem acesso à planilha = sem acesso ao app
 }
 
@@ -161,15 +162,30 @@ function cabecalho_(sh) {
   return idx;
 }
 
-/** Aba Equipe: Nome | Email | Apelido | Ativo | Papel (papéis do roteiro separados por vírgula). */
+/** "não" em qualquer grafia (nao, Não, NAO). Em branco nunca é não. */
+function ehNao_(v) {
+  const t = String(v == null ? '' : v).trim().toLowerCase();
+  return t === 'não' || t === 'nao';
+}
+
+/** Aba Equipe, colunas lidas pelo cabeçalho: Nome | Email | Apelido | Ativo | Papel | ... | Edicao.
+ *  Ativo = está na equipe (menções, papéis e avisos). Edicao = entra no app de Edição. */
 function equipe_() {
   const sh = planilha_().getSheetByName(ABA_EQUIPE);
   if (!sh || sh.getLastRow() < 2) return [];
-  return sh.getRange(2, 1, sh.getLastRow() - 1, 5).getDisplayValues()
-    .filter(function (r) { return r[0] && String(r[3]).toLowerCase() !== 'não' && String(r[3]).toLowerCase() !== 'nao'; })
+  const idx = cabecalho_(sh);
+  const col = function (r, nome, padrao) {
+    const i = idx[nome];
+    return i === undefined ? (padrao === undefined ? '' : padrao) : r[i];
+  };
+  return sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getDisplayValues()
+    .filter(function (r) { return col(r, 'Nome') && !ehNao_(col(r, 'Ativo')); })
     .map(function (r) {
-      return { nome: r[0], email: String(r[1] || '').trim(), apelido: (r[2] || r[0]).toLowerCase(),
-        papeis: String(r[4] || '').split(',').map(function (x) { return x.trim(); }).filter(String) };
+      const nome = col(r, 'Nome');
+      return { nome: nome, email: String(col(r, 'Email') || '').trim(),
+        apelido: String(col(r, 'Apelido') || nome).toLowerCase(),
+        edicao: !ehNao_(col(r, 'Edicao')),
+        papeis: String(col(r, 'Papel') || '').split(',').map(function (x) { return x.trim(); }).filter(String) };
     });
 }
 
