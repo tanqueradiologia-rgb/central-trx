@@ -14,6 +14,18 @@ Página de acompanhamento da TRX Diagnóstico Digital: clínicas particulares, l
 | `scripts/build_central.py` | transforma as planilhas no arquivo de dados da página |
 | `.github/workflows/atualizar.yml` | agenda e publica |
 
+## Produção dos sócios (aba nova, 11/11/2026)
+A aba **Produção dos sócios** da página mostra o coeficiente de esforço e o score de cada médico por período. Ela nasceu do pedido do Marcos de desenvolver com o Henrique (controle financeiro) a medição da produção dos sócios.
+
+Três abas da Pipeline Licitações alimentam a aba, e a régua mora na planilha, não no código:
+| Aba | O que guarda |
+|---|---|
+| `Producao_Params` | a régua: coeficiente de esforço por modalidade, peso dos quatro eixos, meta de margem, fator líquido da cascata e os SLA |
+| `Producao_Socios` | um lançamento por período, médico, contrato e modalidade: exames, laudos no prazo, horas medianas, receita e repasse |
+| `Escala_Socios` | plantões, sobreavisos e escalas devolvidas por médico no período |
+
+O score é a média ponderada de quatro eixos (esforço, prazo, margem e cobertura de escala). **Eixo sem dado no período sai da conta e o peso dele é redistribuído entre os eixos medidos**, então a aba já serve antes de a escala estar preenchida. Mudar um coeficiente ou um peso na `Producao_Params` muda a página na rodada seguinte; mudança de régua passa pelo Marcos.
+
 ## Segredos necessários (Settings → Secrets and variables → Actions)
 - `GOOGLE_SA_JSON`: conteúdo do arquivo JSON da chave da conta de serviço. As planilhas precisam estar compartilhadas com o e-mail dessa conta, como leitor.
 - `CENTRAL_SENHA`: senha da equipe (8 caracteres ou mais). Desde 20/10/2026 a página publica só `central.enc`: `dados_central.js`, `saude.js` e `roteiro.js` são cifrados (PBKDF2 + AES-256-GCM, `scripts/cifrar_central.py`) e apagados antes da publicação. A página pede a senha uma vez e a guarda no navegador; o botão Sair apaga. Para trocar a senha: trocar o segredo, rodar o workflow e avisar a equipe. Sem o segredo a rodada falha e nada é publicado.

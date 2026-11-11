@@ -59,6 +59,24 @@ if "--so-licitacoes" in sys.argv:
     except Exception as e:
         json.dump({"values": []}, open("isgh_dossie.json", "w", encoding="utf-8"))
         print(f"::warning::Nao consegui ler a aba ISGH_Dossie: {e}")
+    # Producao dos socios (11/11/2026): tres abas da Pipeline Licitacoes que alimentam a aba
+    # "Producao dos socios" da Central. Producao_Params e a regua (coeficientes e pesos),
+    # Producao_Socios sao os lancamentos de laudos e Escala_Socios os plantoes.
+    # Falha aqui nao derruba a pagina; sem as abas, a aba da Central simplesmente nao aparece.
+    try:
+        bg = sheets.spreadsheets().values().batchGet(
+            spreadsheetId=LICIT_SHEET,
+            ranges=["Producao_Params!A1:C60", "Producao_Socios!A1:M500", "Escala_Socios!A1:F300"]
+        ).execute()
+        vr = bg.get("valueRanges", [])
+        prod = {"params": vr[0].get("values", []) if len(vr) > 0 else [],
+                "producao": vr[1].get("values", []) if len(vr) > 1 else [],
+                "escala": vr[2].get("values", []) if len(vr) > 2 else []}
+        json.dump(prod, open("producao.json", "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"OK: producao {len(prod['producao'])} linhas, params {len(prod['params'])}, escala {len(prod['escala'])}")
+    except Exception as e:
+        json.dump({"params": [], "producao": [], "escala": []}, open("producao.json", "w", encoding="utf-8"))
+        print(f"::warning::Nao consegui ler as abas de producao dos socios: {e}")
     sys.exit(0)
 
 vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AP").execute()

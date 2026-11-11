@@ -72,7 +72,8 @@ jobs:
           python scripts/gerar_roteiro.py
           python scripts/build_central.py --pipeline pipeline.json --licitacoes licitacoes.json \
             --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET" \
-            --documentos documentos.json --destaque destaque_isgh.json --dossie isgh_dossie.json
+            --documentos documentos.json --destaque destaque_isgh.json --dossie isgh_dossie.json \
+            --producao producao.json
       - name: Verificação automática (motores e regras)
         run: |
           set -a; . ./mods.env; set +a

@@ -226,6 +226,23 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .more{display:flex;justify-content:center;padding-block:12px}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direction:column;gap:4px}
+/* produção dos sócios (11/11/2026): coeficiente de esforço e score por médico */
+.pr-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.pr-top h2{margin:0;font-size:18px}
+.pr-top select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink)}
+.pr-sec{font-family:var(--f-display);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.pr-bar{position:relative;height:8px;border-radius:999px;background:var(--line);overflow:hidden;min-width:70px}
+.pr-bar i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--accent)}
+.pr-sc{display:flex;align-items:center;gap:8px}
+.pr-sc b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
+.pr-eixos{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.pr-eixos span{display:flex;align-items:center;gap:5px}
+.pr-eixos i{display:inline-block;width:34px;height:6px;border-radius:999px;background:var(--line);position:relative;overflow:hidden}
+.pr-eixos i em{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:999px}
+.pr-vazio td{color:var(--muted)}
+.pr-regua{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.pr-regua div{font-size:13px;line-height:1.5}
+.pr-regua b{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 @media (max-width:640px){.brand h1{font-size:22px}.brand .logo{height:24px}.kpi .v{font-size:20px}.count{margin-left:0;width:100%}header.top{position:static}table{min-width:0}.hide-sm{display:none}.clip{max-width:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -253,6 +270,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <a href="#isgh" data-tab="isgh">ISGH<span class="n" id="n-isgh"></span></a>
       <a href="#roteiro" data-tab="roteiro">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
+      <a href="#producao" data-tab="producao">Produção dos sócios<span class="n" id="n-producao"></span></a>
       <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
       <button class="tema" id="sair" type="button" hidden title="Apaga a senha guardada neste aparelho">Sair</button>
     </nav>
@@ -373,6 +391,16 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 
   <section class="pane dossie" id="pane-isgh" hidden>
     <div id="isgh-dossie"></div>
+  </section>
+
+  <section class="pane" id="pane-producao" hidden>
+    <div class="pr-top">
+      <h2>Produção dos sócios</h2>
+      <label>Período <select id="pr-per"></select></label>
+      <div class="seg" id="pr-grupo" role="group" aria-label="Quem entra"><button type="button" data-v="socios" aria-pressed="true">Só os sócios</button><button type="button" data-v="todos" aria-pressed="false">Todos os laudadores</button></div>
+    </div>
+    <div class="kpis" id="k-producao"></div>
+    <div id="pr-corpo"></div>
   </section>
 
   <footer id="rodape"></footer>
@@ -1037,13 +1065,109 @@ const lRot = (function(){
   return {render};
 })();
 
+/* ---------- PRODUÇÃO DOS SÓCIOS: coeficiente de esforço e score por médico (11/11/2026) ----------
+   A régua mora na aba Producao_Params da Pipeline Licitações: mudar o coeficiente ou o peso lá
+   muda esta aba na rodada seguinte, sem mexer em código. Eixo sem dado no período sai da conta
+   e o peso dele é redistribuído entre os eixos medidos. */
+const lProd = (function(){
+  const P = D.producao_socios || {};
+  const PER = P.periodos || [];
+  const R = P.regua || {};
+  const F = P.fonte || {};
+  const corpo = $("#pr-corpo"), selPer = $("#pr-per");
+  const EIXOS = [["esforco","Esforço"],["prazo","Prazo"],["margem","Margem"],["escala","Escala"]];
+  const money = v => "R$ " + (v||0).toLocaleString("pt-BR",{minimumFractionDigits:2, maximumFractionDigits:2});
+  const n1 = v => v===null||v===undefined ? "—" : Number(v).toLocaleString("pt-BR",{minimumFractionDigits:1, maximumFractionDigits:1});
+  const pct = v => v===null||v===undefined ? "—" : n1(v)+"%";
+  const aba = gid => F.id ? "https://docs.google.com/spreadsheets/d/"+F.id+"/edit#gid="+gid : "";
+  let grupo = "socios";
+  if(PER.length){
+    selPer.innerHTML = PER.map(p=>'<option value="'+esc(p.per)+'">'+esc(p.per)+'</option>').join("");
+    $("#n-producao").textContent = PER[0].medicos.length || "";
+  }
+  function barra(v){ return '<span class="pr-bar"><i style="width:'+Math.max(0,Math.min(100,v||0))+'%"></i></span>'; }
+  function eixos(m){
+    return '<div class="pr-eixos">'+EIXOS.map(([k,rot])=>{
+      const v=m.notas[k];
+      return '<span>'+esc(rot)+' <i><em style="width:'+(v===null?0:Math.max(0,Math.min(100,v)))+'%"></em></i> '+(v===null?'<span class="d-mut">sem dado</span>':n1(v))+'</span>';
+    }).join("")+'</div>';
+  }
+  function tabela(lista){
+    if(!lista.length) return '<p class="vazio">Ninguém lançado neste período.</p>';
+    return '<div class="tbl"><table><thead><tr><th>Médico</th><th>Exames</th><th>Esforço (UE)</th>'
+      + '<th class="hide-sm">Rateio</th><th>No prazo</th><th class="hide-sm">Margem</th><th class="hide-sm">Escala</th><th>Score</th></tr></thead><tbody>'
+      + lista.map(m=>'<tr>'
+        + '<td><b>'+esc(m.n)+'</b>'+(m.socio?'':' <span class="d-mut">parceiro</span>')
+          + (m.mods&&m.mods.length?'<div class="meta">'+m.mods.map(x=>esc(x.m)+" "+x.ex).join(" · ")+(m.ctr&&m.ctr.length?' · '+m.ctr.map(esc).join(", "):'')+'</div>':'')
+          + '<div class="meta">'+eixos(m)+'</div></td>'
+        + '<td class="mono">'+m.ex+'</td>'
+        + '<td class="mono">'+n1(m.ue)+'</td>'
+        + '<td class="mono hide-sm">'+(m.share===null?'—':pct(m.share))+'</td>'
+        + '<td class="mono">'+(m.pzp===null?'<span class="d-mut">sem dado</span>':pct(m.pzp)+(m.hrs!==null?' <span class="d-mut">'+n1(m.hrs)+'h</span>':''))+'</td>'
+        + '<td class="mono hide-sm">'+money(m.mg)+(m.mgp===null?'':' <span class="d-mut">'+pct(m.mgp)+'</span>')+'</td>'
+        + '<td class="mono hide-sm">'+(m.pl===null&&m.sob===null?'<span class="d-mut">sem dado</span>':((m.pl||0)+(m.sob||0))+(m.ncob?' <span class="d-bad">−'+m.ncob+'</span>':''))+'</td>'
+        + '<td><span class="pr-sc">'+barra(m.score)+'<b>'+(m.score===null?'—':n1(m.score))+'</b></span></td>'
+        + '</tr>').join("")
+      + '</tbody></table></div>';
+  }
+  function render(){
+    if(!PER.length){
+      corpo.innerHTML = '<p class="vazio">Ainda não há produção lançada. A régua fica na aba <b>Producao_Params</b> e os laudos na aba <b>Producao_Socios</b> da Pipeline Licitações; a Central lê as duas na rodada seguinte.'
+        + (aba(F.gid)?' <a href="'+aba(F.gid)+'" target="_blank" rel="noopener">Abrir a aba ↗</a>':'')+'</p>';
+      $("#k-producao").innerHTML=""; return;
+    }
+    const p = PER.find(x=>x.per===selPer.value) || PER[0];
+    selPer.value = p.per;
+    const socios = p.medicos.filter(m=>m.socio);
+    const lista = grupo==="socios" ? socios : p.medicos;
+    const t = p.tot;
+    $("#k-producao").innerHTML = [
+      ["Exames laudados", t.ex, ""],
+      ["Esforço total (UE)", n1(t.ue), ""],
+      ["No prazo", t.pzp===null?"—":pct(t.pzp), t.pzp!==null&&t.pzp<90?"warn":"ok"],
+      ["Repasse médio", t.repm===null?"—":money(t.repm), ""],
+      ["Margem do período", money(t.mg)+(t.mgp===null?"":" · "+pct(t.mgp)), t.mgp!==null&&t.mgp*1<9?"bad":"ok"],
+      ["Quem laudou", t.socios+" sócios · "+t.parceiros+" parceiros", ""]
+    ].map(([k,v,cls])=>'<div class="kpi '+cls+'" style="cursor:default"><span class="v">'+v+'</span><span class="k">'+k+'</span></div>').join("");
+
+    let h = '<div class="pr-sec">Ranking do período '+esc(p.per)+'</div>' + tabela(lista);
+    if(grupo==="socios" && p.medicos.length>socios.length){
+      h += '<p class="meta">Os parceiros de fora do quadro não entram no ranking, mas contam no total. Troque para "Todos os laudadores" para vê-los.</p>';
+    }
+    const falta = (p.falta||[]).map(k=>(EIXOS.find(e=>e[0]===k)||[k,k])[1]);
+    h += '<div class="pr-sec">Como o score é calculado</div><div class="band"><div class="pr-regua">'
+      + '<div><b>Esforço · '+n1(R.pesos&&R.pesos.esforco)+' pontos</b><br>Cada exame vira unidade de esforço: '
+        + Object.keys(R.coef||{}).map(k=>esc(k)+" "+n1(R.coef[k])).join(" · ")
+        + '.<br>'+(R.meta_ue?'Meta de '+n1(R.meta_ue)+' UE no mês = nota 100.':'Sem meta lançada: a média dos sócios do período ('+n1(p.ref.ue_med)+' UE) vale 50 e o dobro dela vale 100.')+'</div>'
+      + '<div><b>Prazo · '+n1(R.pesos&&R.pesos.prazo)+' pontos</b><br>Laudos entregues dentro do SLA, contados da atribuição ao radiologista: urgência '
+        + n1(R.sla&&R.sla.urgencia)+'h, internado '+n1(R.sla&&R.sla.internado)+'h, ambulatorial '+n1(R.sla&&R.sla.ambulatorial)+'h. A porcentagem é a nota.</div>'
+      + '<div><b>Margem · '+n1(R.pesos&&R.pesos.margem)+' pontos</b><br>Receita menos as deduções da cascata (fator '+n1((R.fator_liq||0)*100)+'%) menos o repasse, dividido pela receita. Bate a meta de '
+        + pct((R.meta_margem||0)*100)+' e a nota é 100.</div>'
+      + '<div><b>Escala · '+n1(R.pesos&&R.pesos.escala)+' pontos</b><br>Plantões e sobreavisos assumidos no mês, '
+        + (R.meta_pl?'contra a meta de '+n1(R.meta_pl)+'.':'comparados com a média dos sócios.')
+        + ' Cada escala devolvida desconta '+n1(R.pena)+' pontos.</div>'
+      + '</div>'
+      + (falta.length?'<p class="meta" style="margin:0"><b>Eixo sem dado neste período: '+falta.map(esc).join(", ")+'.</b> O peso dele foi redistribuído entre os eixos medidos, então o score não penaliza ninguém por falta de lançamento.</p>':'')
+      + '<p class="meta" style="margin:0">A régua é editável na planilha, não no código: '
+      + (aba(F.params_gid)?'<a href="'+aba(F.params_gid)+'" target="_blank" rel="noopener">aba Producao_Params ↗</a> · ':'')
+      + (aba(F.gid)?'<a href="'+aba(F.gid)+'" target="_blank" rel="noopener">aba Producao_Socios ↗</a> · ':'')
+      + (aba(F.escala_gid)?'<a href="'+aba(F.escala_gid)+'" target="_blank" rel="noopener">aba Escala_Socios ↗</a>':'')
+      + '</p></div>';
+    corpo.innerHTML = h;
+  }
+  selPer.addEventListener("change", render);
+  $("#pr-grupo").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; grupo=b.dataset.v;
+    $("#pr-grupo").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)); render(); });
+  return {render};
+})();
+
 /* ---------- abas ---------- */
-const TABS=["prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados"];
+const TABS=["prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao"];
 const rendered={};
 function show(tab){
   if(!TABS.includes(tab)) tab="prioridades";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));

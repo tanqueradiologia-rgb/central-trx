@@ -307,6 +307,240 @@ def documentos_alerta(path):
     return out
 
 
+PROD_GID = 1397135487          # aba Producao_Socios da Pipeline Licitacoes
+PARAMS_GID = 1912529267        # aba Producao_Params (a regua)
+ESCALA_GID = 1455089774        # aba Escala_Socios
+
+# Modalidade: o sistema do hospital escreve o codigo DICOM (MR, CT, CR), a equipe escreve a sigla.
+MOD_ALIAS = {"MR": "RM", "RM": "RM", "CT": "TC", "TC": "TC", "CR": "RX", "DX": "RX", "DR": "RX",
+             "RX": "RX", "MG": "MMG", "MMG": "MMG", "US": "US", "BMD": "DO", "DO": "DO"}
+# Unidade de esforco por modalidade. Padrao da regua aprovada em 01/09/2026 (1 TC = 3 MMG = 4 RX);
+# a RM nao tinha coeficiente e entra como proposta de 1,5 TC. Tudo isso e sobreposto pela
+# aba Producao_Params, que e quem manda.
+COEF_PADRAO = {"RM": 1.5, "TC": 1.0, "MMG": 1.0 / 3, "RX": 0.25, "US": 0.5, "DO": 0.25}
+PESO_PADRAO = {"esforco": 40.0, "prazo": 25.0, "margem": 20.0, "escala": 15.0}
+META_MARGEM_PADRAO = 0.09      # regra do Marcos de 23/10/2026: lucro de 9% do faturamento
+# Fator liquido do contrato privado: 9% de impostos, 10% de gestao e 1% do programador
+# ([[custos-fixos-trx-2026-10]], 05/11/2026). A margem do eixo sai da receita JA liquida
+# dessas deducoes, senao todo laudo pareceria render 40%.
+FATOR_LIQUIDO_PADRAO = 0.8099
+PENA_NAO_COBERTO = 15.0        # pontos descontados do eixo escala por escala devolvida
+
+
+def _tab(rows):
+    """Lista de listas da planilha -> lista de dicionarios pelo cabecalho da linha 1."""
+    if not rows or len(rows) < 2:
+        return []
+    H = [str(h).strip() for h in rows[0]]
+    out = []
+    for n, r in enumerate(rows[1:], start=2):
+        r = list(r) + [""] * (len(H) - len(r))
+        d = {h: r[i] for i, h in enumerate(H) if h}
+        d["_l"] = n
+        out.append(d)
+    return out
+
+
+def _sim(v):
+    return str(v).strip().lower() in ("sim", "s", "true", "1", "x", "socio", "sócio")
+
+
+def producao_socios(path):
+    """Abas Producao_Params, Producao_Socios e Escala_Socios da Pipeline Licitacoes (11/11/2026).
+
+    Devolve o coeficiente de esforco e o score de cada medico por periodo. O score e a media
+    ponderada de quatro eixos, com os pesos da aba Producao_Params:
+      esforco  volume convertido em unidade de esforco (UE) contra a meta ou a media dos socios;
+      prazo    porcentagem de laudos entregues dentro do SLA, contado da atribuicao;
+      margem   (receita - repasse) / receita do que a pessoa laudou, contra a meta de margem;
+      escala   plantoes e sobreavisos assumidos, menos desconto por escala devolvida.
+    Eixo sem dado no periodo SAI da conta e o peso dele e redistribuido entre os eixos medidos:
+    assim a Central ja serve antes de a aba de escala estar preenchida. Sem as abas, devolve {}.
+    """
+    try:
+        pv = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return {}
+    params_rows = pv.get("params") or []
+    prod_rows = pv.get("producao") or []
+    escala_rows = pv.get("escala") or []
+    if not prod_rows or len(prod_rows) < 2:
+        return {}
+
+    # ---- a regua
+    par = {}
+    for d in _tab(params_rows):
+        k = txt(d.get("Chave")).strip()
+        if not k:
+            continue
+        par[k.lower()] = d.get("Valor")
+    coef = dict(COEF_PADRAO)
+    for k, v in par.items():
+        if k.startswith("coef_"):
+            sigla = MOD_ALIAS.get(k[5:].upper(), k[5:].upper())
+            n = num(v)
+            if n is not None and n > 0:
+                coef[sigla] = n
+    pesos = {}
+    for eixo, padrao in PESO_PADRAO.items():
+        n = num(par.get("peso_" + eixo))
+        pesos[eixo] = padrao if n is None else max(0.0, n)
+    meta_margem = num(par.get("meta_margem"))
+    if meta_margem is None or meta_margem <= 0:
+        meta_margem = META_MARGEM_PADRAO
+    if meta_margem > 1:
+        meta_margem = meta_margem / 100.0
+    fator_liq = num(par.get("fator_liquido"))
+    if fator_liq is None or not (0 < fator_liq <= 1):
+        fator_liq = FATOR_LIQUIDO_PADRAO
+    meta_ue = num(par.get("meta_ue_mes"))
+    meta_pl = num(par.get("meta_plantoes_mes"))
+    teto = num(par.get("teto_nota")) or 100.0
+    sla = {"urgencia": num(par.get("sla_urgencia_h")) or 2.0,
+           "internado": num(par.get("sla_internado_h")) or 12.0,
+           "ambulatorial": num(par.get("sla_ambulatorial_h")) or 48.0}
+
+    # ---- lancamentos
+    gente = {}
+
+    def pega(per, nome):
+        k = (per, nome)
+        if k not in gente:
+            gente[k] = {"per": per, "n": nome, "socio": False, "ex": 0, "ue": 0.0, "pz": 0,
+                        "pz_base": 0, "rec": 0.0, "rep": 0.0, "mods": {}, "ctr": set(),
+                        "pl": None, "sob": None, "ncob": 0, "obs": "", "l": None, "hrs": []}
+        return gente[k]
+
+    for d in _tab(prod_rows):
+        per = txt(d.get("Periodo"))[:7]
+        nome = txt(d.get("Medico"), 60)
+        if not per or not nome:
+            continue
+        ex = num(d.get("Exames")) or 0
+        if ex <= 0:
+            continue
+        mod = MOD_ALIAS.get(txt(d.get("Modalidade")).upper(), txt(d.get("Modalidade")).upper())
+        fator = num(d.get("Fator"))
+        fator = 1.0 if fator is None or fator <= 0 else fator
+        g = pega(per, nome)
+        g["socio"] = g["socio"] or _sim(d.get("Socio"))
+        g["ex"] += int(ex)
+        g["ue"] += ex * coef.get(mod, 1.0) * fator
+        pz = num(d.get("No_prazo"))
+        if pz is not None and str(d.get("No_prazo")).strip() != "":
+            g["pz"] += int(pz)
+            g["pz_base"] += int(ex)
+        g["rec"] += num(d.get("Receita")) or 0.0
+        g["rep"] += num(d.get("Repasse")) or 0.0
+        h = num(d.get("Horas_medianas"))
+        if h is not None:
+            g["hrs"].append((h, int(ex)))
+        m = g["mods"].setdefault(mod, {"m": mod, "ex": 0, "ue": 0.0})
+        m["ex"] += int(ex)
+        m["ue"] += ex * coef.get(mod, 1.0) * fator
+        ctr = txt(d.get("Contrato"), 40)
+        if ctr:
+            g["ctr"].add(ctr)
+        if not g["obs"]:
+            g["obs"] = txt(d.get("Obs"), 220)
+        if g["l"] is None:
+            g["l"] = d["_l"]
+
+    for d in _tab(escala_rows):
+        per = txt(d.get("Periodo"))[:7]
+        nome = txt(d.get("Medico"), 60)
+        if not per or not nome:
+            continue
+        pl, sob, nc = num(d.get("Plantoes")), num(d.get("Sobreavisos")), num(d.get("Nao_cobertos"))
+        if pl is None and sob is None and nc is None:
+            continue
+        g = pega(per, nome)
+        g["pl"] = (g["pl"] or 0) + (pl or 0)
+        g["sob"] = (g["sob"] or 0) + (sob or 0)
+        g["ncob"] += int(nc or 0)
+
+    # ---- notas por periodo
+    def nota(valor, ref, meta):
+        """Com meta: 100 quando bate a meta. Sem meta: 50 na media dos socios, 100 no dobro."""
+        if meta and meta > 0:
+            return min(teto, 100.0 * valor / meta)
+        if not ref or ref <= 0:
+            return None
+        return min(teto, 50.0 * valor / ref)
+
+    periodos = []
+    for per in sorted({k[0] for k in gente}, reverse=True):
+        linhas = [g for k, g in gente.items() if k[0] == per]
+        socios = [g for g in linhas if g["socio"]]
+        base = socios or linhas
+        ue_med = (sum(g["ue"] for g in base) / len(base)) if base else 0.0
+        pl_base = [g for g in base if g["pl"] is not None or g["sob"] is not None]
+        pl_med = (sum((g["pl"] or 0) + (g["sob"] or 0) for g in pl_base) / len(pl_base)) if pl_base else 0.0
+        ue_socios = sum(g["ue"] for g in socios) or sum(g["ue"] for g in linhas)
+        saida = []
+        for g in sorted(linhas, key=lambda x: -x["ue"]):
+            liq = g["rec"] * fator_liq
+            margem_pct = ((liq - g["rep"]) / g["rec"]) if g["rec"] else None
+            notas = {
+                "esforco": nota(g["ue"], ue_med, meta_ue),
+                "prazo": (100.0 * g["pz"] / g["pz_base"]) if g["pz_base"] else None,
+                "margem": (max(0.0, min(teto, 100.0 * margem_pct / meta_margem))
+                           if margem_pct is not None else None),
+                "escala": None,
+            }
+            if g["pl"] is not None or g["sob"] is not None:
+                bruto = nota((g["pl"] or 0) + (g["sob"] or 0), pl_med, meta_pl)
+                if bruto is not None:
+                    notas["escala"] = max(0.0, bruto - PENA_NAO_COBERTO * g["ncob"])
+            vivos = {e: v for e, v in notas.items() if v is not None}
+            soma_peso = sum(pesos[e] for e in vivos) or 0.0
+            score = (sum(notas[e] * pesos[e] for e in vivos) / soma_peso) if soma_peso else None
+            hrs = (sum(h * n for h, n in g["hrs"]) / sum(n for _, n in g["hrs"])) if g["hrs"] else None
+            saida.append({
+                "n": g["n"], "socio": g["socio"], "ex": g["ex"], "ue": round(g["ue"], 1),
+                "share": round(100.0 * g["ue"] / ue_socios, 1) if ue_socios and g["socio"] else None,
+                "pz": g["pz"], "pzb": g["pz_base"],
+                "pzp": round(100.0 * g["pz"] / g["pz_base"], 1) if g["pz_base"] else None,
+                "hrs": round(hrs, 1) if hrs is not None else None,
+                "rec": round(g["rec"], 2), "recl": round(liq, 2), "rep": round(g["rep"], 2),
+                "mg": round(liq - g["rep"], 2),
+                "mgp": round(100.0 * margem_pct, 1) if margem_pct is not None else None,
+                "pl": g["pl"], "sob": g["sob"], "ncob": g["ncob"],
+                "notas": {e: (round(v, 1) if v is not None else None) for e, v in notas.items()},
+                "score": round(score, 1) if score is not None else None,
+                "mods": sorted(({"m": m["m"], "ex": m["ex"], "ue": round(m["ue"], 1)}
+                                for m in g["mods"].values()), key=lambda x: -x["ue"]),
+                "ctr": sorted(g["ctr"]), "obs": g["obs"], "l": g["l"],
+            })
+        falta = [e for e in PESO_PADRAO if all(x["notas"][e] is None for x in saida)]
+        periodos.append({
+            "per": per,
+            "medicos": saida,
+            "tot": {"ex": sum(x["ex"] for x in saida), "ue": round(sum(x["ue"] for x in saida), 1),
+                    "rec": round(sum(x["rec"] for x in saida), 2),
+                    "rep": round(sum(x["rep"] for x in saida), 2),
+                    "socios": len([x for x in saida if x["socio"]]),
+                    "parceiros": len([x for x in saida if not x["socio"]]),
+                    "pzp": (round(100.0 * sum(x["pz"] for x in saida) / sum(x["pzb"] for x in saida), 1)
+                            if sum(x["pzb"] for x in saida) else None),
+                    "repm": (round(sum(x["rep"] for x in saida) / sum(x["ex"] for x in saida), 2)
+                             if sum(x["ex"] for x in saida) else None),
+                    "mg": round(sum(x["mg"] for x in saida), 2),
+                    "mgp": (round(100.0 * sum(x["mg"] for x in saida) / sum(x["rec"] for x in saida), 1)
+                            if sum(x["rec"] for x in saida) else None)},
+            "ref": {"ue_med": round(ue_med, 1), "pl_med": round(pl_med, 1)},
+            "falta": falta,
+        })
+
+    return {"periodos": periodos,
+            "regua": {"coef": {k: round(v, 4) for k, v in sorted(coef.items(), key=lambda x: -x[1])},
+                      "pesos": pesos, "meta_margem": meta_margem, "fator_liq": fator_liq,
+                      "meta_ue": meta_ue,
+                      "meta_pl": meta_pl, "sla": sla, "pena": PENA_NAO_COBERTO},
+            "fonte": {"id": LICIT_SHEET, "gid": PROD_GID, "params_gid": PARAMS_GID,
+                      "escala_gid": ESCALA_GID}}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pipeline", required=True)
@@ -317,6 +551,7 @@ def main():
     ap.add_argument("--documentos", default="", help="documentos.json (aba Documentos da planilha Documentos TRX)")
     ap.add_argument("--destaque", default="", help="destaque_isgh.json (aba Destaque_ISGH da Pipeline Licitacoes)")
     ap.add_argument("--dossie", default="", help="isgh_dossie.json (aba ISGH_Dossie da Pipeline Licitacoes)")
+    ap.add_argument("--producao", default="", help="producao.json (abas Producao_Params, Producao_Socios e Escala_Socios)")
     a = ap.parse_args()
 
     pv = json.load(open(a.pipeline, encoding="utf-8"))
@@ -374,6 +609,7 @@ def main():
         "documentos_alerta": documentos_alerta(a.documentos) if a.documentos else [],
         "destaque_isgh": destaque_isgh(a.destaque) if a.destaque else [],
         "isgh_dossie": isgh_dossie(a.dossie) if a.dossie else [],
+        "producao_socios": producao_socios(a.producao) if a.producao else {},
         "documentos_fonte": {"id": DOCS_SHEET, "gid": DOCS_GID},
     }
     js = "window.CENTRAL=" + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n"
