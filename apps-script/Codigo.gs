@@ -1,12 +1,15 @@
 /**
- * Central TRX · Edição
+ * Central TRX · Edição — v12 (12/11/2026)
  * App web (projeto próprio, separado dos scripts da planilha) que lê e grava na
  * "Pipeline TRX — Prospecção (fonte da verdade)" pelo ID em PLANILHA_ID.
  *
- * A planilha continua sendo a fonte da verdade. O app só lê e grava nela,
- * sempre com o login Google de quem está usando (implantar como
- * "Executar como: usuário que acessa o app"). Quem não tem acesso de edição
- * à planilha não consegue gravar.
+ * A planilha continua sendo a fonte da verdade. Desde a v12 o app roda como a
+ * conta da TRX (implantar como "Executar como: eu" e acesso "Qualquer pessoa,
+ * inclusive anônima") e quem usa se identifica por APELIDO + PIN, validados na
+ * aba Equipe (coluna PIN; Ativo e Edicao diferentes de "não"). Ninguém precisa
+ * de login Google, de autorizar o app nem de acesso à planilha. Toda função
+ * chamada pela página valida a credencial antes de ler ou gravar; o histórico
+ * registra o e-mail da pessoa da aba Equipe como autor.
  *
  * Cada frente é uma entrada em FRENTES: clínicas (Pipeline TRX), licitações e quadro de
  * credenciamento (Pipeline Licitações TRX, aba Licitacoes, separadas pela coluna Trilha).
@@ -121,26 +124,29 @@ const ABA_HIST = 'Historico';
 const ABA_EQUIPE = 'Equipe';
 const TZ = 'America/Sao_Paulo';
 
-/** Só entra quem está na aba Equipe com e-mail, Ativo diferente de "não" e Edicao diferente de "não"
- *  (além do acesso à planilha). Edicao em branco vale como sim: a coluna só serve para barrar. */
-function permitido_() {
-  const eu = String(Session.getActiveUser().getEmail() || '').toLowerCase();
-  if (!eu) return false;
-  try {
-    return equipe_().some(function (p) { return p.email.toLowerCase() === eu && p.edicao; });
-  } catch (err) { return false; }  // sem acesso à planilha = sem acesso ao app
+/** Credencial apelido + PIN contra a aba Equipe. Entra quem tem PIN preenchido,
+ *  Ativo diferente de "não" e Edicao diferente de "não". Devolve a pessoa ou null.
+ *  Sem Session.getActiveUser(): com o app rodando como a conta da TRX, o login
+ *  Google de quem acessa não identifica ninguém. */
+function validar_(cred) {
+  const a = String(cred && cred.apelido || '').trim().toLowerCase();
+  const p = String(cred && cred.pin || '').trim();
+  if (!a || !p) return null;
+  return equipeComPin_().filter(function (q) {
+    return q.apelido === a && q.edicao && q.pin && q.pin === p;
+  })[0] || null;
+}
+
+/** Toda função chamada pela página começa por aqui. A página serve a qualquer um;
+ *  os dados, não: sem credencial válida nada é lido nem gravado. */
+function exigir_(cred) {
+  const eu = validar_(cred);
+  if (!eu) throw new Error('LOGIN: apelido ou PIN não conferem. Confira com o Marcos o seu PIN na aba Equipe.');
+  return eu;
 }
 
 function doGet(e) {
-  if (!permitido_()) {
-    return HtmlService.createHtmlOutput(
-      '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<body style="font-family:Open Sans,Segoe UI,system-ui,sans-serif;color:#28313e;background:#f4f2f2;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px">' +
-      '<div style="background:#fff;border:1px solid #dfe0e2;border-radius:8px;padding:24px;max-width:380px">' +
-      '<h2 style="margin:0 0 8px;color:#0e3a5a">Central TRX · Edição</h2>' +
-      '<p style="margin:0;font-size:14px;color:#334861">Esta conta Google não está na equipe da TRX. Se você faz parte da equipe, peça ao Marcos para incluir seu e-mail na aba Equipe da Pipeline TRX.</p>' +
-      '</div></body>').setTitle('Central TRX · Edição');
-  }
+  // A página abre para qualquer um e pede apelido + PIN; sem credencial válida nenhum dado sai.
   // Link vindo da Central (GitHub): ?f=clinicas|licitacoes|quadro&l=<linha da planilha> abre a linha direto.
   const t = HtmlService.createTemplateFromFile('Index');
   const p = (e && e.parameter) || {};
@@ -168,9 +174,10 @@ function ehNao_(v) {
   return t === 'não' || t === 'nao';
 }
 
-/** Aba Equipe, colunas lidas pelo cabeçalho: Nome | Email | Apelido | Ativo | Papel | ... | Edicao.
- *  Ativo = está na equipe (menções, papéis e avisos). Edicao = entra no app de Edição. */
-function equipe_() {
+/** Aba Equipe, colunas lidas pelo cabeçalho: Nome | Email | Apelido | Ativo | Papel | ... | Edicao | PIN.
+ *  Ativo = está na equipe (menções, papéis e avisos). Edicao = entra no app de Edição.
+ *  PIN = credencial de entrada no app (v12); sem PIN a pessoa não entra. */
+function equipeComPin_() {
   const sh = planilha_().getSheetByName(ABA_EQUIPE);
   if (!sh || sh.getLastRow() < 2) return [];
   const idx = cabecalho_(sh);
@@ -185,8 +192,16 @@ function equipe_() {
       return { nome: nome, email: String(col(r, 'Email') || '').trim(),
         apelido: String(col(r, 'Apelido') || nome).toLowerCase(),
         edicao: !ehNao_(col(r, 'Edicao')),
+        pin: String(col(r, 'PIN') || '').trim(),
         papeis: String(col(r, 'Papel') || '').split(',').map(function (x) { return x.trim(); }).filter(String) };
     });
+}
+
+/** A mesma lista SEM o PIN: é a que vai para a página. O PIN nunca sai do servidor. */
+function equipe_() {
+  return equipeComPin_().map(function (p) {
+    return { nome: p.nome, email: p.email, apelido: p.apelido, edicao: p.edicao, papeis: p.papeis };
+  });
 }
 
 /** Quem recebe aviso quando uma linha passa para "quem": nome da pessoa ou papel do roteiro (Gestor, Socios medicos...). */
@@ -199,12 +214,13 @@ function emailsDe_(quem, eq) {
   }).map(function (e) { return e.email; });
 }
 
-/** Menções e passagens dos últimos 30 dias para quem está usando o app. */
-function getAvisos() {
-  const eu = String(Session.getActiveUser().getEmail() || '').toLowerCase();
+/** Menções e passagens dos últimos 30 dias para o e-mail da pessoa logada.
+ *  O "lido até quando" vive no navegador de cada um desde a v12 (sem conta Google
+ *  não há UserProperties por pessoa): a página marca os novos pelo campo t. */
+function getAvisos_(eu) {
+  eu = String(eu || '').toLowerCase();
   const sh = planilha_().getSheetByName(ABA_HIST);
-  const lidoAte = Number(PropertiesService.getUserProperties().getProperty('lidoAte') || 0);
-  if (!eu || !sh || sh.getLastRow() < 2) return { avisos: [], novos: 0 };
+  if (!eu || !sh || sh.getLastRow() < 2) return { avisos: [] };
   const ini = Math.max(2, sh.getLastRow() - 3000);
   const vals = sh.getRange(ini, 1, sh.getLastRow() - ini + 1, 10).getValues();
   const limite = Date.now() - 30 * 864e5;
@@ -218,13 +234,11 @@ function getAvisos() {
     const tipo = String(r[4] || '');
     out.push({ quando: quando ? Utilities.formatDate(quando, TZ, 'dd/MM HH:mm') : String(r[0]), t: t,
       autor: r[1], linha: r[2], nome: r[3], frente: tipo.indexOf(':') > 0 ? tipo.split(':')[0] : 'clinicas',
-      tipo: tipo.replace(/^[^:]+:/, ''), msg: r[8], novo: t > lidoAte });
+      tipo: tipo.replace(/^[^:]+:/, ''), msg: r[8] });
   });
   out.sort(function (a, b) { return b.t - a.t; });
-  return { avisos: out.slice(0, 60), novos: out.filter(function (a) { return a.novo; }).length };
+  return { avisos: out.slice(0, 60) };
 }
-
-function marcarLidos() { PropertiesService.getUserProperties().setProperty('lidoAte', String(Date.now())); return true; }
 
 function parseBr_(v) {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/.exec(String(v || ''));
@@ -245,8 +259,9 @@ function historico_(frente) {
   return porChave;
 }
 
-/** Tudo o que a página precisa para abrir. */
-function getDados(frente) {
+/** Tudo o que a página precisa para abrir. Exige a credencial apelido + PIN. */
+function getDados(frente, cred) {
+  const eu = exigir_(cred);
   frente = frente || 'clinicas';
   const cfg = FRENTES[frente];
   if (!cfg) throw new Error('Frente desconhecida: ' + frente);
@@ -268,8 +283,9 @@ function getDados(frente) {
   return {
     frente: frente,
     titulo: cfg.titulo,
-    usuario: Session.getActiveUser().getEmail() || '',
-    avisos: getAvisos(),
+    usuario: eu.email || '',
+    usuarioNome: eu.nome || '',
+    avisos: getAvisos_(eu.email),
     agora: Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm"),
     edicao: cfg.edicao,
     roteiro: ROTEIRO[{ clinicas: 'particulares', licitacoes: 'licitacoes', quadro: 'quadro' }[frente]],
@@ -290,6 +306,7 @@ function getDados(frente) {
  * Confere se a linha ainda é a mesma clínica antes de gravar.
  */
 function salvar(pedido) {
+  const eu = exigir_(pedido && pedido.cred);
   pedido.frente = pedido.frente || 'clinicas';
   const cfg = FRENTES[pedido.frente];
   if (!cfg) throw new Error('Frente desconhecida.');
@@ -302,7 +319,7 @@ function salvar(pedido) {
     let linha = localizar_(sh, idx, cfg, pedido);
     const larg = sh.getLastColumn();
     const atual = sh.getRange(linha, 1, 1, larg).getDisplayValues()[0];
-    const autor = Session.getActiveUser().getEmail() || 'desconhecido';
+    const autor = eu.email || eu.nome;   // v12: autoria pela aba Equipe, não pelo login Google
     const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
     // identificação usada no histórico: "Clínica · Cidade" (há nomes repetidos em cidades diferentes)
     const nome = atual[idx[cfg.chave]] + (cfg.chave2 ? ' · ' + atual[idx[cfg.chave2]] : '');

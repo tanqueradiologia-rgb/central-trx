@@ -110,6 +110,10 @@ textarea{min-height:84px;resize:vertical;width:100%}
 .tl .it.nota .txt{background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;white-space:pre-wrap;overflow-wrap:anywhere}
 .abas{display:flex;gap:4px;flex-wrap:wrap}.abas button{border:1px solid var(--line);background:var(--surface2);color:inherit;border-radius:6px;padding:6px 10px;cursor:pointer;font:inherit;font-size:13px}.abas button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .loading{padding:40px;text-align:center;color:var(--muted)}
+.login{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;align-items:center;justify-content:center;padding:16px}
+.login .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px;max-width:360px;width:100%;display:flex;flex-direction:column;gap:10px}
+.login h2{margin:0;font-family:var(--f-display);font-size:21px;color:var(--accent)}
+.login label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-family:var(--f-display);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,tr.row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
@@ -117,7 +121,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <header>
   <div class="id"><img class="logo logo-light" src="https://tanqueradiologia-rgb.github.io/central-trx/marca/trx-simplificado.svg" alt="TRX Diagnóstico Digital" width="84" height="28"><img class="logo logo-dark" src="https://tanqueradiologia-rgb.github.io/central-trx/marca/trx-simplificado-negativo.svg" alt="" width="84" height="28"><h1>Central <span>TRX</span> · Edição</h1></div>
   <nav class="abas" id="abas" aria-label="Frentes"></nav>
-  <div class="who"><button class="btn av" id="btAvisos" type="button" aria-haspopup="dialog">Avisos<span class="badge" id="nAvisos" hidden></span></button><span id="quem">Carregando…</span><a id="lkPlan" href="#" target="_blank" rel="noopener">Abrir a planilha ↗</a><button class="btn" id="recarregar" type="button">Recarregar dados</button><button class="tema" id="tema" type="button">Tema escuro</button></div>
+  <div class="who"><button class="btn av" id="btAvisos" type="button" aria-haspopup="dialog">Avisos<span class="badge" id="nAvisos" hidden></span></button><span id="quem">Carregando…</span><a id="lkPlan" href="#" target="_blank" rel="noopener">Abrir a planilha ↗</a><button class="btn" id="recarregar" type="button">Recarregar dados</button><button class="btn" id="sair" type="button">Sair</button><button class="tema" id="tema" type="button">Tema escuro</button></div>
 </header>
 <main>
   <div class="filters">
@@ -135,6 +139,17 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   </table></div>
   <div class="more" id="mais"></div>
 </main>
+
+<div class="login" id="login" hidden>
+  <form class="card" id="fLogin">
+    <h2>Central TRX · Edição</h2>
+    <p class="meta" style="margin:0">Entre com o seu apelido e o seu PIN da aba Equipe. Em dúvida, pergunte ao Marcos.</p>
+    <label>Apelido<input id="lApelido" autocomplete="username" autocapitalize="none" required></label>
+    <label>PIN<input id="lPin" type="password" inputmode="numeric" autocomplete="current-password" required></label>
+    <button class="btn pri" type="submit">Entrar</button>
+    <span class="msg err" id="lMsg" role="alert"></span>
+  </form>
+</div>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside id="pAvisos" class="avp" hidden aria-labelledby="tAvisos">
@@ -164,6 +179,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 "use strict";
 var D=null, sel=null, limite=150, FRENTE="clinicas";
 var ABRIR={f:"<?= abrirFrente ?>", l:"<?= abrirLinha ?>"};
+/* v12: identificação por apelido + PIN (aba Equipe). A credencial fica neste navegador
+   e vai em toda chamada ao servidor; "lido até quando" dos avisos também vive aqui. */
+var CRED=null; try{ CRED=JSON.parse(localStorage.getItem("trx-ed-cred")||"null"); }catch(e){}
+function lidoKey(){ return "trx-ed-lido-"+(CRED&&CRED.apelido||""); }
+function mostrarLogin(msg){ $("#login").hidden=false; $("#lMsg").textContent=msg||""; var a=$("#lApelido"); if(CRED&&CRED.apelido) a.value=CRED.apelido; setTimeout(function(){ (a.value?$("#lPin"):a).focus(); },50); }
+function sair_(msg){ CRED=null; try{localStorage.removeItem("trx-ed-cred");}catch(_){} mostrarLogin(msg||""); }
+function falhaLogin(m){ m=String(m); var i=m.indexOf("LOGIN:"); if(i<0) return false; sair_(m.slice(i+6).trim()); return true; }
 function num(v){ var n=parseFloat(String(v==null?"":v).replace(/\./g,"").replace(",",".")); return isNaN(n)?null:n; }
 function diasPara(v){ var i=iso(v); if(!i) return null; return Math.round((new Date(i+"T12:00:00")-new Date(hoje()+"T12:00:00"))/864e5); }
 var VISTAS={
@@ -208,14 +230,17 @@ function fx(f,s){ f=f||"SEM MEDICAO"; var k={ATACAR:"ATACAR",QUENTE:"QUENTE",MOR
 function nomeEq(email){ var e=(D.equipe||[]).filter(function(x){return x.email.toLowerCase()===String(email).toLowerCase();})[0]; return e?e.nome:email; }
 
 function carregar(){
+  if(!CRED){ mostrarLogin(); return; }
   $("#tb").innerHTML='<tr><td colspan="6"><div class="loading">Lendo a planilha…</div></td></tr>';
-  google.script.run.withSuccessHandler(function(d){ D=d; iniciar(); }).withFailureHandler(function(e){
-    $("#tb").innerHTML='<tr><td colspan="6"><div class="empty">Não consegui ler a planilha: '+esc(e.message)+'. Confira se você tem acesso a ela e recarregue.</div></td></tr>';
-  }).getDados(FRENTE);
+  google.script.run.withSuccessHandler(function(d){ D=d; $("#login").hidden=true; iniciar(); }).withFailureHandler(function(e){
+    var m=String(e&&e.message||e);
+    if(falhaLogin(m)) return;
+    $("#tb").innerHTML='<tr><td colspan="6"><div class="empty">Não consegui ler a planilha: '+esc(m)+'. Tente de novo em instantes.</div></td></tr>';
+  }).getDados(FRENTE, CRED);
 }
 function opcoes(id, vals, primeira, rot){ var s=$(id), v=s.value, lab=function(x){ return rot?rot(x):x; }; s.innerHTML='<option value="">'+primeira+'</option>'; Array.from(new Set(vals.filter(Boolean))).sort(function(a,b){return lab(a).localeCompare(lab(b),"pt");}).forEach(function(x){ var o=document.createElement("option"); o.value=x; o.textContent=lab(x); s.appendChild(o); }); s.value=v; }
 function iniciar(){
-  $("#quem").textContent = D.usuario ? "Conectado como "+nomeEq(D.usuario) : "Conectado";
+  $("#quem").textContent = "Conectado como "+(D.usuarioNome||nomeEq(D.usuario)||"—");
   avisos(D.avisos);
   $("#abas").innerHTML=(D.frentes||[]).map(function(f){ return '<button type="button" data-f="'+f.id+'" aria-current="'+(f.id===FRENTE)+'">'+esc({clinicas:"Clínicas",licitacoes:"Licitações",quadro:"Quadro de credenciamento"}[f.id]||f.titulo)+'</button>'; }).join("");
   $("#thNome").textContent=V().nome; $("#thData").textContent=V().dataTit; $("#lbAtraso").textContent=V().atraso; $("#hInfo").textContent=V().info;
@@ -228,9 +253,12 @@ function iniciar(){
   else if(ABRIR.l && ABRIR.f===FRENTE){ var ra=D.linhas.filter(function(x){return String(x._l)===ABRIR.l;})[0]; ABRIR.l=""; if(ra) abrir(ra); }
 }
 var AV=null;
-function avisos(a){ AV=a||{avisos:[],novos:0}; var b=$("#nAvisos"); b.hidden=!AV.novos; b.textContent=AV.novos;
+function avisos(a){ AV=a||{avisos:[]}; var lido=0; try{ lido=Number(localStorage.getItem(lidoKey())||0); }catch(e){}
+  AV.avisos.forEach(function(x){ x.novo = x.t>lido; });
+  AV.novos = AV.avisos.filter(function(x){ return x.novo; }).length;
+  var b=$("#nAvisos"); b.hidden=!AV.novos; b.textContent=AV.novos;
   $("#lAvisos").innerHTML = AV.avisos.length ? AV.avisos.map(function(x,i){ return '<button class="avi'+(x.novo?' novo':'')+'" type="button" data-i="'+i+'"><span class="w">'+esc(x.quando)+' · '+esc(nomeEq(x.autor))+' · '+esc({clinicas:"Clínicas",licitacoes:"Licitações",quadro:"Quadro"}[x.frente]||x.frente)+'</span><span class="n" style="display:block">'+esc(x.nome)+'</span><span class="m">'+esc(x.msg)+'</span></button>'; }).join("") : '<p class="meta">Nenhum aviso nos últimos 30 dias.</p>'; }
-function abrirAvisos(){ $("#pAvisos").hidden=false; if(AV&&AV.novos){ google.script.run.withSuccessHandler(function(){ $("#nAvisos").hidden=true; }).marcarLidos(); } }
+function abrirAvisos(){ $("#pAvisos").hidden=false; if(AV&&AV.novos){ try{ localStorage.setItem(lidoKey(),String(Date.now())); }catch(e){} $("#nAvisos").hidden=true; AV.novos=0; } }
 $("#btAvisos").addEventListener("click",abrirAvisos);
 $("#fAvisos").addEventListener("click",function(){ $("#pAvisos").hidden=true; });
 $("#lAvisos").addEventListener("click",function(e){ var b=e.target.closest(".avi"); if(!b) return; var x=AV.avisos[+b.dataset.i]; $("#pAvisos").hidden=true;
@@ -335,8 +363,8 @@ function salvar(){
     if(res && res.nada){ $("#msg").className="msg"; $("#msg").textContent="Nada mudou."; return; }
     $("#msg").className="msg ok"; $("#msg").textContent="Salvo na planilha"+(menc.length?" e avisado por e-mail.":".");
     carregar();
-  }).withFailureHandler(function(e){ b.disabled=false; $("#msg").className="msg err"; $("#msg").textContent=e.message; })
-  .salvar(Object.assign({frente:FRENTE, linha:r._l, campos:campos, nota:nota, mencoes:menc}, V().pedido(r)));
+  }).withFailureHandler(function(e){ b.disabled=false; var m=String(e&&e.message||e); if(falhaLogin(m)) return; $("#msg").className="msg err"; $("#msg").textContent=m; })
+  .salvar(Object.assign({frente:FRENTE, linha:r._l, campos:campos, nota:nota, mencoes:menc, cred:CRED}, V().pedido(r)));
 }
 ["#q","#fFase","#fResp","#fUf","#fAtivas","#fAtraso"].forEach(function(id){ $(id).addEventListener("input",function(){ limite=150; render(); }); });
 $("#tb").addEventListener("click",function(e){ var tr=e.target.closest("tr.row"); if(!tr) return; var r=D.linhas.filter(function(x){return x._k===tr.dataset.k;})[0]; if(r) abrir(r); });
@@ -346,6 +374,15 @@ $("#fechar").addEventListener("click",fechar); $("#scrim").addEventListener("cli
 document.addEventListener("keydown",function(e){ if(e.key==="Escape" && !$("#painel").hidden) fechar(); });
 $("#salvar").addEventListener("click",salvar);
 $("#recarregar").addEventListener("click",carregar);
+$("#sair").addEventListener("click",function(){ D=null; sair_(); });
+$("#fLogin").addEventListener("submit",function(e){ e.preventDefault();
+  var a=$("#lApelido").value.trim().toLowerCase(), p=$("#lPin").value.trim();
+  if(!a||!p){ $("#lMsg").textContent="Preencha apelido e PIN."; return; }
+  CRED={apelido:a, pin:p};
+  try{ localStorage.setItem("trx-ed-cred",JSON.stringify(CRED)); }catch(_){}
+  $("#lMsg").textContent=""; $("#lPin").value="";
+  carregar();
+});
 $("#abas").addEventListener("click",function(e){ var b=e.target.closest("button[data-f]"); if(!b||b.dataset.f===FRENTE) return; FRENTE=b.dataset.f; sel=null; limite=150; fechar(); ["#fFase","#fResp","#fUf"].forEach(function(id){$(id).value="";}); $("#q").value=""; $("#fAtraso").checked=false; try{ history.replaceState(null,"","#"+FRENTE); }catch(_){}
   carregar(); });
 try{ var h=(location.hash||"").slice(1); if(VISTAS[h]) FRENTE=h; }catch(_){}
