@@ -271,6 +271,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
       <a href="#roteiro" data-tab="roteiro">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <a href="#producao" data-tab="producao">Produção dos sócios<span class="n" id="n-producao"></span></a>
+      <a href="#fiscal" data-tab="fiscal">Fiscal e Jurídico<span class="n" id="n-fiscal"></span></a>
       <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
       <button class="tema" id="sair" type="button" hidden title="Apaga a senha guardada neste aparelho">Sair</button>
     </nav>
@@ -401,6 +402,15 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
     </div>
     <div class="kpis" id="k-producao"></div>
     <div id="pr-corpo"></div>
+  </section>
+
+  <section class="pane" id="pane-fiscal" hidden>
+    <div class="pr-top">
+      <h2>Fiscal e Jurídico</h2>
+      <span class="meta">Área do Henrique (financeiro e contratos) e da Ana (jurídico e documentos). As fontes são a aba Contratos e a aba Documentos da planilha Documentos TRX; para corrigir, edite a planilha.</span>
+    </div>
+    <div class="kpis" id="k-fiscal"></div>
+    <div id="fis-corpo"></div>
   </section>
 
   <footer id="rodape"></footer>
@@ -1161,13 +1171,53 @@ const lProd = (function(){
   return {render};
 })();
 
+/* ---------- Fiscal e Jurídico (12/11/2026): contratos, documentos e prazos, para o Henrique e a Ana ---------- */
+const lFis=(function(){
+  const FIS=(D.fiscal||{}), CON=FIS.contratos||[], DOCS=FIS.documentos||[], FO=FIS.contratos_fonte||{};
+  const corpo=document.getElementById("fis-corpo");
+  $("#n-fiscal").textContent = CON.length || "";
+  function stCls(st){ st=(st||"").toUpperCase(); if(st==="VENCIDO") return "d-bad"; if(st.indexOf("VENCE EM")===0) return "d-warn"; return ""; }
+  function render(){
+    const ativos=CON.filter(c=>c.st==="Ativo").length, analise=CON.filter(c=>/an[aá]lise/i.test(c.st)).length;
+    const venc=DOCS.filter(d=>(d.st||"").toUpperCase()==="VENCIDO").length;
+    const breve=DOCS.filter(d=>(d.st||"").toUpperCase().indexOf("VENCE EM")===0).length;
+    // prazos jurídicos: licitações ativas com prazo nos próximos 30 dias
+    const hoje=(D.gerado||"").slice(0,10), lim=new Date(hoje+"T12:00:00"); lim.setDate(lim.getDate()+30);
+    const limIso=lim.toISOString().slice(0,10);
+    const prazos=(D.licitacoes||[]).filter(l=>l.prazo&&l.prazo.slice(0,10)>=hoje&&l.prazo.slice(0,10)<=limIso&&!/Descartado|Perdido|Em operacao/.test(l.fase||"")).sort((a,b)=>a.prazo<b.prazo?-1:1);
+    $("#k-fiscal").innerHTML=[
+      ["Contratos ativos",ativos,""],["Propostas em análise",analise,""],
+      ["Documentos vencidos",venc,venc?"bad":"ok"],["Vencem em breve",breve,breve?"warn":"ok"],
+      ["Prazos em 30 dias",prazos.length,""]
+    ].map(([k,v,cls])=>'<div class="kpi '+cls+'" style="cursor:default"><span class="v">'+v+'</span><span class="k">'+k+'</span></div>').join("");
+    const abaUrl=FO.id?'https://docs.google.com/spreadsheets/d/'+FO.id+'/edit#gid='+FO.gid:"";
+    let h='<div class="pr-sec">Contratos e propostas'+(abaUrl?' · <a href="'+abaUrl+'" target="_blank" rel="noopener">editar na planilha ↗</a>':'')+'</div>';
+    h+=CON.length?'<div class="tbl"><table><thead><tr><th>Contrato</th><th class="hide-sm">Tipo</th><th class="hide-sm">Empresa</th><th>Status</th><th>Responsável</th><th>Próxima ação</th><th>Quando ou fim</th></tr></thead><tbody>'
+      +CON.map(c=>'<tr><td><b>'+esc(c.n)+'</b><div class="meta">'+esc(c.parte)+(c.obj?' · '+esc(c.obj):'')+(c.nota?'<br>'+esc(c.nota):'')+'</div></td>'
+        +'<td class="hide-sm">'+esc(c.tp||"—")+'</td><td class="hide-sm">'+esc(c.emp||"—")+'</td><td>'+esc(c.st||"—")+'</td><td>'+esc(c.resp||"—")+'</td>'
+        +'<td>'+esc(c.acao||"—")+(c.link?' <a href="'+esc(c.link)+'" target="_blank" rel="noopener">↗</a>':'')+'</td>'
+        +'<td class="mono">'+esc(c.qdo||c.fim||"—")+'</td></tr>').join("")
+      +'</tbody></table></div>':'<p class="vazio">Nenhum contrato lançado ainda. A fonte é a aba Contratos da planilha Documentos TRX.</p>';
+    h+='<div class="pr-sec">Prazos jurídicos dos próximos 30 dias</div>';
+    h+=prazos.length?'<div class="tbl"><table><thead><tr><th>Prazo</th><th>Órgão</th><th class="hide-sm">Modalidade</th><th>Fase</th><th>Responsável</th></tr></thead><tbody>'
+      +prazos.map(l=>'<tr><td class="mono">'+esc((l.prazo||"").slice(0,10))+'</td><td><b>'+esc(l.org||l.id||"")+'</b>'+(l.obj?'<div class="meta">'+esc(l.obj)+'</div>':'')+'</td><td class="hide-sm">'+esc(l.tp||l.mod||"—")+'</td><td>'+esc(l.fase||"—")+'</td><td>'+esc(l.resp||"—")+'</td></tr>').join("")
+      +'</tbody></table></div>':'<p class="vazio">Nenhum prazo de licitação nos próximos 30 dias.</p>';
+    h+='<div class="pr-sec">Documentos da empresa e validades</div>';
+    h+=DOCS.length?'<div class="tbl"><table><thead><tr><th>Documento</th><th>Validade</th><th>Status</th><th class="hide-sm">Situação</th><th>Responsável</th></tr></thead><tbody>'
+      +DOCS.map(d=>'<tr><td><b>'+esc(d.doc)+'</b>'+(d.mot?'<div class="meta d-bad">'+esc(d.mot)+'</div>':'')+'</td><td class="mono">'+esc(d.val||"—")+'</td><td class="'+stCls(d.st)+'">'+esc(d.st||"—")+'</td><td class="hide-sm">'+esc(d.sit||"—")+'</td><td>'+esc(d.resp||"—")+'</td></tr>').join("")
+      +'</tbody></table></div>':'<p class="vazio">A lista de documentos chega na próxima rodada da Central.</p>';
+    corpo.innerHTML=h;
+  }
+  return {render};
+})();
+
 /* ---------- abas ---------- */
-const TABS=["prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao"];
+const TABS=["prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao","fiscal"];
 const rendered={};
 function show(tab){
   if(!TABS.includes(tab)) tab="prioridades";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,fiscal:lFis})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));

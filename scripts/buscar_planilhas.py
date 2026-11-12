@@ -59,6 +59,15 @@ if "--so-licitacoes" in sys.argv:
     except Exception as e:
         json.dump({"values": []}, open("isgh_dossie.json", "w", encoding="utf-8"))
         print(f"::warning::Nao consegui ler a aba ISGH_Dossie: {e}")
+    # Contratos TRX (12/11/2026): aba Contratos da planilha Documentos TRX, para a area
+    # Fiscal e Juridico da Central (Henrique e Ana). Falha aqui nao derruba a pagina.
+    try:
+        cv = sheets.spreadsheets().values().get(spreadsheetId=DOCS_SHEET, range="Contratos!A1:N200").execute()
+        json.dump(cv, open("contratos.json", "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"OK: contratos {len(cv.get('values', []))} linhas")
+    except Exception as e:
+        json.dump({"values": []}, open("contratos.json", "w", encoding="utf-8"))
+        print(f"::warning::Nao consegui ler a aba Contratos: {e}")
     # Producao dos socios (11/11/2026): tres abas da Pipeline Licitacoes que alimentam a aba
     # "Producao dos socios" da Central. Producao_Params e a regua (coeficientes e pesos),
     # Producao_Socios sao os lancamentos de laudos e Escala_Socios os plantoes.

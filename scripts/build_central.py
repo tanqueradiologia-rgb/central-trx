@@ -307,6 +307,61 @@ def documentos_alerta(path):
     return out
 
 
+CONTRATOS_GID = 830923920      # aba Contratos da planilha Documentos TRX (12/11/2026)
+
+
+def documentos_todos(path):
+    """Documentos TRX inteira, para a area Fiscal e Juridico (12/11/2026): com a saida da
+    equipe do Drive, a Central passa a ser onde a Ana e o Henrique veem os documentos."""
+    try:
+        dv = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return []
+    rows = dv["values"] if isinstance(dv, dict) else dv
+    if not rows:
+        return []
+    H = [str(h).strip() for h in rows[0]]
+    out = []
+    for n, r in enumerate(rows[1:], start=2):
+        d = dict(zip(H, r + [""] * (len(H) - len(r))))
+        doc = txt(d.get("Documento"), 140)
+        if not doc:
+            continue
+        out.append({"l": n, "doc": doc, "cat": txt(d.get("Categoria"), 60), "val": data_iso(d.get("Validade")),
+                    "st": txt(d.get("Status"), 40), "resp": txt(d.get("Responsavel")),
+                    "sit": txt(d.get("Situacao"), 80), "mot": txt(d.get("Desatualizado (motivo)"), 160)})
+    out.sort(key=lambda x: (x["val"] or "9999", x["doc"]))
+    return out
+
+
+def contratos(path):
+    """Aba Contratos da Documentos TRX (12/11/2026): contratos ativos, propostas em analise e
+    alugueis em nome da TRX, um por linha. A planilha e a fonte; a Central so mostra."""
+    try:
+        cv = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return []
+    rows = cv["values"] if isinstance(cv, dict) else cv
+    if not rows:
+        return []
+    H = [str(h).strip() for h in rows[0]]
+    out = []
+    for n, r in enumerate(rows[1:], start=2):
+        d = dict(zip(H, r + [""] * (len(H) - len(r))))
+        nome = txt(d.get("Contrato"), 120)
+        if not nome:
+            continue
+        out.append({"l": n, "n": nome, "tp": txt(d.get("Tipo"), 40), "parte": txt(d.get("Parte"), 120),
+                    "emp": txt(d.get("Empresa"), 40), "obj": txt(d.get("Objeto"), 200),
+                    "ini": data_iso(d.get("Inicio")), "fim": data_iso(d.get("Fim")), "val": txt(d.get("Valor"), 60),
+                    "st": txt(d.get("Status"), 40), "resp": txt(d.get("Responsavel")),
+                    "acao": txt(d.get("Proxima acao"), 160), "qdo": data_iso(d.get("Quando")),
+                    "link": link_http(d.get("Link")), "nota": txt(d.get("Notas"), 200)})
+    ordem = {"Ativo": 0, "Em análise": 1, "Em analise": 1, "A levantar": 2}
+    out.sort(key=lambda x: (ordem.get(x["st"], 3), x["qdo"] or x["fim"] or "9999"))
+    return out
+
+
 PROD_GID = 1397135487          # aba Producao_Socios da Pipeline Licitacoes
 PARAMS_GID = 1912529267        # aba Producao_Params (a regua)
 ESCALA_GID = 1455089774        # aba Escala_Socios
@@ -552,6 +607,7 @@ def main():
     ap.add_argument("--destaque", default="", help="destaque_isgh.json (aba Destaque_ISGH da Pipeline Licitacoes)")
     ap.add_argument("--dossie", default="", help="isgh_dossie.json (aba ISGH_Dossie da Pipeline Licitacoes)")
     ap.add_argument("--producao", default="", help="producao.json (abas Producao_Params, Producao_Socios e Escala_Socios)")
+    ap.add_argument("--contratos", default="", help="contratos.json (aba Contratos da Documentos TRX)")
     a = ap.parse_args()
 
     pv = json.load(open(a.pipeline, encoding="utf-8"))
@@ -610,6 +666,9 @@ def main():
         "destaque_isgh": destaque_isgh(a.destaque) if a.destaque else [],
         "isgh_dossie": isgh_dossie(a.dossie) if a.dossie else [],
         "producao_socios": producao_socios(a.producao) if a.producao else {},
+        "fiscal": {"contratos": contratos(a.contratos) if a.contratos else [],
+                    "documentos": documentos_todos(a.documentos) if a.documentos else [],
+                    "contratos_fonte": {"id": DOCS_SHEET, "gid": CONTRATOS_GID}},
         "documentos_fonte": {"id": DOCS_SHEET, "gid": DOCS_GID},
     }
     js = "window.CENTRAL=" + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n"
