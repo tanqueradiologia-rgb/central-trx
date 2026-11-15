@@ -1,0 +1,67 @@
+name: Zap TRX (avisos WhatsApp)
+
+# Envia um aviso no WhatsApp em nome da TRX pela Cloud API da Meta (regra de 15/11/2026).
+# Disparo: gh api -X POST repos/tanqueradiologia-rgb/central-trx/actions/workflows/zap.yml/dispatches \
+#   -f ref=main -f "inputs[para]=carla" -f "inputs[texto]=..."
+# Segredos necessarios: ZAP_TOKEN (token permanente), ZAP_PHONE_ID (id do numero),
+# ZAP_CONTATOS (JSON apelido -> numero com DDI, ex. {"carla":"55619..."}).
+# O repositorio e publico: numero de telefone nunca entra em arquivo nem em log; so apelido.
+
+on:
+  workflow_dispatch:
+    inputs:
+      para:
+        description: "Apelido do destinatario (como no segredo ZAP_CONTATOS)"
+        required: true
+      texto:
+        description: "Texto do aviso (uma linha; template nao aceita quebra de linha)"
+        required: true
+      modo:
+        description: "template (padrao, abre conversa) ou livre (so com janela de 24h aberta)"
+        required: false
+        default: "template"
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar aviso
+        env:
+          ZAP_TOKEN: ${{ secrets.ZAP_TOKEN }}
+          ZAP_PHONE_ID: ${{ secrets.ZAP_PHONE_ID }}
+          ZAP_CONTATOS: ${{ secrets.ZAP_CONTATOS }}
+          PARA: ${{ inputs.para }}
+          TEXTO: ${{ inputs.texto }}
+          MODO: ${{ inputs.modo }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys, urllib.request, urllib.error
+          token = os.environ.get("ZAP_TOKEN") or sys.exit("segredo ZAP_TOKEN ausente")
+          phone_id = os.environ.get("ZAP_PHONE_ID") or sys.exit("segredo ZAP_PHONE_ID ausente")
+          contatos = json.loads(os.environ.get("ZAP_CONTATOS") or "{}")
+          para = os.environ["PARA"].strip().lower()
+          numero = contatos.get(para, "")
+          if not numero:
+              sys.exit(f"apelido desconhecido no ZAP_CONTATOS: {para}")
+          texto = os.environ["TEXTO"].replace("\n", " ").strip()
+          modo = (os.environ.get("MODO") or "template").strip()
+          if modo == "livre":
+              payload = {"messaging_product": "whatsapp", "to": numero,
+                         "type": "text", "text": {"body": texto}}
+          else:
+              payload = {"messaging_product": "whatsapp", "to": numero, "type": "template",
+                         "template": {"name": "aviso_trx", "language": {"code": "pt_BR"},
+                                      "components": [{"type": "body",
+                                                      "parameters": [{"type": "text", "text": texto}]}]}}
+          req = urllib.request.Request(
+              f"https://graph.facebook.com/v21.0/{phone_id}/messages",
+              data=json.dumps(payload).encode(),
+              headers={"Authorization": f"Bearer {token}",
+                       "Content-Type": "application/json"})
+          try:
+              r = urllib.request.urlopen(req, timeout=30)
+              print("enviado para", para, "- HTTP", r.status)
+          except urllib.error.HTTPError as e:
+              print("ERRO", e.code, e.read().decode()[:500])
+              sys.exit(1)
+          PY
