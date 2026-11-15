@@ -161,6 +161,11 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .avisos h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
 .avisos ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}.avisos li.al{color:var(--bad);font-weight:600}
 .mural-band{margin:4px 0 10px;border-left:4px solid var(--ok)}
+.mural-band textarea{width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical}
+.mural-band .mu-linha{display:flex;align-items:center;gap:10px;margin:6px 0 10px;flex-wrap:wrap;font-size:13px}
+.mural-band .mu-linha input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.mural-band .mu-linha button{font:inherit;font-size:13px;padding:6px 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface2);color:var(--ink);cursor:pointer}
+.mural-band .mu-linha button:disabled{opacity:.6;cursor:default}
 .dossie h2{font-family:var(--f-display);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;display:flex;align-items:center;gap:8px}
 .dossie h2::before{content:"";width:8px;height:8px;background:var(--accent);flex:none}
 .dossie h2::after{content:"";height:1px;background:var(--line);flex:1}
@@ -956,11 +961,48 @@ const lPr = makeList({
          :x.breve?'<span class="tag b">'+esc(x.breve)+(x.val?' · '+fData(x.val):'')+'</span>'
          :'<span class="tag d">DESATUALIZADO</span>')+
         (x.mot?' · '+esc(x.mot):'')+(x.resp?' <span class="meta">· '+esc(x.resp)+'</span>':'')+'</li>').join("")+'</ul>'; } }catch(e){}
-  // Mural da equipe (15/11/2026): recados do app de Edição (aba Mural da Pipeline TRX), visíveis em todas as áreas.
+  // Mural da equipe (15/11/2026): recados da aba Mural da Pipeline TRX, visíveis em todas as áreas.
   // Posição: topo da página, logo após o Hoje e antes da Prioridade máxima (Marcos, 15/11/2026).
-  try{ const MU=D.mural||[]; if(MU.length){ const el=$("#mural");
-    el.innerHTML='<h3>Mural da equipe · '+MU.length+'</h3><ul>'+MU.map(x=>'<li><span class="meta">'+esc(x.q)+' · '+esc(x.a)+(x.menc?' · para '+esc(x.menc):'')+'</span> · '+esc(x.m)+'</li>').join("")+'</ul>';
-    el.hidden=false; } }catch(e){}
+  // Publicação ali mesmo (15/11/2026 à noite): o formulário posta no app de Edição (doPost JSON),
+  // identificado pelos mesmos apelido+PIN do app, guardados neste navegador após o primeiro post.
+  try{ const MU=D.mural||[]; const el=$("#mural");
+    const li=x=>'<li><span class="meta">'+esc(x.q)+' · '+esc(x.a)+(x.menc?' · para '+esc(x.menc):'')+'</span> · '+esc(x.m)+'</li>';
+    el.innerHTML='<h3>Mural da equipe'+(MU.length?' · '+MU.length:'')+'</h3>'
+      +'<form id="mu-form" autocomplete="off">'
+      +'<textarea id="mu-msg" maxlength="1000" rows="2" placeholder="Escreva um recado para a equipe… @apelido marca alguém"></textarea>'
+      +'<div class="mu-linha"><span id="mu-quem"></span><button type="submit" id="mu-bt">Publicar</button><span id="mu-st" class="meta"></span></div>'
+      +'</form><ul id="mu-lista">'+MU.map(li).join("")+'</ul>';
+    el.hidden=false;
+    const CK="central-mural-cred";
+    const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
+    function renderQuem(){ const c=cred(), q=$("#mu-quem");
+      q.innerHTML=c?('como <b>'+esc(c.apelido)+'</b> · <a href="#" id="mu-troca">trocar</a>')
+        :'<input id="mu-ap" placeholder="apelido" size="9" autocapitalize="none"> <input id="mu-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">';
+      const t=$("#mu-troca"); if(t) t.addEventListener("click",ev=>{ ev.preventDefault(); try{localStorage.removeItem(CK);}catch(_){} renderQuem(); }); }
+    renderQuem();
+    $("#mu-form").addEventListener("submit", async ev=>{
+      ev.preventDefault();
+      const msg=$("#mu-msg").value.trim(); if(!msg) return;
+      let c=cred();
+      if(!c){ const ap=($("#mu-ap").value||"").trim().toLowerCase(), pin=($("#mu-pin").value||"").trim();
+        if(!ap||!pin){ $("#mu-st").textContent="Diga apelido e PIN (os mesmos do app de Edição)."; return; }
+        c={apelido:ap, pin:pin}; }
+      const bt=$("#mu-bt"); bt.disabled=true; $("#mu-st").textContent="Publicando…";
+      try{
+        const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:"muralPostar",cred:c,msg:msg})});
+        const j=await r.json();
+        if(!j.ok) throw new Error(j.erro||"Não deu para publicar.");
+        try{localStorage.setItem(CK,JSON.stringify(c));}catch(_){}
+        $("#mu-msg").value=""; $("#mu-st").textContent="Publicado.";
+        $("#mu-lista").innerHTML=(j.mural||[]).slice(0,30).map(x=>li({q:x.quando,a:x.autor,m:x.msg,menc:x.menc})).join("");
+        renderQuem(); setTimeout(()=>{ if($("#mu-st").textContent==="Publicado.") $("#mu-st").textContent=""; },4000);
+      }catch(err){
+        const m=String((err&&err.message)||err);
+        $("#mu-st").textContent=m.indexOf("LOGIN")>=0?"Apelido ou PIN não conferem.":("Não deu: "+m);
+        if(m.indexOf("LOGIN")>=0){ try{localStorage.removeItem(CK);}catch(_){} renderQuem(); }
+      } finally { bt.disabled=false; }
+    });
+  }catch(e){}
   // avisos da verificação automática, cada um numa linha (os prazos já aparecem na agenda)
   try{ const S=window.SAUDE; if(S){ const al=(S.alertas||[]).filter(a=>!/vencem em até 7 dias/.test(a)), av=S.avisos||[];
     if(al.length||av.length){ const el=$("#avisos"); el.hidden=false;

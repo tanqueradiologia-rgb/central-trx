@@ -157,6 +157,24 @@ function doGet(e) {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
+/** API JSON do mural para a Central (GitHub Pages), v13.1 de 15/11/2026.
+ *  A Central posta por fetch(EDIT_URL, {method:'POST', body: JSON com action/cred/msg}).
+ *  Mesma regra de sempre: nada é lido nem gravado sem apelido+PIN válidos. */
+function doPost(e) {
+  let out;
+  try {
+    const p = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (p.action === 'muralGet') out = muralGet(p.cred);
+    else if (p.action === 'muralPostar') out = muralPostar(p.cred, p.msg);
+    else throw new Error('Ação desconhecida.');
+    out.ok = true;
+  } catch (err) {
+    out = { ok: false, erro: String((err && err.message) || err) };
+  }
+  return ContentService.createTextOutput(JSON.stringify(out))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 /* ---------------- leitura ---------------- */
 
 function planilha_(id) { return SpreadsheetApp.openById(id || PLANILHA_ID); }
