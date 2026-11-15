@@ -160,6 +160,7 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .avisos{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 14px}
 .avisos h3{font-family:var(--f-display);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
 .avisos ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}.avisos li.al{color:var(--bad);font-weight:600}
+.mural-band{margin:4px 0 10px;border-left:4px solid var(--ok)}
 .dossie h2{font-family:var(--f-display);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;display:flex;align-items:center;gap:8px}
 .dossie h2::before{content:"";width:8px;height:8px;background:var(--accent);flex:none}
 .dossie h2::after{content:"";height:1px;background:var(--line);flex:1}
@@ -281,6 +282,7 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 
 <main class="wrap">
 <div id="hoje" class="hoje-band" hidden></div>
+<div id="mural" class="avisos mural-band" hidden></div>
 <div id="isgh" class="isgh-band" hidden></div>
   <section class="pane" id="pane-prioridades" hidden>
     <div class="agenda">
@@ -954,10 +956,11 @@ const lPr = makeList({
          :x.breve?'<span class="tag b">'+esc(x.breve)+(x.val?' · '+fData(x.val):'')+'</span>'
          :'<span class="tag d">DESATUALIZADO</span>')+
         (x.mot?' · '+esc(x.mot):'')+(x.resp?' <span class="meta">· '+esc(x.resp)+'</span>':'')+'</li>').join("")+'</ul>'; } }catch(e){}
-  // Mural da equipe (15/11/2026): recados do app de Edição (aba Mural da Pipeline TRX), visíveis em todas as áreas
-  try{ const MU=D.mural||[]; if(MU.length){ const el=$("#docs-al"); const dv=document.createElement("div");
-    dv.innerHTML='<h3>Mural da equipe · '+MU.length+'</h3><ul>'+MU.map(x=>'<li><span class="meta">'+esc(x.q)+' · '+esc(x.a)+(x.menc?' · para '+esc(x.menc):'')+'</span> · '+esc(x.m)+'</li>').join("")+'</ul>';
-    el.hidden=false; el.appendChild(dv); } }catch(e){}
+  // Mural da equipe (15/11/2026): recados do app de Edição (aba Mural da Pipeline TRX), visíveis em todas as áreas.
+  // Posição: topo da página, logo após o Hoje e antes da Prioridade máxima (Marcos, 15/11/2026).
+  try{ const MU=D.mural||[]; if(MU.length){ const el=$("#mural");
+    el.innerHTML='<h3>Mural da equipe · '+MU.length+'</h3><ul>'+MU.map(x=>'<li><span class="meta">'+esc(x.q)+' · '+esc(x.a)+(x.menc?' · para '+esc(x.menc):'')+'</span> · '+esc(x.m)+'</li>').join("")+'</ul>';
+    el.hidden=false; } }catch(e){}
   // avisos da verificação automática, cada um numa linha (os prazos já aparecem na agenda)
   try{ const S=window.SAUDE; if(S){ const al=(S.alertas||[]).filter(a=>!/vencem em até 7 dias/.test(a)), av=S.avisos||[];
     if(al.length||av.length){ const el=$("#avisos"); el.hidden=false;
