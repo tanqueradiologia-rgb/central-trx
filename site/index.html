@@ -944,12 +944,13 @@ const lPr = makeList({
     const d=e.target.closest(".cal-d[data-k]"); if(d && !d.disabled){ const k=d.dataset.k; filtrar("dia "+fData(k), p=>p.dt && p.dt.slice(0,10)===k); d.classList.add("sel"); }
   });
   cal();
-  // validades (planilha Documentos TRX): vermelho = vencido ou desatualizado; laranja = vence em 15/30/45 dias
+  // validades (planilha Documentos TRX): vermelho = vencido ou desatualizado; laranja = vence em 15/30/45 dias.
+  // Regra de 15/11/2026: vencido efetivo sai da fila da Carla e o Marcos regulariza; a faixa (15/30 dias) continua com a Carla.
   try{ const DA=D.documentos_alerta||[], DF=D.documentos_fonte||{};
     if(DA.length){ const el=$("#docs-al"); el.hidden=false;
       const url=l=>"https://docs.google.com/spreadsheets/d/"+DF.id+"/edit#gid="+DF.gid+"&range=A"+l;
       el.innerHTML='<h3>Validades para resolver · '+DA.length+'</h3><ul>'+DA.map(x=>'<li><a href="'+url(x.l)+'" target="_blank" rel="noopener"><b>'+esc(x.doc)+'</b></a> · '+
-        (x.venc?'<span class="tag v">VENCIDO'+(x.val?' em '+fData(x.val):'')+'</span>'
+        (x.venc?'<span class="tag v">VENCIDO'+(x.val?' em '+fData(x.val):'')+'</span> <span class="meta">o Marcos irá regularizar</span>'
          :x.breve?'<span class="tag b">'+esc(x.breve)+(x.val?' · '+fData(x.val):'')+'</span>'
          :'<span class="tag d">DESATUALIZADO</span>')+
         (x.mot?' · '+esc(x.mot):'')+(x.resp?' <span class="meta">· '+esc(x.resp)+'</span>':'')+'</li>').join("")+'</ul>'; } }catch(e){}
