@@ -121,7 +121,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <header>
   <div class="id"><img class="logo logo-light" src="https://tanqueradiologia-rgb.github.io/central-trx/marca/trx-simplificado.svg" alt="TRX Diagnóstico Digital" width="84" height="28"><img class="logo logo-dark" src="https://tanqueradiologia-rgb.github.io/central-trx/marca/trx-simplificado-negativo.svg" alt="" width="84" height="28"><h1>Central <span>TRX</span> · Edição</h1></div>
   <nav class="abas" id="abas" aria-label="Frentes"></nav>
-  <div class="who"><button class="btn av" id="btAvisos" type="button" aria-haspopup="dialog">Avisos<span class="badge" id="nAvisos" hidden></span></button><span id="quem">Carregando…</span><a id="lkPlan" href="#" target="_blank" rel="noopener">Abrir a planilha ↗</a><button class="btn" id="recarregar" type="button">Recarregar dados</button><button class="btn" id="sair" type="button">Sair</button><button class="tema" id="tema" type="button">Tema escuro</button></div>
+  <div class="who"><button class="btn av" id="btAvisos" type="button" aria-haspopup="dialog">Avisos<span class="badge" id="nAvisos" hidden></span></button><button class="btn" id="btMural" type="button" aria-haspopup="dialog">Mural</button><span id="quem">Carregando…</span><a id="lkPlan" href="#" target="_blank" rel="noopener">Abrir a planilha ↗</a><button class="btn" id="recarregar" type="button">Recarregar dados</button><button class="btn" id="sair" type="button">Sair</button><button class="tema" id="tema" type="button">Tema escuro</button></div>
 </header>
 <main>
   <div class="filters">
@@ -155,6 +155,16 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <aside id="pAvisos" class="avp" hidden aria-labelledby="tAvisos">
   <div class="hd"><div><h2 id="tAvisos">Avisos para você</h2><div class="meta">Notas em que marcaram você e linhas que passaram para você, nos últimos 30 dias. Também chegam por e-mail.</div></div><button class="btn" id="fAvisos" type="button">Fechar</button></div>
   <div class="bd" id="lAvisos"></div>
+</aside>
+<aside id="pMural" class="avp" hidden aria-labelledby="tMural">
+  <div class="hd"><div><h2 id="tMural">Mural da equipe</h2><div class="meta">Recados gerais. @apelido marca alguém (marcos, carla, natalia, brunosato, henrique, vinicius, diogo, bruno, thalyta, ana, adair). O mural também aparece na Central.</div></div><button class="btn" id="fMural" type="button">Fechar</button></div>
+  <div class="bd">
+    <form id="fPostar" style="display:flex;gap:8px;margin-bottom:12px">
+      <input type="text" id="mMsg" maxlength="1000" placeholder="Escreva um recado para a equipe…" style="flex:1" required>
+      <button class="btn" type="submit" id="mEnviar">Postar</button>
+    </form>
+    <div id="lMural"><p class="meta">Carregando…</p></div>
+  </div>
 </aside>
 <aside id="painel" hidden aria-labelledby="pTit">
   <div class="hd"><div><h2 id="pTit"></h2><div class="meta" id="pSub"></div></div><button class="btn" id="fechar" type="button">Fechar</button></div>
@@ -261,6 +271,12 @@ function avisos(a){ AV=a||{avisos:[]}; var lido=0; try{ lido=Number(localStorage
 function abrirAvisos(){ $("#pAvisos").hidden=false; if(AV&&AV.novos){ try{ localStorage.setItem(lidoKey(),String(Date.now())); }catch(e){} $("#nAvisos").hidden=true; AV.novos=0; } }
 $("#btAvisos").addEventListener("click",abrirAvisos);
 $("#fAvisos").addEventListener("click",function(){ $("#pAvisos").hidden=true; });
+function muralRender(m){ $("#lMural").innerHTML = (m&&m.length) ? m.map(function(x){ return '<div class="avi"><span class="w">'+esc(x.quando)+' · '+esc(x.autor)+(x.menc?' · para '+esc(x.menc):'')+'</span><span class="m" style="display:block">'+esc(x.msg)+'</span></div>'; }).join("") : '<p class="meta">Nenhum recado ainda. Escreva o primeiro.</p>'; }
+$("#btMural").addEventListener("click",function(){ $("#pMural").hidden=false;
+  google.script.run.withSuccessHandler(function(d){ muralRender(d.mural); }).withFailureHandler(function(e){ $("#lMural").innerHTML='<p class="meta">'+esc(e&&e.message||'Não deu para carregar o mural.')+'</p>'; }).muralGet(CRED); });
+$("#fMural").addEventListener("click",function(){ $("#pMural").hidden=true; });
+$("#fPostar").addEventListener("submit",function(e){ e.preventDefault(); var t=$("#mMsg").value.trim(); if(!t) return; $("#mEnviar").disabled=true;
+  google.script.run.withSuccessHandler(function(d){ $("#mMsg").value=""; $("#mEnviar").disabled=false; muralRender(d.mural); }).withFailureHandler(function(e2){ $("#mEnviar").disabled=false; alert(e2&&e2.message||'Não deu para postar.'); }).muralPostar(CRED, t); });
 $("#lAvisos").addEventListener("click",function(e){ var b=e.target.closest(".avi"); if(!b) return; var x=AV.avisos[+b.dataset.i]; $("#pAvisos").hidden=true;
   if(x.frente===FRENTE){ var r=D.linhas.filter(function(y){return y._k===x.nome;})[0]||D.linhas.filter(function(y){return String(y._l)===String(x.linha);})[0]; if(r) abrir(r); return; }
   FRENTE=x.frente; ABRIR.f=x.frente; ABRIR.l=String(x.linha); sel=null; carregar(); });

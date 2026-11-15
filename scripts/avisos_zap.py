@@ -55,6 +55,11 @@ def monta_avisos(central):
             chave = f"doc-desat:{doc}"
             avisos.append((chave, "carla",
                            f"Central TRX: {doc} DESATUALIZADO. {str(d['mot'])[:140]}"))
+    for m in central.get("mural", []):
+        for ap in [a.strip().lower() for a in (m.get("menc") or "").split(",") if a.strip()]:
+            chave = f"mural:{m.get('q','')}:{m.get('a','')}:{ap}"
+            avisos.append((chave, ap,
+                           f"Mural da Central: {m.get('a','')} marcou voce: {str(m.get('m',''))[:180]}"))
     return avisos
 
 

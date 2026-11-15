@@ -1,5 +1,5 @@
 /**
- * Central TRX · Edição — v12 (12/11/2026)
+ * Central TRX · Edição — v13 (15/11/2026): Mural da equipe (aba Mural na Pipeline TRX)
  * App web (projeto próprio, separado dos scripts da planilha) que lê e grava na
  * "Pipeline TRX — Prospecção (fonte da verdade)" pelo ID em PLANILHA_ID.
  *
@@ -428,4 +428,50 @@ function avisar_(emails, autor, nome, nota, linha, cfg, frente, passagem) {
       });
     } catch (err) { console.warn('Aviso não enviado para ' + e + ': ' + err); }
   });
+}
+
+/* ---------------- mural da equipe (v13, 15/11/2026) ---------------- */
+
+const ABA_MURAL = 'Mural';
+
+function muralAba_() {
+  const ss = planilha_();
+  let sh = ss.getSheetByName(ABA_MURAL);
+  if (!sh) {
+    sh = ss.insertSheet(ABA_MURAL);
+    sh.getRange(1, 1, 1, 4).setValues([['Quando', 'Autor', 'Mensagem', 'Mencoes']]);
+  }
+  return sh;
+}
+
+function muralLer_() {
+  const sh = muralAba_();
+  if (sh.getLastRow() < 2) return [];
+  const ini = Math.max(2, sh.getLastRow() - 199);
+  const vals = sh.getRange(ini, 1, sh.getLastRow() - ini + 1, 4).getDisplayValues();
+  return vals.map(function (r) { return { quando: r[0], autor: r[1], msg: r[2], menc: r[3] }; }).reverse();
+}
+
+/** Mural da equipe: as últimas 200 mensagens, mais novas primeiro. */
+function muralGet(cred) {
+  exigir_(cred);
+  return { mural: muralLer_() };
+}
+
+/** Posta no mural. @apelido no texto vira menção (a Central avisa no zap quando ativo). */
+function muralPostar(cred, msg) {
+  const eu = exigir_(cred);
+  msg = String(msg || '').trim();
+  if (!msg) throw new Error('Escreva a mensagem.');
+  if (msg.length > 1000) throw new Error('Mensagem longa demais (máximo 1000 caracteres).');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('A planilha está ocupada. Tente de novo em alguns segundos.');
+  try {
+    const aps = equipeComPin_().map(function (q) { return q.apelido; });
+    const menc = (msg.match(/@[a-z0-9]+/gi) || []).map(function (m) { return m.slice(1).toLowerCase(); })
+      .filter(function (a, i, arr) { return aps.indexOf(a) >= 0 && arr.indexOf(a) === i; }).join(', ');
+    const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
+    muralAba_().appendRow([agora, eu.nome || eu.email, msg, menc]);
+  } finally { lock.releaseLock(); }
+  return { mural: muralLer_() };
 }

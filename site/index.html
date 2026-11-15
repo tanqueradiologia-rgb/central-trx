@@ -954,6 +954,10 @@ const lPr = makeList({
          :x.breve?'<span class="tag b">'+esc(x.breve)+(x.val?' · '+fData(x.val):'')+'</span>'
          :'<span class="tag d">DESATUALIZADO</span>')+
         (x.mot?' · '+esc(x.mot):'')+(x.resp?' <span class="meta">· '+esc(x.resp)+'</span>':'')+'</li>').join("")+'</ul>'; } }catch(e){}
+  // Mural da equipe (15/11/2026): recados do app de Edição (aba Mural da Pipeline TRX), visíveis em todas as áreas
+  try{ const MU=D.mural||[]; if(MU.length){ const el=$("#docs-al"); const dv=document.createElement("div");
+    dv.innerHTML='<h3>Mural da equipe · '+MU.length+'</h3><ul>'+MU.map(x=>'<li><span class="meta">'+esc(x.q)+' · '+esc(x.a)+(x.menc?' · para '+esc(x.menc):'')+'</span> · '+esc(x.m)+'</li>').join("")+'</ul>';
+    el.hidden=false; el.appendChild(dv); } }catch(e){}
   // avisos da verificação automática, cada um numa linha (os prazos já aparecem na agenda)
   try{ const S=window.SAUDE; if(S){ const al=(S.alertas||[]).filter(a=>!/vencem em até 7 dias/.test(a)), av=S.avisos||[];
     if(al.length||av.length){ const el=$("#avisos"); el.hidden=false;

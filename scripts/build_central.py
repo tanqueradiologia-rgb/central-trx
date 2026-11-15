@@ -400,6 +400,28 @@ def _sim(v):
     return str(v).strip().lower() in ("sim", "s", "true", "1", "x", "socio", "sócio")
 
 
+def mural(path):
+    """Aba Mural da Pipeline TRX (15/11/2026): recados gerais da equipe, postados pelo
+    app de Edição v13. A Central mostra os 30 mais recentes em todas as áreas."""
+    try:
+        mv = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return []
+    rows = mv.get("values") if isinstance(mv, dict) else mv
+    if not rows or len(rows) < 2:
+        return []
+    H = [str(h).strip() for h in rows[0]]
+    out = []
+    for r in rows[1:]:
+        d = dict(zip(H, r + [""] * (len(H) - len(r))))
+        m = txt(d.get("Mensagem"), 400)
+        if not m:
+            continue
+        out.append({"q": txt(d.get("Quando"), 20), "a": txt(d.get("Autor"), 60),
+                    "m": m, "menc": txt(d.get("Mencoes"), 120)})
+    return out[-30:][::-1]
+
+
 def producao_socios(path):
     """Abas Producao_Params, Producao_Socios e Escala_Socios da Pipeline Licitacoes (11/11/2026).
 
@@ -607,6 +629,7 @@ def main():
     ap.add_argument("--destaque", default="", help="destaque_isgh.json (aba Destaque_ISGH da Pipeline Licitacoes)")
     ap.add_argument("--dossie", default="", help="isgh_dossie.json (aba ISGH_Dossie da Pipeline Licitacoes)")
     ap.add_argument("--producao", default="", help="producao.json (abas Producao_Params, Producao_Socios e Escala_Socios)")
+    ap.add_argument("--mural", default="", help="mural.json (aba Mural da Pipeline TRX)")
     ap.add_argument("--contratos", default="", help="contratos.json (aba Contratos da Documentos TRX)")
     a = ap.parse_args()
 
@@ -666,6 +689,7 @@ def main():
         "destaque_isgh": destaque_isgh(a.destaque) if a.destaque else [],
         "isgh_dossie": isgh_dossie(a.dossie) if a.dossie else [],
         "producao_socios": producao_socios(a.producao) if a.producao else {},
+        "mural": mural(a.mural) if a.mural else [],
         "fiscal": {"contratos": contratos(a.contratos) if a.contratos else [],
                     "documentos": documentos_todos(a.documentos) if a.documentos else [],
                     "contratos_fonte": {"id": DOCS_SHEET, "gid": CONTRATOS_GID}},

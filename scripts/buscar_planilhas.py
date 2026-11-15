@@ -90,6 +90,15 @@ if "--so-licitacoes" in sys.argv:
 
 vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AP").execute()
 json.dump(vals, open("pipeline.json", "w", encoding="utf-8"), ensure_ascii=False)
+# Mural da equipe (15/11/2026): aba Mural da Pipeline TRX, escrita pelo app de Edição v13.
+# Falha aqui não derruba a página; sem a aba, o bloco do mural simplesmente não aparece.
+try:
+    mv = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Mural!A1:D400").execute()
+    json.dump(mv, open("mural.json", "w", encoding="utf-8"), ensure_ascii=False)
+    print(f"OK: mural {len(mv.get('values', []))} linhas")
+except Exception as e:
+    json.dump({"values": []}, open("mural.json", "w", encoding="utf-8"))
+    print(f"::warning::Nao consegui ler a aba Mural: {e}")
 
 # O xlsx do robô do Mac (LICIT_ID) deixou de ser baixado em 02/10/2026: o radar do Mac foi
 # aposentado e a planilha Google de licitações é a única fonte.
