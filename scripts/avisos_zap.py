@@ -10,9 +10,13 @@ no WhatsApp, pelo numero da TRX (Cloud API da Meta), um aviso por item NOVO:
 - documento que entrou na faixa VENCE EM 15 DIAS: avisa a Carla;
 - documento marcado DESATUALIZADO (coluna T): avisa a Carla.
 
-Sem os segredos ZAP_TOKEN/ZAP_PHONE_ID/ZAP_CONTATOS o script nao faz nada e
-nao mexe no estado: quando o Marcos ativar o zap, a fila acumulada sai aos
-poucos (ate 8 avisos por rodada). Item que sai da Central sai do estado.
+Caminho de envio principal: AiSensy (segredo ZAP_AISENSY_KEY; coexistencia no
+numero da TRX, inscricao de 15/11). Exige no painel AiSensy o template
+"aviso_trx" aprovado e uma API Campaign "aviso_trx" live. Caminho alternativo:
+Cloud API da Meta (ZAP_TOKEN + ZAP_PHONE_ID). Sem nenhum segredo de envio (ou
+sem ZAP_CONTATOS) o script nao faz nada e nao mexe no estado: quando o Marcos
+ativar o zap, a fila acumulada sai aos poucos (ate 8 avisos por rodada). Item
+que sai da Central sai do estado.
 """
 import json
 import os
@@ -63,16 +67,27 @@ def monta_avisos(central):
     return avisos
 
 
-def envia(token, phone_id, numero, texto):
-    payload = {"messaging_product": "whatsapp", "to": numero, "type": "template",
-               "template": {"name": "aviso_trx", "language": {"code": "pt_BR"},
-                            "components": [{"type": "body",
-                                            "parameters": [{"type": "text",
-                                                            "text": texto.replace("\n", " ")}]}]}}
-    req = urllib.request.Request(
-        f"https://graph.facebook.com/v21.0/{phone_id}/messages",
-        data=json.dumps(payload).encode(),
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+def envia(canal, numero, apelido, texto):
+    texto = texto.replace("\n", " ")
+    if canal["tipo"] == "aisensy":
+        payload = {"apiKey": canal["key"], "campaignName": "aviso_trx",
+                   "destination": numero, "userName": apelido.capitalize(),
+                   "templateParams": [texto]}
+        req = urllib.request.Request(
+            "https://backend.aisensy.com/campaign/t1/api/v2",
+            data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json"})
+    else:
+        payload = {"messaging_product": "whatsapp", "to": numero, "type": "template",
+                   "template": {"name": "aviso_trx", "language": {"code": "pt_BR"},
+                                "components": [{"type": "body",
+                                                "parameters": [{"type": "text",
+                                                                "text": texto}]}]}}
+        req = urllib.request.Request(
+            f"https://graph.facebook.com/v21.0/{canal['phone_id']}/messages",
+            data=json.dumps(payload).encode(),
+            headers={"Authorization": f"Bearer {canal['token']}",
+                     "Content-Type": "application/json"})
     urllib.request.urlopen(req, timeout=30)
 
 
@@ -88,10 +103,17 @@ def main():
 
     novos = [a for a in avisos if a[0] not in notificados]
 
-    token = os.environ.get("ZAP_TOKEN", "")
-    phone_id = os.environ.get("ZAP_PHONE_ID", "")
+    aisensy = os.environ.get("ZAP_AISENSY_KEY", "").strip()
+    token = os.environ.get("ZAP_TOKEN", "").strip()
+    phone_id = os.environ.get("ZAP_PHONE_ID", "").strip()
     contatos = json.loads(os.environ.get("ZAP_CONTATOS") or "{}")
-    if not (token and phone_id and contatos):
+    if aisensy:
+        canal = {"tipo": "aisensy", "key": aisensy}
+    elif token and phone_id:
+        canal = {"tipo": "meta", "token": token, "phone_id": phone_id}
+    else:
+        canal = None
+    if not (canal and contatos):
         print(f"zap desativado (sem segredos); {len(novos)} aviso(s) aguardando ativacao")
         return 0
 
@@ -103,7 +125,7 @@ def main():
             print(f"sem numero para '{apelido}' no ZAP_CONTATOS; aviso retido: {chave}")
             continue
         try:
-            envia(token, phone_id, numero, texto)
+            envia(canal, numero, apelido, texto)
             notificados[chave] = gerado
             enviados += 1
             print(f"enviado a {apelido}: {chave}")

@@ -88,6 +88,7 @@ jobs:
       - name: Avisos da Central no zap da equipe
         continue-on-error: true
         env:
+          ZAP_AISENSY_KEY: ${{ secrets.ZAP_AISENSY_KEY }}
           ZAP_TOKEN: ${{ secrets.ZAP_TOKEN }}
           ZAP_PHONE_ID: ${{ secrets.ZAP_PHONE_ID }}
           ZAP_CONTATOS: ${{ secrets.ZAP_CONTATOS }}

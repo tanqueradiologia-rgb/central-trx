@@ -1,10 +1,14 @@
 name: Zap TRX (avisos WhatsApp)
 
-# Envia um aviso no WhatsApp em nome da TRX pela Cloud API da Meta (regra de 15/11/2026).
+# Envia um aviso no WhatsApp em nome da TRX (regra de 15/11/2026).
+# Caminho principal: AiSensy (coexistencia no numero da TRX, inscricao de 15/11).
+#   Segredos: ZAP_AISENSY_KEY (chave de API do painel AiSensy) e
+#   ZAP_CONTATOS (JSON apelido -> numero com DDI, ex. {"carla":"55619..."}).
+#   Exige no painel AiSensy: template "aviso_trx" aprovado (corpo "Aviso TRX: {{1}}")
+#   e uma API Campaign chamada "aviso_trx" ligada a esse template, com status live.
+# Caminho alternativo (se um dia houver token proprio da Meta): ZAP_TOKEN + ZAP_PHONE_ID.
 # Disparo: gh api -X POST repos/tanqueradiologia-rgb/central-trx/actions/workflows/zap.yml/dispatches \
 #   -f ref=main -f "inputs[para]=carla" -f "inputs[texto]=..."
-# Segredos necessarios: ZAP_TOKEN (token permanente), ZAP_PHONE_ID (id do numero),
-# ZAP_CONTATOS (JSON apelido -> numero com DDI, ex. {"carla":"55619..."}).
 # O repositorio e publico: numero de telefone nunca entra em arquivo nem em log; so apelido.
 
 on:
@@ -17,7 +21,7 @@ on:
         description: "Texto do aviso (uma linha; template nao aceita quebra de linha)"
         required: true
       modo:
-        description: "template (padrao, abre conversa) ou livre (so com janela de 24h aberta)"
+        description: "template (padrao) ou livre (so no caminho Meta, com janela de 24h)"
         required: false
         default: "template"
 
@@ -27,6 +31,7 @@ jobs:
     steps:
       - name: Enviar aviso
         env:
+          ZAP_AISENSY_KEY: ${{ secrets.ZAP_AISENSY_KEY }}
           ZAP_TOKEN: ${{ secrets.ZAP_TOKEN }}
           ZAP_PHONE_ID: ${{ secrets.ZAP_PHONE_ID }}
           ZAP_CONTATOS: ${{ secrets.ZAP_CONTATOS }}
@@ -36,8 +41,6 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os, sys, urllib.request, urllib.error
-          token = os.environ.get("ZAP_TOKEN") or sys.exit("segredo ZAP_TOKEN ausente")
-          phone_id = os.environ.get("ZAP_PHONE_ID") or sys.exit("segredo ZAP_PHONE_ID ausente")
           contatos = json.loads(os.environ.get("ZAP_CONTATOS") or "{}")
           para = os.environ["PARA"].strip().lower()
           numero = contatos.get(para, "")
@@ -45,19 +48,35 @@ jobs:
               sys.exit(f"apelido desconhecido no ZAP_CONTATOS: {para}")
           texto = os.environ["TEXTO"].replace("\n", " ").strip()
           modo = (os.environ.get("MODO") or "template").strip()
-          if modo == "livre":
-              payload = {"messaging_product": "whatsapp", "to": numero,
-                         "type": "text", "text": {"body": texto}}
+          aisensy = os.environ.get("ZAP_AISENSY_KEY", "").strip()
+          token = os.environ.get("ZAP_TOKEN", "").strip()
+          phone_id = os.environ.get("ZAP_PHONE_ID", "").strip()
+
+          if aisensy:
+              payload = {"apiKey": aisensy, "campaignName": "aviso_trx",
+                         "destination": numero, "userName": para.capitalize(),
+                         "templateParams": [texto]}
+              req = urllib.request.Request(
+                  "https://backend.aisensy.com/campaign/t1/api/v2",
+                  data=json.dumps(payload).encode(),
+                  headers={"Content-Type": "application/json"})
+          elif token and phone_id:
+              if modo == "livre":
+                  body = {"messaging_product": "whatsapp", "to": numero,
+                          "type": "text", "text": {"body": texto}}
+              else:
+                  body = {"messaging_product": "whatsapp", "to": numero, "type": "template",
+                          "template": {"name": "aviso_trx", "language": {"code": "pt_BR"},
+                                       "components": [{"type": "body",
+                                                       "parameters": [{"type": "text", "text": texto}]}]}}
+              req = urllib.request.Request(
+                  f"https://graph.facebook.com/v21.0/{phone_id}/messages",
+                  data=json.dumps(body).encode(),
+                  headers={"Authorization": f"Bearer {token}",
+                           "Content-Type": "application/json"})
           else:
-              payload = {"messaging_product": "whatsapp", "to": numero, "type": "template",
-                         "template": {"name": "aviso_trx", "language": {"code": "pt_BR"},
-                                      "components": [{"type": "body",
-                                                      "parameters": [{"type": "text", "text": texto}]}]}}
-          req = urllib.request.Request(
-              f"https://graph.facebook.com/v21.0/{phone_id}/messages",
-              data=json.dumps(payload).encode(),
-              headers={"Authorization": f"Bearer {token}",
-                       "Content-Type": "application/json"})
+              sys.exit("nenhum segredo de envio: defina ZAP_AISENSY_KEY (AiSensy) ou ZAP_TOKEN+ZAP_PHONE_ID (Meta)")
+
           try:
               r = urllib.request.urlopen(req, timeout=30)
               print("enviado para", para, "- HTTP", r.status)
