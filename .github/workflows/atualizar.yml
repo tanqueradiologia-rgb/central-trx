@@ -29,6 +29,10 @@ jobs:
   atualizar:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -78,6 +82,24 @@ jobs:
         run: |
           set -a; . ./mods.env; set +a
           python scripts/verificar_central.py
+      # Avisos no zap da equipe (regra de 15/11/2026): item novo na Central que pede
+      # notificação vira mensagem no WhatsApp pelo número da TRX. Sem os segredos ZAP_*
+      # o passo não faz nada. O estado (data/avisos_state.json) é comitado com [skip ci].
+      - name: Avisos da Central no zap da equipe
+        continue-on-error: true
+        env:
+          ZAP_TOKEN: ${{ secrets.ZAP_TOKEN }}
+          ZAP_PHONE_ID: ${{ secrets.ZAP_PHONE_ID }}
+          ZAP_CONTATOS: ${{ secrets.ZAP_CONTATOS }}
+        run: |
+          python scripts/avisos_zap.py
+          if [ -n "$(git status --porcelain data/avisos_state.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/avisos_state.json
+            git commit -m "avisos zap: estado da rodada [skip ci]"
+            git pull --rebase origin main && git push origin main
+          fi
       # Os dados só saem cifrados: dados_central.js, saude.js e roteiro.js viram central.enc
       # e são apagados de site/. Sem o segredo CENTRAL_SENHA a rodada falha e nada é publicado.
       - name: Cifrar os dados da Central com a senha da equipe
