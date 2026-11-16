@@ -489,6 +489,10 @@ def producao_socios(path):
         fixa_mes = sum(d["v"] for d in desp)
     rateio = (txt(par.get("rateio_sobra")) or "igual").lower()
     socios_sobra = num(par.get("socios_sobra"))
+    # Remuneracao administrativa (Marcos, 16/11/2026): o trabalho de gestao e real e se paga em
+    # reais, nao so em UE. Cada unidade ADM vale valor_unidade_adm. Entra como despesa da empresa,
+    # antes da sobra, e some do eixo margem, que mede so o laudo. Sem a chave, nada e pago.
+    valor_adm = num(par.get("valor_unidade_adm")) or 0.0
     teto = num(par.get("teto_nota")) or 100.0
     sla = {"urgencia": num(par.get("sla_urgencia_h")) or 2.0,
            "internado": num(par.get("sla_internado_h")) or 12.0,
@@ -502,7 +506,8 @@ def producao_socios(path):
         if k not in gente:
             gente[k] = {"per": per, "n": nome, "socio": False, "ex": 0, "ue": 0.0, "pz": 0,
                         "pz_base": 0, "rec": 0.0, "rep": 0.0, "mods": {}, "ctr": set(),
-                        "pl": None, "sob": None, "ncob": 0, "obs": "", "l": None, "hrs": []}
+                        "pl": None, "sob": None, "ncob": 0, "obs": "", "l": None, "hrs": [],
+                        "adm_un": 0}
         return gente[k]
 
     for d in _tab(prod_rows):
@@ -518,7 +523,11 @@ def producao_socios(path):
         fator = 1.0 if fator is None or fator <= 0 else fator
         g = pega(per, nome)
         g["socio"] = g["socio"] or _sim(d.get("Socio"))
-        g["ex"] += int(ex)
+        # ADM e gestao, nao exame: conta unidade e esforco, nunca entra em exames laudados
+        if mod == "ADM":
+            g["adm_un"] += int(ex)
+        else:
+            g["ex"] += int(ex)
         g["ue"] += ex * coef.get(mod, 1.0) * fator
         pz = num(d.get("No_prazo"))
         if pz is not None and str(d.get("No_prazo")).strip() != "":
@@ -596,6 +605,8 @@ def producao_socios(path):
                 "pz": g["pz"], "pzb": g["pz_base"],
                 "pzp": round(100.0 * g["pz"] / g["pz_base"], 1) if g["pz_base"] else None,
                 "hrs": round(hrs, 1) if hrs is not None else None,
+                "admun": g["adm_un"] or None,
+                "adm": round(g["adm_un"] * valor_adm, 2) if g["adm_un"] and valor_adm else 0.0,
                 "rec": round(g["rec"], 2), "recl": round(liq, 2), "rep": round(g["rep"], 2),
                 "mg": round(liq - g["rep"], 2),
                 "mgp": round(100.0 * margem_pct, 1) if margem_pct is not None else None,
@@ -611,22 +622,25 @@ def producao_socios(path):
         # ---- acerto final do periodo: receita liquida - despesa fixa - repasse = sobra
         rec_tot = sum(x["rec"] for x in saida)
         rep_tot = sum(x["rep"] for x in saida)
+        adm_tot = sum(x["adm"] for x in saida)
         liq_tot = rec_tot * fator_liq
-        sobra = liq_tot - fixa_mes - rep_tot
+        sobra = liq_tot - fixa_mes - rep_tot - adm_tot
         n_soc = int(socios_sobra) if socios_sobra and socios_sobra > 0 else len(socios)
         ue_soc = sum(g["ue"] for g in socios)
         for x in saida:
             if not x["socio"]:
-                x["quota"], x["liq"] = None, round(x["rep"], 2)
+                x["quota"], x["liq"] = None, round(x["rep"] + x["adm"], 2)
                 continue
             if rateio == "ue" and ue_soc:
                 q = sobra * (next(g["ue"] for g in socios if g["n"] == x["n"]) / ue_soc)
             else:
                 q = (sobra / n_soc) if n_soc else 0.0
             x["quota"] = round(q, 2)
-            x["liq"] = round(x["rep"] + q, 2)
+            x["liq"] = round(x["rep"] + x["adm"] + q, 2)
         acerto = {"rec": round(rec_tot, 2), "liq": round(liq_tot, 2), "fixa": round(fixa_mes, 2),
-                  "rep": round(rep_tot, 2), "sobra": round(sobra, 2), "socios": n_soc,
+                  "rep": round(rep_tot, 2), "adm": round(adm_tot, 2),
+                  "adm_un": sum(x["admun"] or 0 for x in saida),
+                  "valor_adm": valor_adm, "sobra": round(sobra, 2), "socios": n_soc,
                   "quota": round(sobra / n_soc, 2) if (rateio != "ue" and n_soc) else None,
                   "rateio": "ue" if rateio == "ue" else "igual", "itens": desp,
                   "liq_socios": round(sum(x["liq"] for x in saida if x["socio"]), 2)}

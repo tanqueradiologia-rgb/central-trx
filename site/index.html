@@ -1181,6 +1181,7 @@ const lProd = (function(){
         + '<td class="mono hide-sm">'+(m.share===null?'—':pct(m.share))+'</td>'
         + '<td class="mono hide-sm">'+money(m.rep)+'</td>'
         + '<td class="mono"><b'+(m.liq<0?' class="d-bad"':'')+'>'+(m.liq===undefined||m.liq===null?"—":money(m.liq))+'</b>'
+          + (m.adm?'<div class="meta">gestão '+money(m.adm)+'</div>':'')
           + (m.quota===null||m.quota===undefined?'':'<div class="meta">'+(m.quota<0?"− ":"+ ")+money(Math.abs(m.quota))+' do resultado</div>')+'</td>'
         + '<td class="mono hide-sm">'+money(m.mg)+(m.mgp===null?'':' <span class="d-mut">'+pct(m.mgp)+'</span>')+'</td>'
         + '<td class="mono hide-sm">'+(m.pl===null&&m.sob===null?'<span class="d-mut">sem dado</span>':((m.pl||0)+(m.sob||0))+(m.ncob?' <span class="d-bad">−'+m.ncob+'</span>':''))+'</td>'
@@ -1202,6 +1203,7 @@ const lProd = (function(){
       + '<span class="q">'+esc(m.n)+'</span>'
       + '<span class="v'+(m.liq<0?' d-bad':'')+'">'+money(m.liq)+'</span>'
       + '<span class="d">'+m.ex+' laudos '+money(m.rep)+'<br>'
+      + (m.adm?'gestão, '+m.admun+(m.admun>1?' unidades ':' unidade ')+money(m.adm)+'<br>':'')
       + (A.sobra<0?'prejuízo do mês ':'lucro do mês ')+sinal(m.quota)+'</span></div>').join("")
       + '</div>';
     h += '<p class="meta">Laudos produzidos mais a parte do resultado da empresa no mês, já sem nenhuma despesa fixa. '
@@ -1212,6 +1214,7 @@ const lProd = (function(){
       + '<span>Receita líquida, fator '+n1((R.fator_liq||0)*100)+'% (imposto, gestão 10%, 1% do sistema)</span><span>'+money(A.liq)+'</span>'
       + '<span>Despesa fixa da TRX no mês</span><span>'+sinal(-A.fixa)+'</span>'
       + '<span>Repasse de todos os laudadores</span><span>'+sinal(-A.rep)+'</span>'
+      + (A.adm?'<span>Remuneração administrativa, '+A.adm_un+' unidades a '+money(A.valor_adm)+'</span><span>'+sinal(-A.adm)+'</span>':'')
       + '<span class="tot">Resultado da empresa</span><span class="tot'+(A.sobra<0?' d-bad':'')+'">'+money(A.sobra)+'</span>'
       + '<span class="tot">Total a faturar pelos sócios</span><span class="tot">'+money(A.liq_socios)+'</span>'
       + '</div>'
