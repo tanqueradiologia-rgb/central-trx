@@ -938,7 +938,7 @@ const lPr = makeList({
       + (ac?'<div class="hj-ac">'+ac+'</div>':'')
       + obsHtml(estado(atual,it.k).obs)
       + '<form class="hj-mk" autocomplete="off"><label><input type="checkbox" value="feito"> Feito</label><label><input type="checkbox" value="ciente"> Ciente</label>'
-      + '<input class="hj-o" maxlength="600" placeholder="Observação para a equipe (opcional)"><button type="submit">Salvar</button><span class="hj-st meta"></span></form></li>';
+      + '<input class="hj-o" maxlength="600" placeholder="Observação para a equipe (opcional; comece com @claude para pedir ao Claude)"><button type="submit">Salvar</button><span class="hj-st meta"></span></form></li>';
   }
   const CK="central-mural-cred";   // mesma credencial do Mural: entrou num, vale no outro
   const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
