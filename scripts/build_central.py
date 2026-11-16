@@ -627,11 +627,47 @@ def producao_socios(path):
         sobra = liq_tot - fixa_mes - rep_tot - adm_tot
         n_soc = int(socios_sobra) if socios_sobra and socios_sobra > 0 else len(socios)
         ue_soc = sum(g["ue"] for g in socios)
+        soc_saida = [x for x in saida if x["socio"]]
+
+        def ratear_prejuizo(lista, total):
+            """Divide o prejuizo entre os socios com TETO no que cada um tem a receber.
+
+            Regra do Marcos de 16/11/2026: o prejuizo dos socios e dividido entre os proprios
+            socios, e nenhum socio fica negativo enquanto houver lucro entre os demais. Começa
+            em partes iguais; quem nao tem saldo para absorver a parte dele para no zero e o
+            que faltou volta a ser dividido entre os que ainda tem saldo. O que nao couber em
+            ninguem fica com a empresa.
+            """
+            cap = {x["n"]: max(0.0, x["rep"] + x["adm"]) for x in lista}
+            absorv = {n: 0.0 for n in cap}
+            falta = total
+            abertos = [n for n in cap if cap[n] > 0]
+            while falta > 0.005 and abertos:
+                parte = falta / len(abertos)
+                fechou = False
+                for n in list(abertos):
+                    livre = cap[n] - absorv[n]
+                    if parte >= livre:
+                        absorv[n] = cap[n]
+                        falta -= livre
+                        abertos.remove(n)
+                        fechou = True
+                if not fechou:
+                    for n in abertos:
+                        absorv[n] += parte
+                    falta = 0.0
+            return absorv, falta
+
+        absorv, nao_coberto = ({}, 0.0)
+        if sobra < 0:
+            absorv, nao_coberto = ratear_prejuizo(soc_saida, -sobra)
         for x in saida:
             if not x["socio"]:
                 x["quota"], x["liq"] = None, round(x["rep"] + x["adm"], 2)
                 continue
-            if rateio == "ue" and ue_soc:
+            if sobra < 0:
+                q = -absorv.get(x["n"], 0.0)
+            elif rateio == "ue" and ue_soc:
                 q = sobra * (next(g["ue"] for g in socios if g["n"] == x["n"]) / ue_soc)
             else:
                 q = (sobra / n_soc) if n_soc else 0.0
@@ -641,7 +677,9 @@ def producao_socios(path):
                   "rep": round(rep_tot, 2), "adm": round(adm_tot, 2),
                   "adm_un": sum(x["admun"] or 0 for x in saida),
                   "valor_adm": valor_adm, "sobra": round(sobra, 2), "socios": n_soc,
-                  "quota": round(sobra / n_soc, 2) if (rateio != "ue" and n_soc) else None,
+                  "nao_coberto": round(nao_coberto, 2),
+                  "quota": (round(sobra / n_soc, 2)
+                            if (sobra >= 0 and rateio != "ue" and n_soc) else None),
                   "rateio": "ue" if rateio == "ue" else "igual", "itens": desp,
                   "liq_socios": round(sum(x["liq"] for x in saida if x["socio"]), 2)}
 

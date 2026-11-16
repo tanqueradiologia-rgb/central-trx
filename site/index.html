@@ -1206,9 +1206,12 @@ const lProd = (function(){
       + (m.adm?'gestão, '+m.admun+(m.admun>1?' unidades ':' unidade ')+money(m.adm)+'<br>':'')
       + (A.sobra<0?'prejuízo do mês ':'lucro do mês ')+sinal(m.quota)+'</span></div>').join("")
       + '</div>';
-    h += '<p class="meta">Laudos produzidos mais a parte do resultado da empresa no mês, já sem nenhuma despesa fixa. '
-      + (A.rateio==="ue"?'O resultado é dividido pela participação de cada um no esforço (UE).':'O resultado é dividido em partes iguais entre '+A.socios+' sócios, pela assembleia de 01/09/2026.')
-      + (A.sobra<0?' <b class="d-bad">O mês fechou negativo: o prejuízo sai do repasse dos sócios, não do caixa da empresa.</b>':'')+'</p>';
+    h += '<p class="meta">Laudos produzidos mais a gestão, mais a parte do resultado da empresa no mês, já sem nenhuma despesa fixa. '
+      + (A.sobra<0
+         ? '<b class="d-bad">O mês fechou negativo.</b> O prejuízo sai do repasse dos sócios, não do caixa, dividido entre eles em partes iguais, mas com teto: quem não tem saldo para a parte dele para no zero e o que faltou volta a ser dividido entre os que ainda têm saldo. Nenhum sócio fica negativo enquanto houver sócio no positivo.'
+           + (A.nao_coberto>0.005?' <b class="d-bad">'+money(A.nao_coberto)+' do prejuízo não couberam nos sócios e ficam com a empresa.</b>':'')
+         : (A.rateio==="ue"?'O lucro é dividido pela participação de cada um no esforço (UE).':'O lucro é dividido em partes iguais entre '+A.socios+' sócios, pela assembleia de 01/09/2026.'))
+      +'</p>';
     h += '<div class="band"><div class="pr-casc">'
       + '<span>Receita bruta dos laudos</span><span>'+money(A.rec)+'</span>'
       + '<span>Receita líquida, fator '+n1((R.fator_liq||0)*100)+'% (imposto, gestão 10%, 1% do sistema)</span><span>'+money(A.liq)+'</span>'
