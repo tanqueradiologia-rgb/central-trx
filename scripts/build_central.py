@@ -400,6 +400,36 @@ def _sim(v):
     return str(v).strip().lower() in ("sim", "s", "true", "1", "x", "socio", "sócio")
 
 
+def tarefas_status(path):
+    """Aba Tarefas_Status da Pipeline TRX (16/11/2026): Feito, Ciente e Observação marcados
+    nas tarefas do bloco Hoje. Uma linha por marcação; aqui sai o estado por pessoa + chave:
+    o último status (feito/ciente) e todas as observações, em ordem."""
+    try:
+        tv = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return []
+    rows = tv.get("values") if isinstance(tv, dict) else tv
+    if not rows or len(rows) < 2:
+        return []
+    H = [str(h).strip() for h in rows[0]]
+    est = {}
+    for r in rows[1:]:
+        d = dict(zip(H, r + [""] * (len(H) - len(r))))
+        p, k = txt(d.get("Pessoa"), 60), txt(d.get("Chave"), 80)
+        if not p or not k:
+            continue
+        e = est.setdefault((p.lower(), k), {"p": p, "k": k, "t": "", "of": "", "st": "", "q": "", "a": "", "obs": []})
+        e["t"] = txt(d.get("Tarefa"), 200) or e["t"]
+        e["of"] = txt(d.get("Origem"), 40) or e["of"]
+        st = str(d.get("Status") or "").strip().lower()
+        if st in ("feito", "ciente"):
+            e.update(st=st, q=txt(d.get("Quando"), 20), a=txt(d.get("Autor"), 60))
+        o = txt(d.get("Observacao"), 600)
+        if o:
+            e["obs"].append({"q": txt(d.get("Quando"), 20), "a": txt(d.get("Autor"), 60), "o": o})
+    return list(est.values())
+
+
 def mural(path):
     """Aba Mural da Pipeline TRX (15/11/2026): recados gerais da equipe, postados pelo
     app de Edição v13. A Central mostra os 30 mais recentes em todas as áreas."""
@@ -732,6 +762,7 @@ def main():
     ap.add_argument("--dossie", default="", help="isgh_dossie.json (aba ISGH_Dossie da Pipeline Licitacoes)")
     ap.add_argument("--producao", default="", help="producao.json (abas Producao_Params, Producao_Socios e Escala_Socios)")
     ap.add_argument("--mural", default="", help="mural.json (aba Mural da Pipeline TRX)")
+    ap.add_argument("--tarefas", default="", help="tarefas.json (aba Tarefas_Status da Pipeline TRX)")
     ap.add_argument("--contratos", default="", help="contratos.json (aba Contratos da Documentos TRX)")
     a = ap.parse_args()
 
@@ -792,6 +823,7 @@ def main():
         "isgh_dossie": isgh_dossie(a.dossie) if a.dossie else [],
         "producao_socios": producao_socios(a.producao) if a.producao else {},
         "mural": mural(a.mural) if a.mural else [],
+        "tarefas_status": tarefas_status(a.tarefas) if a.tarefas else [],
         "fiscal": {"contratos": contratos(a.contratos) if a.contratos else [],
                     "documentos": documentos_todos(a.documentos) if a.documentos else [],
                     "contratos_fonte": {"id": DOCS_SHEET, "gid": CONTRATOS_GID}},

@@ -100,6 +100,15 @@ except Exception as e:
     json.dump({"values": []}, open("mural.json", "w", encoding="utf-8"))
     print(f"::warning::Nao consegui ler a aba Mural: {e}")
 
+# Feito, Ciente e Observação das tarefas do bloco Hoje (16/11/2026): aba Tarefas_Status, escrita pelo app v14.
+try:
+    tv = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Tarefas_Status!A1:H5000").execute()
+    json.dump(tv, open("tarefas.json", "w", encoding="utf-8"), ensure_ascii=False)
+    print(f"OK: tarefas {len(tv.get('values', []))} linhas")
+except Exception as e:
+    json.dump({"values": []}, open("tarefas.json", "w", encoding="utf-8"))
+    print(f"::warning::Nao consegui ler a aba Tarefas_Status: {e}")
+
 # O xlsx do robô do Mac (LICIT_ID) deixou de ser baixado em 02/10/2026: o radar do Mac foi
 # aposentado e a planilha Google de licitações é a única fonte.
 open("mods.env", "w").write(f"MOD_PIPELINE={mod(PIPELINE_ID)}\n")

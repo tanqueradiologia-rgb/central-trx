@@ -190,7 +190,21 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .hoje-band .hj-ac{margin:4px 0 0 100px;display:flex;gap:10px;flex-wrap:wrap}
 .hoje-band .hj-ac a,.hoje-band .hj-ac button{font:inherit;font-size:12px;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
 .hoje-band .hj-vazio{padding:12px 14px;color:var(--muted);font-size:13px}
-@media (max-width:640px){.hoje-band .hj-x,.hoje-band .hj-ac{margin-left:0}}
+.hoje-band .hj-cred{font-size:12px}.hoje-band .hj-cred input{font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink)}
+.hoje-band .hj-obs{list-style:none;margin:4px 0 0 100px;padding:4px 0 0 10px;border-left:2px solid var(--line);font-size:13px}
+.hoje-band .hj-obs li{padding:1px 0;border:0}
+.hoje-band .hj-mk{margin:6px 0 0 100px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}
+.hoje-band .hj-mk label{display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap}
+.hoje-band .hj-mk .hj-o{flex:1;min-width:180px;font:inherit;font-size:13px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.hoje-band .hj-mk button{font:inherit;font-size:13px;padding:4px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+.hoje-band .hj-mk button:disabled{opacity:.5}
+.hoje-band .hj-arq{border-top:1px solid var(--line);padding:6px 14px;font-size:13px}
+.hoje-band .hj-arq summary{cursor:pointer;color:var(--muted)}
+.hoje-band .hj-arq ul{list-style:none;margin:6px 0 0;padding:0}
+.hoje-band .hj-arq li{padding:4px 0;border-top:1px dashed var(--line)}
+.hoje-band .hj-arq .hj-obs{margin-left:0}.hoje-band .hj-arq .hj-obs li{border:0;padding:1px 0}
+.hoje-band .tag{font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px}.hoje-band .tag.ok{background:var(--ok);color:#fff}.hoje-band .tag.ci{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+@media (max-width:640px){.hoje-band .hj-x,.hoje-band .hj-ac,.hoje-band .hj-obs,.hoje-band .hj-mk{margin-left:0}}
 .isgh-band{margin:14px 0 4px;border:2px solid var(--accent);border-radius:var(--r);background:var(--surface);overflow:hidden}
 .isgh-band>h2{margin:0;padding:8px 14px;background:var(--accent);color:#fff;font-family:var(--f-display);font-size:15px;letter-spacing:.06em;text-transform:uppercase}
 .isgh-band .ig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;padding:12px 14px}
@@ -849,11 +863,16 @@ const lPr = makeList({
 
 /* ---------- HOJE: a fila de uma pessoa só, juntando a faixa do ISGH e as abas ----------
    A Central é protegida por senha compartilhada e não sabe quem está olhando, então quem
-   escolhe é a própria pessoa, e a escolha fica guardada neste aparelho. */
+   escolhe é a própria pessoa, e a escolha fica guardada neste aparelho.
+   16/11/2026 (pedido do Marcos): cada tarefa tem Feito, Ciente e Observação. A marcação vai
+   para a aba Tarefas_Status da Pipeline TRX pelo app de Edição (doPost, apelido + PIN, os
+   mesmos do Mural). Feito ou Ciente tira a tarefa da fila daquela pessoa e ela vai para
+   "Arquivadas"; observação sozinha fica embaixo da tarefa, visível para todos.
+   Até a rodada seguinte trazer a marcação da planilha, ela vale por este navegador. */
 (function(){
   const el=$("#hoje"); if(!el) return;
   const IG = D.destaque_isgh||[];
-  const sa = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const sa = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
   const PESSOA = {"gestor bruno":"Bruno","gestora thalyta":"Thalyta"};
   const donos = s => String(s||"").replace(/\([^)]*\)/g," ").split(/,| e |;|\/|&/i)
       .map(x=>x.trim()).filter(Boolean).map(x=>PESSOA[sa(x)]||x);
@@ -863,15 +882,50 @@ const lPr = makeList({
   const pessoas=[...nomes.values()].sort((a,b)=>a.localeCompare(b,"pt"));
   if(!pessoas.length) return;
 
+  // chave estável da tarefa: origem + título + prazo + ação. Prazo ou ação novos = tarefa nova na fila.
+  const hash = t => { let h=5381; for(let i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return (h>>>0).toString(36); };
+  const chave = it => (it.p?it.p.src:"isgh")+"-"+hash(sa([it.t,(it.dt||"").slice(0,10),it.x].join("|")));
+
+  // estado = o que veio da planilha + o que foi marcado neste navegador e ainda não voltou da planilha
+  const SRV={}; (D.tarefas_status||[]).forEach(e=>{ SRV[sa(e.p)+"|"+e.k]=e; });
+  const LK="central-tarefas-local";
+  const lerLocal=()=>{ try{ return JSON.parse(localStorage.getItem(LK)||"[]"); }catch(e){ return []; } };
+  function limparLocal(){ const agora=Date.now();
+    const v=lerLocal().filter(l=>{ const s=SRV[sa(l.p)+"|"+l.k];
+      if(agora-l.ts>36e5*24) return false;
+      if(!s) return true;
+      const stOk=!l.st || s.st===l.st, obsOk=!l.o || (s.obs||[]).some(o=>o.o===l.o);
+      return !(stOk&&obsOk); });
+    try{ localStorage.setItem(LK,JSON.stringify(v)); }catch(e){}
+    return v; }
+  let LOC=limparLocal();
+  function estado(pessoa,k){
+    const s=SRV[sa(pessoa)+"|"+k], e={st:s?s.st:"", q:s?s.q:"", a:s?s.a:"", t:s?s.t:"", of:s?s.of:"", obs:s?(s.obs||[]).slice():[]};
+    LOC.filter(l=>sa(l.p)===sa(pessoa)&&l.k===k).forEach(l=>{
+      if(l.st){ e.st=l.st; e.q=l.q; e.a=l.a; } if(l.t) e.t=l.t; if(l.of) e.of=l.of;
+      if(l.o && !e.obs.some(o=>o.o===l.o)) e.obs.push({q:l.q,a:l.a,o:l.o}); });
+    return e;
+  }
+
   const meu = (s,k) => donos(s).some(d=>sa(d)===k);
   function itens(pessoa){
     const k=sa(pessoa), out=[];
     IG.forEach(i=>{ if(meu(i.resp,k)) out.push({of:"ISGH", t:i.t, x:i.x, dt:i.dt||"", lk:i.lk||""}); });
     PR.forEach(p=>{ if(!meu(p.resp,k)) return; const d=p.dt?dias(p.dt):null;
       if(d===null||d>7) return; out.push({of:p.tp, t:p.n, x:p.acao, dt:p.dt, p}); });
+    out.forEach(it=>{ it.k=chave(it); });
     out.sort((a,b)=>{ const A=a.dt||"9999-99-99", B=b.dt||"9999-99-99"; return A<B?-1:A>B?1:0; });
     return out;
   }
+  // arquivadas da pessoa nos últimos 15 dias, mais novas primeiro
+  const qMs = q => { const m=/(\d{2})\/(\d{2})\/(\d{4})\s*(\d{2})?:?(\d{2})?/.exec(q||""); return m?new Date(+m[3],m[2]-1,+m[1],+(m[4]||0),+(m[5]||0)).getTime():0; };
+  function arquivadas(pessoa){
+    const ks=new Set(); (D.tarefas_status||[]).forEach(e=>{ if(sa(e.p)===sa(pessoa)) ks.add(e.k); });
+    LOC.forEach(l=>{ if(sa(l.p)===sa(pessoa)) ks.add(l.k); });
+    const lim=Date.now()-15*864e5;
+    return [...ks].map(k=>Object.assign({k},estado(pessoa,k))).filter(e=>e.st && qMs(e.q)>=lim).sort((a,b)=>qMs(b.q)-qMs(a.q));
+  }
+  const obsHtml = obs => obs.length?'<ul class="hj-obs">'+obs.slice(-4).map(o=>'<li><span class="meta">'+esc(o.q)+' · '+esc(o.a)+':</span> '+esc(o.o)+'</li>').join("")+'</ul>':'';
   function linha(it,n){
     const pz = it.dt ? fDias(dias(it.dt))+' <span class="d-mut">'+fData(it.dt)+'</span>' : '<span class="d-mut">sem data</span>';
     let ac='';
@@ -879,25 +933,69 @@ const lPr = makeList({
     else { if(it.x && it.x.length>60) ac = '<button type="button" data-c="'+n+'">Copiar o texto</button>';
            if(it.lk) ac += '<a href="'+esc(it.lk)+'" target="_blank" rel="noopener">Detalhe ↗</a>';
            ac += '<a href="#isgh">Ver o dossiê do ISGH</a>'; }
-    return '<li><div class="hj-l1"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span></div>'
+    return '<li data-n="'+n+'"><div class="hj-l1"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span></div>'
       + (it.x?'<div class="hj-x">'+esc(it.x)+'</div>':'')
-      + (ac?'<div class="hj-ac">'+ac+'</div>':'') + '</li>';
+      + (ac?'<div class="hj-ac">'+ac+'</div>':'')
+      + obsHtml(estado(atual,it.k).obs)
+      + '<form class="hj-mk" autocomplete="off"><label><input type="checkbox" value="feito"> Feito</label><label><input type="checkbox" value="ciente"> Ciente</label>'
+      + '<input class="hj-o" maxlength="600" placeholder="Observação para a equipe (opcional)"><button type="submit">Salvar</button><span class="hj-st meta"></span></form></li>';
   }
-  let atual=null;
+  const CK="central-mural-cred";   // mesma credencial do Mural: entrou num, vale no outro
+  const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
+  let atual=null, lista=[];
   function render(){
-    const it=itens(atual).slice(0,14);
+    lista=itens(atual).filter(it=>!estado(atual,it.k).st).slice(0,14);
+    const arq=arquivadas(atual), c=cred();
     const opts=pessoas.map(p=>'<option'+(p===atual?' selected':'')+'>'+esc(p)+'</option>').join("");
     el.innerHTML='<div class="hj-top"><h2>Hoje</h2><select id="hj-quem">'+opts+'</select>'
-      +'<span class="hj-n">'+(it.length?it.length+(it.length===1?' item':' itens'):'nada em aberto')+'</span></div>'
-      +(it.length?'<ul>'+it.map(linha).join("")+'</ul>':'<div class="hj-vazio">Nada com prazo nos próximos 7 dias para '+esc(atual)+'.</div>');
+      +'<span class="hj-n">'+(lista.length?lista.length+(lista.length===1?' item':' itens'):'nada em aberto')+'</span>'
+      +'<span class="hj-cred meta">'+(c?'marcando como <b>'+esc(c.apelido)+'</b> · <a href="#" id="hj-troca">trocar</a>'
+        :'para marcar: <input id="hj-ap" placeholder="apelido" size="9" autocapitalize="none"> <input id="hj-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">')+'</span></div>'
+      +(lista.length?'<ul class="hj-lista">'+lista.map(linha).join("")+'</ul>':'<div class="hj-vazio">Nada com prazo nos próximos 7 dias para '+esc(atual)+'.</div>')
+      +(arq.length?'<details class="hj-arq"><summary>Arquivadas nos últimos 15 dias · '+arq.length+'</summary><ul>'+arq.map(e=>
+          '<li><span class="tag '+(e.st==="feito"?'ok':'ci')+'">'+(e.st==="feito"?'✓ Feito':'Ciente')+'</span> <b>'+esc(e.t||"tarefa")+'</b>'
+          +(e.of?' <span class="hj-of">'+esc(e.of)+'</span>':'')+' <span class="meta">· '+esc(e.a)+' em '+esc(e.q)+'</span>'+obsHtml(e.obs)+'</li>').join("")+'</ul></details>':'');
     el.hidden=false;
     $("#hj-quem").addEventListener("change",e=>{ atual=e.target.value; try{localStorage.setItem("central-quem",atual);}catch(_){} render(); });
+    const tr=$("#hj-troca"); if(tr) tr.addEventListener("click",ev=>{ ev.preventDefault(); try{localStorage.removeItem(CK);}catch(_){} render(); window.dispatchEvent(new Event("central-cred")); });
     el.querySelectorAll("button[data-c]").forEach(b=>b.addEventListener("click",async()=>{
-      const t=itens(atual)[+b.dataset.c]; if(!t) return;
+      const t=lista[+b.dataset.c]; if(!t) return;
       try{ await navigator.clipboard.writeText(t.x); b.textContent="Copiado"; setTimeout(()=>{b.textContent="Copiar o texto";},1500); }
       catch(_){ b.textContent="Selecione e copie à mão"; }
     }));
+    el.querySelectorAll(".hj-mk").forEach(f=>{
+      const cx=f.querySelectorAll("input[type=checkbox]");
+      cx.forEach(x=>x.addEventListener("change",()=>{ if(x.checked) cx.forEach(y=>{ if(y!==x) y.checked=false; }); }));
+      f.addEventListener("submit",ev=>{ ev.preventDefault(); marcar(f, lista[+f.closest("li").dataset.n]); });
+    });
   }
+  async function marcar(f,it){
+    if(!it) return;
+    const stEl=f.querySelector(".hj-st"), bt=f.querySelector("button");
+    const ch=f.querySelector("input[type=checkbox]:checked"), st=ch?ch.value:"", o=f.querySelector(".hj-o").value.trim();
+    if(!st && !o){ stEl.textContent="Marque Feito ou Ciente, ou escreva a observação."; return; }
+    let c=cred();
+    if(!c){ const ap=(($("#hj-ap")||{}).value||"").trim().toLowerCase(), pin=(($("#hj-pin")||{}).value||"").trim();
+      if(!ap||!pin){ stEl.textContent="Preencha apelido e PIN no alto do bloco (os mesmos do app de Edição)."; return; }
+      c={apelido:ap,pin:pin}; }
+    bt.disabled=true; stEl.textContent="Salvando…";
+    try{
+      const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:"tarefaMarcar",cred:c,
+        t:{pessoa:atual,chave:it.k,titulo:it.t,origem:it.of,status:st,obs:o}})});
+      const j=await r.json();
+      if(!j.ok) throw new Error(j.erro||"Não deu para salvar.");
+      const novo=!cred(); try{ localStorage.setItem(CK,JSON.stringify(c)); }catch(_){}
+      LOC=lerLocal(); LOC.push({p:atual,k:it.k,t:it.t,of:it.of,st:st,o:o,q:j.quando,a:j.autor,ts:Date.now()});
+      try{ localStorage.setItem(LK,JSON.stringify(LOC)); }catch(_){}
+      render(); if(novo) window.dispatchEvent(new Event("central-cred"));
+    }catch(err){
+      const m=String((err&&err.message)||err);
+      stEl.textContent=m.indexOf("LOGIN")>=0?"Apelido ou PIN não conferem.":("Não deu: "+m);
+      if(m.indexOf("LOGIN")>=0){ try{localStorage.removeItem(CK);}catch(_){} }
+      bt.disabled=false;
+    }
+  }
+  window.addEventListener("central-cred",()=>{ if(!el.contains(document.activeElement)) render(); });
   let guardado=null; try{ guardado=localStorage.getItem("central-quem"); }catch(_){}
   atual = pessoas.find(p=>p===guardado) || pessoas.find(p=>sa(p)==="carla") || pessoas[0];
   render();
@@ -989,7 +1087,7 @@ const lPr = makeList({
       q.innerHTML=c?('como <b>'+esc(c.apelido)+'</b> · <a href="#" id="mu-troca">trocar</a>')
         :'<input id="mu-ap" placeholder="apelido" size="9" autocapitalize="none"> <input id="mu-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">';
       const t=$("#mu-troca"); if(t) t.addEventListener("click",ev=>{ ev.preventDefault(); try{localStorage.removeItem(CK);}catch(_){} renderQuem(); }); }
-    renderQuem();
+    renderQuem(); window.addEventListener("central-cred",renderQuem);
     $("#mu-form").addEventListener("submit", async ev=>{
       ev.preventDefault();
       const msg=$("#mu-msg").value.trim(); if(!msg) return;
@@ -1002,7 +1100,8 @@ const lPr = makeList({
         const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:"muralPostar",cred:c,msg:msg})});
         const j=await r.json();
         if(!j.ok) throw new Error(j.erro||"Não deu para publicar.");
-        try{localStorage.setItem(CK,JSON.stringify(c));}catch(_){}
+        const novo=!cred(); try{localStorage.setItem(CK,JSON.stringify(c));}catch(_){}
+        if(novo) window.dispatchEvent(new Event("central-cred"));
         $("#mu-msg").value=""; $("#mu-st").textContent="Publicado.";
         $("#mu-lista").innerHTML=(j.mural||[]).slice(0,30).map(x=>li({q:x.quando,a:x.autor,m:x.msg,menc:x.menc})).join("");
         renderQuem(); setTimeout(()=>{ if($("#mu-st").textContent==="Publicado.") $("#mu-st").textContent=""; },4000);

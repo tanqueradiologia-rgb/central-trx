@@ -1,5 +1,6 @@
 /**
- * Central TRX · Edição — v13 (15/11/2026): Mural da equipe (aba Mural na Pipeline TRX)
+ * Central TRX · Edição — v14 (16/11/2026): Feito, Ciente e Observação nas tarefas do bloco Hoje
+ *   (aba Tarefas_Status na Pipeline TRX). v13 (15/11/2026): Mural da equipe (aba Mural).
  * App web (projeto próprio, separado dos scripts da planilha) que lê e grava na
  * "Pipeline TRX — Prospecção (fonte da verdade)" pelo ID em PLANILHA_ID.
  *
@@ -166,6 +167,7 @@ function doPost(e) {
     const p = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (p.action === 'muralGet') out = muralGet(p.cred);
     else if (p.action === 'muralPostar') out = muralPostar(p.cred, p.msg);
+    else if (p.action === 'tarefaMarcar') out = tarefaMarcar(p.cred, p.t);
     else throw new Error('Ação desconhecida.');
     out.ok = true;
   } catch (err) {
@@ -492,4 +494,45 @@ function muralPostar(cred, msg) {
     muralAba_().appendRow([agora, eu.nome || eu.email, msg, menc]);
   } finally { lock.releaseLock(); }
   return { mural: muralLer_() };
+}
+
+/* ---------------- tarefas do bloco Hoje (v14, 16/11/2026) ----------------
+ * Cada tarefa da fila de uma pessoa na Central ganha Feito, Ciente e Observação.
+ * Uma linha por marcação na aba Tarefas_Status (nada é apagado: é o histórico).
+ * Feito ou Ciente tira a tarefa da fila daquela pessoa; observação sozinha não tira,
+ * fica visível embaixo da tarefa para quem olhar a fila. A Chave vem da Central
+ * (origem + título + prazo + ação): se o prazo ou a ação mudar, a tarefa volta. */
+
+const ABA_TAREFAS = 'Tarefas_Status';
+const CAB_TAREFAS = ['Quando', 'Autor', 'Pessoa', 'Chave', 'Tarefa', 'Origem', 'Status', 'Observacao'];
+
+function tarefasAba_() {
+  const ss = planilha_();
+  let sh = ss.getSheetByName(ABA_TAREFAS);
+  if (!sh) {
+    sh = ss.insertSheet(ABA_TAREFAS);
+    sh.getRange(1, 1, 1, CAB_TAREFAS.length).setValues([CAB_TAREFAS]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function tarefaMarcar(cred, t) {
+  const eu = exigir_(cred);
+  t = t || {};
+  const st = String(t.status || '').trim().toLowerCase();
+  if (st && st !== 'feito' && st !== 'ciente') throw new Error('Status inválido.');
+  const obs = String(t.obs || '').trim();
+  if (!st && !obs) throw new Error('Marque Feito ou Ciente, ou escreva uma observação.');
+  if (obs.length > 600) throw new Error('Observação longa demais (máximo 600 caracteres).');
+  const chave = String(t.chave || '').trim(), pessoa = String(t.pessoa || '').trim();
+  if (!chave || !pessoa) throw new Error('Tarefa sem identificação.');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('A planilha está ocupada. Tente de novo em alguns segundos.');
+  const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
+  try {
+    tarefasAba_().appendRow([agora, eu.nome || eu.email, pessoa.slice(0, 60), chave.slice(0, 80),
+      String(t.titulo || '').slice(0, 200), String(t.origem || '').slice(0, 40), st, obs]);
+  } finally { lock.releaseLock(); }
+  return { quando: agora, autor: eu.nome || eu.email };
 }
