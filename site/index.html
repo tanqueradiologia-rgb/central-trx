@@ -1128,14 +1128,19 @@ const lRot = (function(){
 /* ---------- PRODUÇÃO DOS SÓCIOS: coeficiente de esforço e score por médico (11/11/2026) ----------
    A régua mora na aba Producao_Params da Pipeline Licitações: mudar o coeficiente ou o peso lá
    muda esta aba na rodada seguinte, sem mexer em código. Eixo sem dado no período sai da conta
-   e o peso dele é redistribuído entre os eixos medidos. */
+   e o peso dele é redistribuído entre os eixos medidos; eixo com peso 0 some da tela.
+   O prazo está com peso 0: é indicador do conjunto dos radiologistas, não critério entre sócios. */
 const lProd = (function(){
   const P = D.producao_socios || {};
   const PER = P.periodos || [];
   const R = P.regua || {};
   const F = P.fonte || {};
   const corpo = $("#pr-corpo"), selPer = $("#pr-per");
-  const EIXOS = [["esforco","Esforço"],["prazo","Prazo"],["margem","Margem"],["escala","Escala"]];
+  const EIXOS_TODOS = [["esforco","Esforço"],["prazo","Prazo"],["margem","Margem"],["escala","Escala"]];
+  const peso = k => Number((R.pesos||{})[k]||0);
+  // Eixo com peso 0 na régua sai da tela inteira. O prazo está em 0 por decisão do Marcos:
+  // prazo é indicador do conjunto dos radiologistas, não critério entre sócios.
+  const EIXOS = EIXOS_TODOS.filter(([k])=>peso(k)>0);
   const money = v => "R$ " + (v||0).toLocaleString("pt-BR",{minimumFractionDigits:2, maximumFractionDigits:2});
   const n1 = v => v===null||v===undefined ? "—" : Number(v).toLocaleString("pt-BR",{minimumFractionDigits:1, maximumFractionDigits:1});
   const pct = v => v===null||v===undefined ? "—" : n1(v)+"%";
@@ -1154,16 +1159,17 @@ const lProd = (function(){
   }
   function tabela(lista){
     if(!lista.length) return '<p class="vazio">Ninguém lançado neste período.</p>';
-    return '<div class="tbl"><table><thead><tr><th>Médico</th><th>Exames</th><th>Esforço (UE)</th>'
-      + '<th class="hide-sm">Rateio</th><th>No prazo</th><th class="hide-sm">Margem</th><th class="hide-sm">Escala</th><th>Score</th></tr></thead><tbody>'
+    return '<div class="tbl"><table><thead><tr><th>Médico</th><th>Exames</th><th>Valor</th><th>Esforço (UE)</th>'
+      + '<th class="hide-sm">Rateio</th><th class="hide-sm">Repasse</th><th class="hide-sm">Margem</th><th class="hide-sm">Escala</th><th>Score</th></tr></thead><tbody>'
       + lista.map(m=>'<tr>'
         + '<td><b>'+esc(m.n)+'</b>'+(m.socio?'':' <span class="d-mut">parceiro</span>')
           + (m.mods&&m.mods.length?'<div class="meta">'+m.mods.map(x=>esc(x.m)+" "+x.ex).join(" · ")+(m.ctr&&m.ctr.length?' · '+m.ctr.map(esc).join(", "):'')+'</div>':'')
           + '<div class="meta">'+eixos(m)+'</div></td>'
         + '<td class="mono">'+m.ex+'</td>'
+        + '<td class="mono"><b>'+money(m.rec)+'</b></td>'
         + '<td class="mono">'+n1(m.ue)+'</td>'
         + '<td class="mono hide-sm">'+(m.share===null?'—':pct(m.share))+'</td>'
-        + '<td class="mono">'+(m.pzp===null?'<span class="d-mut">sem dado</span>':pct(m.pzp)+(m.hrs!==null?' <span class="d-mut">'+n1(m.hrs)+'h</span>':''))+'</td>'
+        + '<td class="mono hide-sm">'+money(m.rep)+'</td>'
         + '<td class="mono hide-sm">'+money(m.mg)+(m.mgp===null?'':' <span class="d-mut">'+pct(m.mgp)+'</span>')+'</td>'
         + '<td class="mono hide-sm">'+(m.pl===null&&m.sob===null?'<span class="d-mut">sem dado</span>':((m.pl||0)+(m.sob||0))+(m.ncob?' <span class="d-bad">−'+m.ncob+'</span>':''))+'</td>'
         + '<td><span class="pr-sc">'+barra(m.score)+'<b>'+(m.score===null?'—':n1(m.score))+'</b></span></td>'
@@ -1183,9 +1189,9 @@ const lProd = (function(){
     const t = p.tot;
     $("#k-producao").innerHTML = [
       ["Exames laudados", t.ex, ""],
+      ["Valor produzido", money(t.rec), ""],
       ["Esforço total (UE)", n1(t.ue), ""],
-      ["No prazo", t.pzp===null?"—":pct(t.pzp), t.pzp!==null&&t.pzp<90?"warn":"ok"],
-      ["Repasse médio", t.repm===null?"—":money(t.repm), ""],
+      ["Repasse do período", money(t.rep)+(t.repm===null?"":" · "+money(t.repm)+" por laudo"), ""],
       ["Margem do período", money(t.mg)+(t.mgp===null?"":" · "+pct(t.mgp)), t.mgp!==null&&t.mgp*1<9?"bad":"ok"],
       ["Quem laudou", t.socios+" sócios · "+t.parceiros+" parceiros", ""]
     ].map(([k,v,cls])=>'<div class="kpi '+cls+'" style="cursor:default"><span class="v">'+v+'</span><span class="k">'+k+'</span></div>').join("");
@@ -1194,18 +1200,21 @@ const lProd = (function(){
     if(grupo==="socios" && p.medicos.length>socios.length){
       h += '<p class="meta">Os parceiros de fora do quadro não entram no ranking, mas contam no total. Troque para "Todos os laudadores" para vê-los.</p>';
     }
-    const falta = (p.falta||[]).map(k=>(EIXOS.find(e=>e[0]===k)||[k,k])[1]);
-    h += '<div class="pr-sec">Como o score é calculado</div><div class="band"><div class="pr-regua">'
-      + '<div><b>Esforço · '+n1(R.pesos&&R.pesos.esforco)+' pontos</b><br>Cada exame vira unidade de esforço: '
+    const falta = (p.falta||[]).filter(k=>peso(k)>0).map(k=>(EIXOS.find(e=>e[0]===k)||[k,k])[1]);
+    const blocos = {
+      esforco: '<div><b>Esforço · '+n1(peso("esforco"))+' pontos</b><br>Cada exame vira unidade de esforço: '
         + Object.keys(R.coef||{}).map(k=>esc(k)+" "+n1(R.coef[k])).join(" · ")
-        + '.<br>'+(R.meta_ue?'Meta de '+n1(R.meta_ue)+' UE no mês = nota 100.':'Sem meta lançada: a média dos sócios do período ('+n1(p.ref.ue_med)+' UE) vale 50 e o dobro dela vale 100.')+'</div>'
-      + '<div><b>Prazo · '+n1(R.pesos&&R.pesos.prazo)+' pontos</b><br>Laudos entregues dentro do SLA, contados da atribuição ao radiologista: urgência '
-        + n1(R.sla&&R.sla.urgencia)+'h, internado '+n1(R.sla&&R.sla.internado)+'h, ambulatorial '+n1(R.sla&&R.sla.ambulatorial)+'h. A porcentagem é a nota.</div>'
-      + '<div><b>Margem · '+n1(R.pesos&&R.pesos.margem)+' pontos</b><br>Receita menos as deduções da cascata (fator '+n1((R.fator_liq||0)*100)+'%) menos o repasse, dividido pela receita. Bate a meta de '
-        + pct((R.meta_margem||0)*100)+' e a nota é 100.</div>'
-      + '<div><b>Escala · '+n1(R.pesos&&R.pesos.escala)+' pontos</b><br>Plantões e sobreavisos assumidos no mês, '
+        + '.<br>'+(R.meta_ue?'Meta de '+n1(R.meta_ue)+' UE no mês = nota 100.':'Sem meta lançada: a média dos sócios do período ('+n1(p.ref.ue_med)+' UE) vale 50 e o dobro dela vale 100.')+'</div>',
+      prazo: '<div><b>Prazo · '+n1(peso("prazo"))+' pontos</b><br>Laudos entregues dentro do SLA, contados da atribuição ao radiologista: urgência '
+        + n1(R.sla&&R.sla.urgencia)+'h, internado '+n1(R.sla&&R.sla.internado)+'h, ambulatorial '+n1(R.sla&&R.sla.ambulatorial)+'h. A porcentagem é a nota.</div>',
+      margem: '<div><b>Margem · '+n1(peso("margem"))+' pontos</b><br>Receita menos as deduções da cascata (fator '+n1((R.fator_liq||0)*100)+'%) menos o repasse, dividido pela receita. Bate a meta de '
+        + pct((R.meta_margem||0)*100)+' e a nota é 100.</div>',
+      escala: '<div><b>Escala · '+n1(peso("escala"))+' pontos</b><br>Plantões e sobreavisos assumidos no mês, '
         + (R.meta_pl?'contra a meta de '+n1(R.meta_pl)+'.':'comparados com a média dos sócios.')
         + ' Cada escala devolvida desconta '+n1(R.pena)+' pontos.</div>'
+    };
+    h += '<div class="pr-sec">Como o score é calculado</div><div class="band"><div class="pr-regua">'
+      + EIXOS.map(([k])=>blocos[k]).join("")
       + '</div>'
       + (falta.length?'<p class="meta" style="margin:0"><b>Eixo sem dado neste período: '+falta.map(esc).join(", ")+'.</b> O peso dele foi redistribuído entre os eixos medidos, então o score não penaliza ninguém por falta de lançamento.</p>':'')
       + '<p class="meta" style="margin:0">A régua é editável na planilha, não no código: '
