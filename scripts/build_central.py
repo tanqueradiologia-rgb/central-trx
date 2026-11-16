@@ -493,6 +493,12 @@ def producao_socios(path):
     # reais, nao so em UE. Cada unidade ADM vale valor_unidade_adm. Entra como despesa da empresa,
     # antes da sobra, e some do eixo margem, que mede so o laudo. Sem a chave, nada e pago.
     valor_adm = num(par.get("valor_unidade_adm")) or 0.0
+    # Retencao do RT (Marcos, 16/11/2026): o combinado em reuniao e que o valor do RT fica RETIDO
+    # em conta da Tanque, para custo juridico excepcional, com o risco assumido por todos os
+    # socios. Nao e pagamento a ninguem: sai do resultado antes da sobra e fica em caixa.
+    imposto_pct = num(par.get("imposto_pct"))
+    imposto_pct = 9.0 if imposto_pct is None else imposto_pct
+    rt_pct = num(par.get("retencao_rt_pct")) or 0.0
     teto = num(par.get("teto_nota")) or 100.0
     sla = {"urgencia": num(par.get("sla_urgencia_h")) or 2.0,
            "internado": num(par.get("sla_internado_h")) or 12.0,
@@ -624,7 +630,8 @@ def producao_socios(path):
         rep_tot = sum(x["rep"] for x in saida)
         adm_tot = sum(x["adm"] for x in saida)
         liq_tot = rec_tot * fator_liq
-        sobra = liq_tot - fixa_mes - rep_tot - adm_tot
+        rt_ret = rec_tot * (1 - imposto_pct / 100.0) * rt_pct / 100.0
+        sobra = liq_tot - fixa_mes - rep_tot - adm_tot - rt_ret
         n_soc = int(socios_sobra) if socios_sobra and socios_sobra > 0 else len(socios)
         ue_soc = sum(g["ue"] for g in socios)
         soc_saida = [x for x in saida if x["socio"]]
@@ -676,7 +683,8 @@ def producao_socios(path):
         acerto = {"rec": round(rec_tot, 2), "liq": round(liq_tot, 2), "fixa": round(fixa_mes, 2),
                   "rep": round(rep_tot, 2), "adm": round(adm_tot, 2),
                   "adm_un": sum(x["admun"] or 0 for x in saida),
-                  "valor_adm": valor_adm, "sobra": round(sobra, 2), "socios": n_soc,
+                  "valor_adm": valor_adm, "rt": round(rt_ret, 2), "rt_pct": rt_pct,
+                  "sobra": round(sobra, 2), "socios": n_soc,
                   "nao_coberto": round(nao_coberto, 2),
                   "quota": (round(sobra / n_soc, 2)
                             if (sobra >= 0 and rateio != "ue" and n_soc) else None),

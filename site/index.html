@@ -1218,10 +1218,12 @@ const lProd = (function(){
       + '<span>Despesa fixa da TRX no mês</span><span>'+sinal(-A.fixa)+'</span>'
       + '<span>Repasse de todos os laudadores</span><span>'+sinal(-A.rep)+'</span>'
       + (A.adm?'<span>Remuneração administrativa, '+A.adm_un+' unidades a '+money(A.valor_adm)+'</span><span>'+sinal(-A.adm)+'</span>':'')
+      + (A.rt?'<span>Retenção do RT, '+n1(A.rt_pct)+'% da receita líquida de impostos, fica em conta da Tanque</span><span>'+sinal(-A.rt)+'</span>':'')
       + '<span class="tot">Resultado da empresa</span><span class="tot'+(A.sobra<0?' d-bad':'')+'">'+money(A.sobra)+'</span>'
       + '<span class="tot">Total a faturar pelos sócios</span><span class="tot">'+money(A.liq_socios)+'</span>'
       + '</div>'
       + (A.itens&&A.itens.length?'<p class="meta" style="margin:8px 0 0">Despesa fixa: '+A.itens.map(i=>esc(i.n)+" "+money(i.v)).join(" · ")+'.</p>':'')
+      + (A.rt?'<p class="meta" style="margin:8px 0 0">A retenção do RT não é pagamento a ninguém: fica em conta da Tanque para custo jurídico excepcional, com o risco assumido por todos os sócios.</p>':'')
       + '<p class="meta" style="margin:4px 0 0">A despesa fixa do mês inteiro cai no período, sem rateio por contrato. Os valores ficam na aba Producao_Params, em chaves <b>despesa_</b>'
       + (aba(F.params_gid)?' · <a href="'+aba(F.params_gid)+'" target="_blank" rel="noopener">abrir a aba ↗</a>':'')+'</p></div>';
     return h;
