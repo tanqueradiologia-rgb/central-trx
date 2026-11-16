@@ -472,6 +472,23 @@ def producao_socios(path):
         fator_liq = FATOR_LIQUIDO_PADRAO
     meta_ue = num(par.get("meta_ue_mes"))
     meta_pl = num(par.get("meta_plantoes_mes"))
+    # Acerto final (16/11/2026, pedido do Marcos): toda despesa fixa da TRX sai ANTES de fechar
+    # o liquido de cada socio. Cada chave despesa_* da Producao_Params e uma linha de despesa;
+    # despesa_fixa_mes, se preenchida, substitui a soma. O 1% do desenvolvimento e a gestao de
+    # 10% ja estao no fator_liquido, entao aqui entram so os fixos (Carla, 3.000 do sistema,
+    # contador, aluguel e o resto). Sem as chaves, o acerto nao aparece e nada muda.
+    desp = []
+    for k, v in par.items():
+        if k.startswith("despesa_") and k != "despesa_fixa_mes":
+            n = num(v)
+            if n:
+                desp.append({"n": txt(k[8:].replace("_", " ")), "v": round(n, 2)})
+    desp.sort(key=lambda x: -x["v"])
+    fixa_mes = num(par.get("despesa_fixa_mes"))
+    if fixa_mes is None or fixa_mes <= 0:
+        fixa_mes = sum(d["v"] for d in desp)
+    rateio = (txt(par.get("rateio_sobra")) or "igual").lower()
+    socios_sobra = num(par.get("socios_sobra"))
     teto = num(par.get("teto_nota")) or 100.0
     sla = {"urgencia": num(par.get("sla_urgencia_h")) or 2.0,
            "internado": num(par.get("sla_internado_h")) or 12.0,
@@ -590,6 +607,30 @@ def producao_socios(path):
                 "ctr": sorted(g["ctr"]), "obs": g["obs"], "l": g["l"],
             })
         falta = [e for e in PESO_PADRAO if all(x["notas"][e] is None for x in saida)]
+
+        # ---- acerto final do periodo: receita liquida - despesa fixa - repasse = sobra
+        rec_tot = sum(x["rec"] for x in saida)
+        rep_tot = sum(x["rep"] for x in saida)
+        liq_tot = rec_tot * fator_liq
+        sobra = liq_tot - fixa_mes - rep_tot
+        n_soc = int(socios_sobra) if socios_sobra and socios_sobra > 0 else len(socios)
+        ue_soc = sum(g["ue"] for g in socios)
+        for x in saida:
+            if not x["socio"]:
+                x["quota"], x["liq"] = None, round(x["rep"], 2)
+                continue
+            if rateio == "ue" and ue_soc:
+                q = sobra * (next(g["ue"] for g in socios if g["n"] == x["n"]) / ue_soc)
+            else:
+                q = (sobra / n_soc) if n_soc else 0.0
+            x["quota"] = round(q, 2)
+            x["liq"] = round(x["rep"] + q, 2)
+        acerto = {"rec": round(rec_tot, 2), "liq": round(liq_tot, 2), "fixa": round(fixa_mes, 2),
+                  "rep": round(rep_tot, 2), "sobra": round(sobra, 2), "socios": n_soc,
+                  "quota": round(sobra / n_soc, 2) if (rateio != "ue" and n_soc) else None,
+                  "rateio": "ue" if rateio == "ue" else "igual", "itens": desp,
+                  "liq_socios": round(sum(x["liq"] for x in saida if x["socio"]), 2)}
+
         periodos.append({
             "per": per,
             "medicos": saida,
@@ -606,6 +647,7 @@ def producao_socios(path):
                     "mgp": (round(100.0 * sum(x["mg"] for x in saida) / sum(x["rec"] for x in saida), 1)
                             if sum(x["rec"] for x in saida) else None)},
             "ref": {"ue_med": round(ue_med, 1), "pl_med": round(pl_med, 1)},
+            "acerto": acerto,
             "falta": falta,
         })
 

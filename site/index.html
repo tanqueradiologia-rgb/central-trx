@@ -246,6 +246,16 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 .pr-eixos i{display:inline-block;width:34px;height:6px;border-radius:999px;background:var(--line);position:relative;overflow:hidden}
 .pr-eixos i em{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:999px}
 .pr-vazio td{color:var(--muted)}
+/* acerto final (16/11/2026): o que cada sócio fatura no mês, laudos mais a quota do resultado */
+.pr-fat{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.pr-fat .c{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:var(--surface)}
+.pr-fat .c.neg{border-color:var(--bad,#b4232a)}
+.pr-fat .c .q{font-size:13px;color:var(--muted);font-weight:600}
+.pr-fat .c .v{display:block;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:26px;font-weight:700;line-height:1.2;margin:2px 0 4px}
+.pr-fat .c .d{font-size:12px;color:var(--muted);line-height:1.5}
+.pr-casc{display:grid;grid-template-columns:1fr auto;gap:2px 14px;font-size:14px;max-width:520px}
+.pr-casc span:nth-child(even){font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.pr-casc .tot{font-weight:700;border-top:1px solid var(--line);padding-top:4px;margin-top:2px}
 .pr-regua{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
 .pr-regua div{font-size:13px;line-height:1.5}
 .pr-regua b{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
@@ -1160,7 +1170,7 @@ const lProd = (function(){
   function tabela(lista){
     if(!lista.length) return '<p class="vazio">Ninguém lançado neste período.</p>';
     return '<div class="tbl"><table><thead><tr><th>Médico</th><th>Exames</th><th>Valor</th><th>Esforço (UE)</th>'
-      + '<th class="hide-sm">Rateio</th><th class="hide-sm">Repasse</th><th class="hide-sm">Margem</th><th class="hide-sm">Escala</th><th>Score</th></tr></thead><tbody>'
+      + '<th class="hide-sm">Rateio</th><th class="hide-sm">Repasse</th><th>A faturar</th><th class="hide-sm">Margem</th><th class="hide-sm">Escala</th><th>Score</th></tr></thead><tbody>'
       + lista.map(m=>'<tr>'
         + '<td><b>'+esc(m.n)+'</b>'+(m.socio?'':' <span class="d-mut">parceiro</span>')
           + (m.mods&&m.mods.length?'<div class="meta">'+m.mods.map(x=>esc(x.m)+" "+x.ex).join(" · ")+(m.ctr&&m.ctr.length?' · '+m.ctr.map(esc).join(", "):'')+'</div>':'')
@@ -1170,11 +1180,45 @@ const lProd = (function(){
         + '<td class="mono">'+n1(m.ue)+'</td>'
         + '<td class="mono hide-sm">'+(m.share===null?'—':pct(m.share))+'</td>'
         + '<td class="mono hide-sm">'+money(m.rep)+'</td>'
+        + '<td class="mono"><b'+(m.liq<0?' class="d-bad"':'')+'>'+(m.liq===undefined||m.liq===null?"—":money(m.liq))+'</b>'
+          + (m.quota===null||m.quota===undefined?'':'<div class="meta">'+(m.quota<0?"− ":"+ ")+money(Math.abs(m.quota))+' do resultado</div>')+'</td>'
         + '<td class="mono hide-sm">'+money(m.mg)+(m.mgp===null?'':' <span class="d-mut">'+pct(m.mgp)+'</span>')+'</td>'
         + '<td class="mono hide-sm">'+(m.pl===null&&m.sob===null?'<span class="d-mut">sem dado</span>':((m.pl||0)+(m.sob||0))+(m.ncob?' <span class="d-bad">−'+m.ncob+'</span>':''))+'</td>'
         + '<td><span class="pr-sc">'+barra(m.score)+'<b>'+(m.score===null?'—':n1(m.score))+'</b></span></td>'
         + '</tr>').join("")
       + '</tbody></table></div>';
+  }
+  // Acerto final do mês: o número que o sócio fatura é o repasse dos laudos dele mais a quota
+  // do resultado da empresa depois de TODA despesa fixa. Mês negativo entra como desconto.
+  function faturar(p, socios){
+    const A = p.acerto;
+    if(!A) return "";
+    const sinal = v => (v<0?"− ":"+ ")+money(Math.abs(v));
+    let h = '<div class="pr-sec">A faturar no período '+esc(p.per)+'</div>';
+    if(!A.fixa){
+      h += '<p class="meta"><b>As despesas fixas ainda não estão lançadas na régua.</b> Enquanto não houver chave <b>despesa_</b> na aba Producao_Params, o acerto abaixo sai sem desconto de estrutura.</p>';
+    }
+    h += '<div class="pr-fat">' + socios.map(m=>'<div class="c'+(m.liq<0?' neg':'')+'">'
+      + '<span class="q">'+esc(m.n)+'</span>'
+      + '<span class="v'+(m.liq<0?' d-bad':'')+'">'+money(m.liq)+'</span>'
+      + '<span class="d">'+m.ex+' laudos '+money(m.rep)+'<br>'
+      + (A.sobra<0?'prejuízo do mês ':'lucro do mês ')+sinal(m.quota)+'</span></div>').join("")
+      + '</div>';
+    h += '<p class="meta">Laudos produzidos mais a parte do resultado da empresa no mês, já sem nenhuma despesa fixa. '
+      + (A.rateio==="ue"?'O resultado é dividido pela participação de cada um no esforço (UE).':'O resultado é dividido em partes iguais entre '+A.socios+' sócios, pela assembleia de 01/09/2026.')
+      + (A.sobra<0?' <b class="d-bad">O mês fechou negativo: o prejuízo sai do repasse dos sócios, não do caixa da empresa.</b>':'')+'</p>';
+    h += '<div class="band"><div class="pr-casc">'
+      + '<span>Receita bruta dos laudos</span><span>'+money(A.rec)+'</span>'
+      + '<span>Receita líquida, fator '+n1((R.fator_liq||0)*100)+'% (imposto, gestão 10%, 1% do sistema)</span><span>'+money(A.liq)+'</span>'
+      + '<span>Despesa fixa da TRX no mês</span><span>'+sinal(-A.fixa)+'</span>'
+      + '<span>Repasse de todos os laudadores</span><span>'+sinal(-A.rep)+'</span>'
+      + '<span class="tot">Resultado da empresa</span><span class="tot'+(A.sobra<0?' d-bad':'')+'">'+money(A.sobra)+'</span>'
+      + '<span class="tot">Total a faturar pelos sócios</span><span class="tot">'+money(A.liq_socios)+'</span>'
+      + '</div>'
+      + (A.itens&&A.itens.length?'<p class="meta" style="margin:8px 0 0">Despesa fixa: '+A.itens.map(i=>esc(i.n)+" "+money(i.v)).join(" · ")+'.</p>':'')
+      + '<p class="meta" style="margin:4px 0 0">A despesa fixa do mês inteiro cai no período, sem rateio por contrato. Os valores ficam na aba Producao_Params, em chaves <b>despesa_</b>'
+      + (aba(F.params_gid)?' · <a href="'+aba(F.params_gid)+'" target="_blank" rel="noopener">abrir a aba ↗</a>':'')+'</p></div>';
+    return h;
   }
   function render(){
     if(!PER.length){
@@ -1194,9 +1238,10 @@ const lProd = (function(){
       ["Repasse do período", money(t.rep)+(t.repm===null?"":" · "+money(t.repm)+" por laudo"), ""],
       ["Margem do período", money(t.mg)+(t.mgp===null?"":" · "+pct(t.mgp)), t.mgp!==null&&t.mgp*1<9?"bad":"ok"],
       ["Quem laudou", t.socios+" sócios · "+t.parceiros+" parceiros", ""]
-    ].map(([k,v,cls])=>'<div class="kpi '+cls+'" style="cursor:default"><span class="v">'+v+'</span><span class="k">'+k+'</span></div>').join("");
+    ].concat(p.acerto?[["Resultado do mês, já sem a despesa fixa", money(p.acerto.sobra), p.acerto.sobra<0?"bad":"ok"]]:[]).map(([k,v,cls])=>'<div class="kpi '+cls+'" style="cursor:default"><span class="v">'+v+'</span><span class="k">'+k+'</span></div>').join("");
 
-    let h = '<div class="pr-sec">Ranking do período '+esc(p.per)+'</div>' + tabela(lista);
+    let h = faturar(p, socios);
+    h += '<div class="pr-sec">Ranking do período '+esc(p.per)+'</div>' + tabela(lista);
     if(grupo==="socios" && p.medicos.length>socios.length){
       h += '<p class="meta">Os parceiros de fora do quadro não entram no ranking, mas contam no total. Troque para "Todos os laudadores" para vê-los.</p>';
     }
