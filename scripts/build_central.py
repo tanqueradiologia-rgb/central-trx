@@ -499,6 +499,29 @@ def mural(path):
     return out[-30:][::-1]
 
 
+def entregas_hrvj(path):
+    """Aba Entregas_HRVJ da Pipeline Licitacoes (17/11/2026): [[DD/MM/AAAA, total], ...] em ordem
+    de data. E o banco contra o qual o relatorio diario calcula o intervalo. Sem aba, devolve []."""
+    try:
+        pv = json.load(open(path, encoding="utf-8"))
+        rows = pv["values"] if isinstance(pv, dict) else pv
+    except Exception:
+        return []
+    out = {}
+    for r in (rows or [])[1:]:
+        if len(r) < 2:
+            continue
+        d = str(r[0]).strip()
+        m = re.match(r"^(\d{2})/(\d{2})/(\d{4})$", d)
+        try:
+            n = int(float(str(r[1]).replace(".", "").replace(",", ".")))
+        except (TypeError, ValueError):
+            continue
+        if m and n > 0:
+            out[d] = n
+    return sorted(([d, n] for d, n in out.items()), key=lambda x: x[0][6:] + x[0][3:5] + x[0][:2])
+
+
 def producao_socios(path):
     """Abas Producao_Params, Producao_Socios e Escala_Socios da Pipeline Licitacoes (11/11/2026).
 
@@ -810,6 +833,7 @@ def main():
     ap.add_argument("--producao", default="", help="producao.json (abas Producao_Params, Producao_Socios e Escala_Socios)")
     ap.add_argument("--mural", default="", help="mural.json (aba Mural da Pipeline TRX)")
     ap.add_argument("--tarefas", default="", help="tarefas.json (aba Tarefas_Status da Pipeline TRX)")
+    ap.add_argument("--entregas", default="", help="entregas_hrvj.json (aba Entregas_HRVJ da Pipeline Licitacoes)")
     ap.add_argument("--equipe", default="", help="equipe.json (aba Equipe da Pipeline TRX, sem PIN)")
     ap.add_argument("--objetivos", default="", help="objetivos.json (aba Objetivos da Pipeline TRX)")
     ap.add_argument("--contratos", default="", help="contratos.json (aba Contratos da Documentos TRX)")
@@ -873,6 +897,7 @@ def main():
         "producao_socios": producao_socios(a.producao) if a.producao else {},
         "mural": mural(a.mural) if a.mural else [],
         "tarefas_status": tarefas_status(a.tarefas) if a.tarefas else [],
+        "entregas_hrvj": entregas_hrvj(a.entregas) if a.entregas else [],
         "equipe": equipe(a.equipe) if a.equipe else [],
         "objetivos": objetivos(a.objetivos) if a.objetivos else [],
         "fiscal": {"contratos": contratos(a.contratos) if a.contratos else [],

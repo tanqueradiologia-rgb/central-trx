@@ -75,7 +75,7 @@ if "--so-licitacoes" in sys.argv:
     try:
         bg = sheets.spreadsheets().values().batchGet(
             spreadsheetId=LICIT_SHEET,
-            ranges=["Producao_Params!A1:C60", "Producao_Socios!A1:M500", "Escala_Socios!A1:F300"]
+            ranges=["Producao_Params!A1:C120", "Producao_Socios!A1:M500", "Escala_Socios!A1:F300"]
         ).execute()
         vr = bg.get("valueRanges", [])
         prod = {"params": vr[0].get("values", []) if len(vr) > 0 else [],
@@ -86,6 +86,15 @@ if "--so-licitacoes" in sys.argv:
     except Exception as e:
         json.dump({"params": [], "producao": [], "escala": []}, open("producao.json", "w", encoding="utf-8"))
         print(f"::warning::Nao consegui ler as abas de producao dos socios: {e}")
+    # Banco de entregas do HRVJ (17/11/2026): aba Entregas_HRVJ, escrita pelo app de Edicao v17 quando
+    # a Carla guarda a entrega na aba Relatorios. So saem Emissao e Total. Falha nao derruba a pagina.
+    try:
+        ev = sheets.spreadsheets().values().get(spreadsheetId=LICIT_SHEET, range="Entregas_HRVJ!A1:B400").execute()
+        json.dump(ev, open("entregas_hrvj.json", "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"OK: entregas_hrvj {len(ev.get('values', []))} linhas")
+    except Exception as e:
+        json.dump({"values": []}, open("entregas_hrvj.json", "w", encoding="utf-8"))
+        print(f"::warning::Nao consegui ler a aba Entregas_HRVJ: {e}")
     sys.exit(0)
 
 vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AP").execute()

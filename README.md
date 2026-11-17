@@ -10,6 +10,7 @@ Página de acompanhamento da TRX Diagnóstico Digital: clínicas particulares, l
 | Arquivo | Função |
 |---|---|
 | `site/index.html` | a página |
+| `site/vendor/xlsx.mini.min.js` | SheetJS, lê a planilha de apuração no navegador |
 | `scripts/buscar_planilhas.py` | baixa as duas planilhas |
 | `scripts/build_central.py` | transforma as planilhas no arquivo de dados da página |
 | `.github/workflows/atualizar.yml` | agenda e publica |
@@ -38,12 +39,32 @@ O score é a média ponderada de quatro eixos (esforço, prazo, margem e cobertu
 - `CENTRAL_SENHA`: senha da equipe (8 caracteres ou mais). Desde 20/10/2026 a página publica só `central.enc`: `dados_central.js`, `saude.js` e `roteiro.js` são cifrados (PBKDF2 + AES-256-GCM, `scripts/cifrar_central.py`) e apagados antes da publicação. A página pede a senha uma vez e a guarda no navegador; o botão Sair apaga. Para trocar a senha: trocar o segredo, rodar o workflow e avisar a equipe. Sem o segredo a rodada falha e nada é publicado.
 
 ## O que continua público
-O repositório é público: `config/roteiro.json`, `apps-script/Codigo.gs` (com o roteiro embutido) e os IDs das planilhas ficam visíveis no GitHub, mesmo com a página cifrada. Para esconder também isso, o repositório precisa virar privado (GitHub Pages em repositório privado exige plano pago) ou o roteiro precisa sair do repositório.
+O repositório é público: `config/roteiro.json`, `apps-script/Codigo.gs` (com o roteiro embutido), os IDs das planilhas e o `site/index.html` ficam visíveis no GitHub, mesmo com a página cifrada. No `index.html` estão os dados do prestador que saem na nota fiscal (razão social, CNPJ, endereço e conta bancária). Repasse por médico e nomes de radiologistas saíram do código em 17/11/2026 e moram só na planilha; eles continuam no histórico dos commits 6aa177c e 59a1044. Para esconder também isso, o repositório precisa virar privado (GitHub Pages em repositório privado exige plano pago) ou o roteiro precisa sair do repositório.
 
 ## Central TRX · Edição (Apps Script)
-A pasta `apps-script/` tem o app de edição das clínicas. Ele é um projeto Apps Script próprio (separado dos scripts que já existem na planilha) e abre a Pipeline TRX pelo ID:
-- `Codigo.gs`: lê e grava na aba Pipeline; registra cada mudança e cada nota na aba Historico; avisa por e-mail quem foi marcado (lista na aba Equipe).
-- `Index.html`: a tela.
-- `appsscript.json`: fuso de Brasília e implantação como app da Web executado com o login de quem acessa.
+A pasta `apps-script/` tem o app de edição. É um projeto Apps Script próprio, implantado como app da Web que roda como a conta da TRX (`USER_DEPLOYING`) e aceita acesso anônimo: quem entra se identifica por **apelido + PIN**, validados na coluna PIN da aba Equipe (v12, 12/11/2026). Sem credencial válida nada é lido nem gravado.
 
-Só grava as colunas liberadas em `FRENTES.clinicas.edicao`. Licitações e quadro entram como novas frentes depois que a Pipeline_Licitacoes virar Google Sheets.
+| Ação | O que grava | Desde |
+|---|---|---|
+| edição das frentes | colunas liberadas em `FRENTES` da Pipeline TRX e da Pipeline Licitações; cada mudança vai para a aba Historico | v1 |
+| Mural | aba Mural da Pipeline TRX; `@apelido` marca alguém | v13 |
+| Feito, Ciente e Observação | aba Tarefas_Status | v14 |
+| Objetivos da semana e e-mail para a equipe | abas Objetivos e Emails | v15 |
+| `producaoLancar` | aba Producao_Socios (substitui o mês, o contrato e a modalidade; preserva ADM e outros contratos) | v16 |
+| `entregaGuardar` | aba Entregas_HRVJ e a linha automática "Produção do HRVJ" do Destaque_ISGH | v17 |
+| `medicaoGravar` | colunas F (laudos de RM) e K (relatório enviado em) da aba Medicoes da planilha Faturamento e Cobranca HRVJ ISGH | v17 |
+
+As três últimas só aceitam os apelidos listados em `producao_lancadores` da Producao_Params (área financeira). Depois de mudar o `Codigo.gs`, é preciso implantar uma versão nova na mesma URL (Implantar → Gerenciar implantações → editar → Nova versão).
+
+## Relatórios (aba nova, 17/11/2026)
+A Carla solta na aba **Relatórios** a planilha de apuração que o sistema do hospital exporta e a Central monta o relatório diário e o fechamento para nota fiscal, em A4, para salvar em PDF pela impressão do navegador. O arquivo é lido no navegador com a SheetJS de `site/vendor/xlsx.mini.min.js` e não sai dele.
+- **Régua do agrupamento:** dez categorias nomeadas e o resto em Outros. Nome de radiologista não entra no relatório do cliente; prazo não entra em lugar nenhum; o valor unitário aparece uma vez só.
+- **Banco de entregas:** a aba `Entregas_HRVJ` da Pipeline Licitações (Emissao, Total, Autor, Quando, Obs). O número em destaque do relatório diário é a diferença contra a última entrega anterior à data de emissão. O botão Guardar como última entrega grava na planilha; o navegador guarda só um cache de 3 horas, até a rodada seguinte trazer a planilha.
+- **Produção:** o botão Atualizar a produção manda médico, exames e receita ao app de Edição. O repasse (`repasse_padrao` e linhas `repasse: Nome`) e a marca de sócio (`socio_nomes`) são aplicados pelo app a partir da Producao_Params. **Nenhum valor de repasse nem nome de médico mora no código.** O arquivo tem de ser o acumulado: cada envio substitui o mês inteiro, e a tela avisa quando o arquivo é menor que a última entrega.
+- **Cobrança:** o botão Registrar a medição grava F e K na planilha de cobrança, que é o que a tarefa "TRX — Cobrança HRVJ/ISGH" lê.
+
+## Kit (aba nova, 17/11/2026)
+Modelos da marca para a equipe: ofício, comunicado, ata, proposta e e-mail, imagem de grupo do WhatsApp e bloco de marca. A fonte do padrão é o artefato Kit de Modelos Corporativos TRX e o design system TRX; os tokens estão copiados no `index.html`, então mudança na marca precisa ser trazida para cá (a tarefa semanal "Design system TRX" confere).
+
+## Início (17/11/2026)
+Mural e Objetivos da semana ficam logo abaixo do painel do dia, lado a lado, em cartões maiores. Cada item do Urgente agora abre no próprio Início, com texto, dono e botões para a planilha ou para a aba de origem.

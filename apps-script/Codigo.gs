@@ -1,5 +1,7 @@
 /**
- * Central TRX · Edição — v15 (17/11/2026): Objetivos da semana (aba Objetivos) e e-mail para a
+ * Central TRX · Edição — v17 (17/11/2026): banco de entregas do HRVJ (aba Entregas_HRVJ),
+ *   medição na planilha de cobrança e produção restrita a producao_lancadores, com o repasse
+ *   lido da Producao_Params. v16: producaoLancar. v15 (17/11/2026): Objetivos da semana (aba Objetivos) e e-mail para a
  *   equipe enviado pela Central (conta da TRX, resposta para quem escreveu; registro na aba Emails).
  *   v14 (16/11/2026): Feito, Ciente e Observação nas tarefas do bloco Hoje
  *   (aba Tarefas_Status na Pipeline TRX). v13 (15/11/2026): Mural da equipe (aba Mural).
@@ -174,6 +176,8 @@ function doPost(e) {
     else if (p.action === 'objetivoMarcar') out = objetivoMarcar(p.cred, p.o);
     else if (p.action === 'emailEnviar') out = emailEnviar(p.cred, p.m);
     else if (p.action === 'producaoLancar') out = producaoLancar(p.cred, p.dados);
+    else if (p.action === 'entregaGuardar') out = entregaGuardar(p.cred, p.e);
+    else if (p.action === 'medicaoGravar') out = medicaoGravar(p.cred, p.m);
     else throw new Error('Ação desconhecida.');
     out.ok = true;
   } catch (err) {
@@ -658,14 +662,18 @@ function emailEnviar(cred, m) {
  * A Carla sobe a planilha de apuracao na Central, a pagina agrupa os laudos no navegador e manda para ca
  * a producao do periodo. Aqui as linhas daquele periodo/contrato/modalidade sao substituidas na aba
  * Producao_Socios da Pipeline Licitacoes; as linhas de credito ADM e de outros contratos ficam como estao.
- * As colunas No_prazo e Horas_medianas ficam SEMPRE vazias: prazo nao e criterio entre socios. */
+ * As colunas No_prazo e Horas_medianas ficam SEMPRE vazias: prazo nao e criterio entre socios.
+ * Desde 17/11/2026 (v17): so lanca quem esta em producao_lancadores da Producao_Params, e o repasse
+ * e a marca de socio sao calculados AQUI, pelas linhas repasse_padrao, "repasse: Nome" e socio_nomes
+ * da mesma aba. A pagina manda so medico, exames e receita; nenhum valor de repasse mora no codigo. */
 
 const ABA_PROD = 'Producao_Socios';
 const PROD_COLS = ['Periodo', 'Medico', 'Socio', 'Contrato', 'Modalidade', 'Exames', 'No_prazo',
                    'Horas_medianas', 'Receita', 'Repasse', 'Fator', 'Obs'];
 
 function producaoLancar(cred, d) {
-  exigir_(cred);
+  lancador_(cred);
+  const regua = reguaProd_();
   d = d || {};
   const periodo = String(d.periodo || '').trim();
   const contrato = String(d.contrato || '').trim();
@@ -703,14 +711,14 @@ function producaoLancar(cred, d) {
       const linha = new Array(larg).fill('');
       linha[idx['Periodo']] = periodo;
       linha[idx['Medico']] = String(l.medico || '').slice(0, 60);
-      linha[idx['Socio']] = l.socio ? 'sim' : 'nao';
+      linha[idx['Socio']] = ehSocio_(l.medico, regua) ? 'sim' : 'nao';
       linha[idx['Contrato']] = contrato;
       linha[idx['Modalidade']] = modalidade;
       linha[idx['Exames']] = Number(l.exames) || 0;
       linha[idx['No_prazo']] = '';
       linha[idx['Horas_medianas']] = '';
       linha[idx['Receita']] = Number(l.receita) || 0;
-      linha[idx['Repasse']] = Number(l.repasse) || 0;
+      linha[idx['Repasse']] = Math.round((Number(l.exames) || 0) * repasseDe_(l.medico, regua) * 100) / 100;
       linha[idx['Fator']] = 1;
       linha[idx['Obs']] = String(l.obs || '').slice(0, 220);
       return linha;
@@ -718,5 +726,139 @@ function producaoLancar(cred, d) {
     const inicio = sh.getLastRow() + 1;
     sh.getRange(inicio, 1, novas.length, larg).setValues(novas);
     return { tirou: tirou, gravou: novas.length, periodo: periodo, contrato: contrato };
+  } finally { lock.releaseLock(); }
+}
+
+/* ---------------- regua de repasse e quem pode lancar (v17, 17/11/2026) ---------------- */
+
+function semAcento_(t) {
+  return String(t == null ? '' : t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** Le a Producao_Params: repasse padrao, repasse por medico, trechos de nome dos socios e lancadores. */
+function reguaProd_() {
+  const sh = SpreadsheetApp.openById(LICIT_ID).getSheetByName('Producao_Params');
+  if (!sh) throw new Error('A aba Producao_Params nao existe na Pipeline Licitacoes.');
+  const vals = sh.getRange(1, 1, sh.getLastRow(), 2).getDisplayValues();
+  const r = { padrao: null, porMedico: {}, socios: [], lancadores: [] };
+  const num = function (v) { const n = parseFloat(String(v).replace(/\./g, '').replace(',', '.')); return isNaN(n) ? null : n; };
+  vals.forEach(function (l) {
+    const k = String(l[0]).trim(), v = String(l[1]).trim(), kl = k.toLowerCase();
+    if (kl === 'repasse_padrao') r.padrao = num(v);
+    else if (kl.indexOf('repasse:') === 0) { const n = num(v); if (n !== null) r.porMedico[semAcento_(k.slice(8))] = n; }
+    else if (kl === 'socio_nomes') r.socios = v.split(';').map(semAcento_).filter(String);
+    else if (kl === 'producao_lancadores') r.lancadores = v.split(';').map(function (x) { return x.trim().toLowerCase(); }).filter(String);
+  });
+  if (r.padrao === null) throw new Error('Falta a linha repasse_padrao na Producao_Params.');
+  return r;
+}
+function repasseDe_(nome, r) { const k = semAcento_(nome); return r.porMedico[k] !== undefined ? r.porMedico[k] : r.padrao; }
+function ehSocio_(nome, r) { const k = semAcento_(nome); return r.socios.some(function (x) { return k.indexOf(x) >= 0; }); }
+
+/** Producao, entregas e medicao sao da area financeira: so entra quem esta em producao_lancadores. */
+function lancador_(cred) {
+  const eu = exigir_(cred);
+  const ap = String(cred && cred.apelido || '').trim().toLowerCase();
+  const lista = reguaProd_().lancadores;
+  if (lista.indexOf(ap) < 0) throw new Error('Sem permissao: so ' + (lista.join(', ') || 'a area financeira') + ' lanca producao, entrega e medicao. Fale com o Marcos.');
+  return eu;
+}
+
+/* ---------------- banco de entregas do HRVJ (v17, 17/11/2026) ----------------
+ * Aba Entregas_HRVJ da Pipeline Licitacoes: Emissao | Total | Autor | Quando | Obs. Uma linha por
+ * relatorio diario emitido; o relatorio seguinte compara com a ultima linha anterior a data dele.
+ * Guardar a mesma data de novo substitui o total. A cada entrega a linha automatica do
+ * Destaque_ISGH (titulo que comeca por "Producao do HRVJ") e reescrita com o total e o saldo. */
+
+const ABA_ENT = 'Entregas_HRVJ';
+const ABA_DESTAQUE = 'Destaque_ISGH';
+const DESTAQUE_AUTO = 'Produção do HRVJ';
+
+function dataBr_(t) { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(t || '').trim()); return m ? m[3] + m[2] + m[1] : ''; }
+
+function entregaGuardar(cred, e) {
+  const eu = lancador_(cred);
+  e = e || {};
+  const emissao = String(e.emissao || '').trim();
+  const total = parseInt(e.total, 10);
+  const pacote = parseInt(e.pacote, 10) || 0;
+  if (!dataBr_(emissao)) throw new Error('Data de emissao invalida (use DD/MM/AAAA).');
+  if (!(total > 0) || total > 100000) throw new Error('Total invalido.');
+  const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('A planilha esta ocupada. Tente de novo em alguns segundos.');
+  try {
+    const ss = SpreadsheetApp.openById(LICIT_ID);
+    const sh = ss.getSheetByName(ABA_ENT);
+    if (!sh) throw new Error('A aba ' + ABA_ENT + ' nao existe na Pipeline Licitacoes.');
+    const ult = sh.getLastRow();
+    const vals = ult > 1 ? sh.getRange(2, 1, ult - 1, 2).getDisplayValues() : [];
+    let linha = 0;
+    vals.forEach(function (r, i) { if (String(r[0]).trim() === emissao) linha = i + 2; });
+    const nova = [emissao, total, eu.nome || eu.email, agora, String(e.obs || '').slice(0, 200)];
+    if (linha) sh.getRange(linha, 1, 1, 5).setValues([nova]); else sh.appendRow(nova);
+    SpreadsheetApp.flush();
+    const todas = sh.getRange(2, 1, sh.getLastRow() - 1, 2).getDisplayValues()
+      .map(function (r) { return [String(r[0]).trim(), parseInt(r[1], 10) || 0]; })
+      .filter(function (r) { return dataBr_(r[0]) && r[1] > 0; })
+      .sort(function (a, b) { return dataBr_(a[0]) < dataBr_(b[0]) ? -1 : 1; });
+    // linha automatica do Destaque_ISGH: so quando a entrega guardada e a mais recente
+    try {
+      const ultima = todas[todas.length - 1];
+      if (ultima && ultima[0] === emissao) {
+        const ant = todas.length > 1 ? todas[todas.length - 2] : null;
+        const titulo = DESTAQUE_AUTO + ': ' + total + ' laudos até ' + emissao.slice(0, 5);
+        const texto = 'Atualizado sozinho pela aba Relatórios em ' + agora + '. Entrega de ' + emissao + ' com ' + total + ' laudos acumulados'
+          + (ant ? ', ' + (total - ant[1]) + ' liberados desde a entrega de ' + ant[0] : '') + '.'
+          + (pacote ? ' Saldo do pacote de ' + pacote + ': ' + Math.max(0, pacote - total) + ' laudos.' : '');
+        const sd = ss.getSheetByName(ABA_DESTAQUE);
+        if (sd) {
+          const dv = sd.getRange(1, 1, sd.getLastRow(), 2).getDisplayValues();
+          let ld = 0;
+          dv.forEach(function (r, i) { if (i && String(r[1]).indexOf(DESTAQUE_AUTO) === 0) ld = i + 1; });
+          if (ld) sd.getRange(ld, 2, 1, 2).setValues([[titulo, texto]]);
+          else sd.appendRow(['contrato', titulo, texto, '', 'Carla', 0, '']);
+        }
+      }
+    } catch (err) {}
+    return { entregas: todas, quando: agora };
+  } finally { lock.releaseLock(); }
+}
+
+/* ---------------- medicao na planilha de cobranca (v17, 17/11/2026) ----------------
+ * O fechamento para nota fiscal da aba Relatorios grava na aba Medicoes da planilha
+ * "Faturamento e Cobranca HRVJ ISGH" os laudos de RM (F) e a data do relatorio (K) da medicao
+ * escolhida, para a tarefa de cobranca enxergar sem ninguem digitar de novo. So F e K: Q, R e S
+ * sao formulas e o resto e preenchimento da equipe. */
+
+const FATUR_ID = '14i23-uo6aCZ30SM-XoSKtrqIN4dyCmcsGyFZ1RdFCTk';
+
+function medicaoGravar(cred, m) {
+  const eu = lancador_(cred);
+  m = m || {};
+  const numero = String(m.numero || '').trim().toUpperCase();
+  const laudos = parseInt(m.laudos, 10);
+  const enviado = String(m.enviadoEm || '').trim();
+  if (!/^[AB]-\d$/.test(numero)) throw new Error('Medicao invalida (use A-1, A-2, B-1...).');
+  if (!(laudos > 0) || laudos > 100000) throw new Error('Quantidade de laudos invalida.');
+  if (enviado && !dataBr_(enviado)) throw new Error('Data do relatorio invalida (use DD/MM/AAAA).');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('A planilha esta ocupada. Tente de novo em alguns segundos.');
+  try {
+    const sh = SpreadsheetApp.openById(FATUR_ID).getSheetByName('Medicoes');
+    if (!sh) throw new Error('A aba Medicoes nao existe na planilha de cobranca.');
+    const col = sh.getRange(1, 1, Math.min(sh.getLastRow(), 40), 1).getDisplayValues();
+    let linha = 0;
+    col.forEach(function (r, i) { if (String(r[0]).trim().toUpperCase() === numero) linha = i + 1; });
+    if (!linha) throw new Error('Nao achei a medicao ' + numero + ' na aba Medicoes.');
+    const antes = sh.getRange(linha, 6).getDisplayValue();
+    sh.getRange(linha, 6).setValue(laudos);
+    if (enviado) sh.getRange(linha, 11).setValue(enviado);
+    const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
+    const obs = sh.getRange(linha, 20);
+    obs.setValue((String(obs.getValue() || '') + ' | ' + agora + ': ' + (eu.nome || eu.email) + ' gravou ' + laudos + ' laudos de RM pela aba Relatórios'
+      + (antes && String(antes) !== String(laudos) ? ' (antes: ' + antes + ')' : '') + (enviado ? ', relatório de ' + enviado : '') + '.').replace(/^ \| /, ''));
+    return { numero: numero, laudos: laudos, antes: antes };
   } finally { lock.releaseLock(); }
 }

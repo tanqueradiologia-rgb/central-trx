@@ -348,6 +348,15 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 .ini-hero .ih-n a.al b{color:#ffb4b8}
 .ini-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start}
 .ini-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+/* Mural e Objetivos em destaque (17/11/2026): logo abaixo do painel do dia, lado a lado, em cartões maiores */
+.ini-com{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;margin:16px 0}
+.ini-com>div{margin:0!important;border:1px solid var(--line);border-top:4px solid var(--turq);border-left:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(14,58,90,.10);padding-top:14px}
+.ini-com h3{font-family:var(--f-display);font-size:18px;letter-spacing:.01em}
+.ini-com .mural-band #mu-lista li{padding:9px 0;font-size:15px;line-height:1.45}
+.ini-com .mural-band #mu-lista li:first-child{background:var(--surface2);border-radius:10px;padding:10px 12px;border-top:0;margin-bottom:2px}
+.ini-com .obj .ob-t{font-size:15px}
+.ini-com .obj .ob-ck{width:18px;height:18px}
+@media (max-width:900px){.ini-com{grid-template-columns:1fr}}
 .ini-col>div{margin:0!important}
 @media (max-width:900px){.ini-grid{grid-template-columns:1fr}}
 /* Hoje: uma linha por item; abre ao tocar */
@@ -406,8 +415,16 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 .urg .u-l{list-style:none;margin:0;padding:0}
 .urg:not(.tudo) .u-l li:nth-child(n+9){display:none}
 .urg .u-l li{border-top:1px solid var(--line)}
-.urg .u-l a{display:flex;align-items:baseline;gap:10px;padding:8px 2px;color:var(--ink);text-decoration:none;font-size:14px}
-.urg .u-l a:hover{background:var(--surface2)}
+.urg .u-l summary{display:flex;align-items:baseline;gap:10px;padding:8px 2px;color:var(--ink);font-size:14px;cursor:pointer;list-style:none}
+.urg .u-l summary::-webkit-details-marker{display:none}
+.urg .u-l summary:hover{background:var(--surface2)}
+.urg .u-l details[open] summary b{white-space:normal}
+.urg .u-x{padding:2px 2px 12px 128px;font-size:14px;line-height:1.5}
+.urg .u-x p{margin:0 0 6px}
+.urg .u-x .u-ac{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.urg .u-x .u-ac a{font-size:13px;font-weight:600;color:var(--turq);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 12px}
+.urg .u-x .u-ac a:hover{border-color:var(--turq)}
+@media (max-width:640px){.urg .u-x{padding-left:2px}}
 .urg .u-l b{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .urg .u-d{font-size:12px;font-weight:700;white-space:nowrap;min-width:118px}
 .urg .u-d.venc{color:var(--bad)}.urg .u-d.hoje{color:var(--warn)}.urg .u-d.amanha{color:var(--turq)}
@@ -519,14 +536,16 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 <main class="wrap">
   <section class="pane" id="pane-inicio" hidden>
     <div class="ini-hero" id="ini-hero"></div>
+    <div class="ini-com">
+      <div id="mural" class="avisos mural-band" hidden></div>
+      <div id="obj" class="avisos obj"></div>
+    </div>
     <div class="ini-grid">
       <div class="ini-col">
         <div id="urg" class="avisos urg" hidden></div>
         <div id="hoje" class="hoje-band" hidden></div>
       </div>
       <div class="ini-col">
-        <div id="obj" class="avisos obj"></div>
-        <div id="mural" class="avisos mural-band" hidden></div>
         <div id="equipe" class="avisos eqp" hidden></div>
       </div>
     </div>
@@ -1667,16 +1686,22 @@ const lFis=(function(){
 (function(){
   const el=$("#urg"); if(!el) return;
   const it=[];
+  // Cada item abre aqui mesmo, com o texto, o dono e o que fazer; ir para a aba de origem é um botão, não o clique da linha.
   PR.filter(p=>p.prazo&&p.dt&&!passou(p.dt)&&dias(p.dt)!==null&&dias(p.dt)<=1)
-    .forEach(p=>it.push({d:dias(p.dt),dt:p.dt,t:p.n,of:p.tp,s:p.acao||p.fase,r:p.resp,href:"#prioridades"}));
+    .forEach(p=>it.push({d:dias(p.dt),dt:p.dt,t:p.n,of:p.tp,r:p.resp,x:[p.sub,p.fase?"Fase: "+p.fase:"",p.acao?"Próxima ação: "+p.acao:""].filter(Boolean),
+      ac:[p.link?[p.link,"Abrir a linha na planilha",1]:null,["#licitacoes","Ver em Licitações"]]}));
   (D.destaque_isgh||[]).filter(i=>i.dt&&dias(i.dt)!==null&&dias(i.dt)<=1)
-    .forEach(i=>it.push({d:dias(i.dt),dt:i.dt,t:i.t,of:"ISGH",s:"",r:i.resp,href:"#isgh"}));
+    .forEach(i=>it.push({d:dias(i.dt),dt:i.dt,t:i.t,of:"ISGH",r:i.resp,x:[i.x].filter(Boolean),
+      ac:[i.lk?[i.lk,"Abrir a planilha",1]:null,["#isgh","Ver o dossiê do ISGH"]]}));
   (D.documentos_alerta||[]).filter(x=>x.venc)
-    .forEach(x=>it.push({d:x.val?dias(x.val):-1,dt:x.val||"",t:x.doc,of:"Documento",s:"vencido",r:x.resp,href:"#fiscal"}));
+    .forEach(x=>it.push({d:x.val?dias(x.val):-1,dt:x.val||"",t:x.doc,of:"Documento",r:x.resp,x:["Documento vencido"+(x.val?" em "+fData(x.val):"")+". O Marcos regulariza; a Carla acompanha."],
+      ac:[["#fiscal","Ver em Fiscal e Jurídico"]]}));
   it.sort((a,b)=>(a.d??0)-(b.d??0));
   const MAX=8;
-  const li=x=>'<li><a href="'+x.href+'"><span class="u-d '+(x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):'')+'</span>'
-    +'<b>'+esc(x.t)+'</b><span class="u-of">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</a></li>';
+  const li=x=>'<li><details><summary><span class="u-d '+(x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):'')+'</span>'
+    +'<b>'+esc(x.t)+'</b><span class="u-of">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</summary>'
+    +'<div class="u-x">'+x.x.map(t=>'<p>'+esc(t)+'</p>').join("")+(x.r?'<p class="meta">Com: '+esc(x.r)+'</p>':'')
+    +'<div class="u-ac">'+x.ac.filter(Boolean).map(a=>'<a href="'+esc(a[0])+'"'+(a[2]?' target="_blank" rel="noopener"':'')+'>'+esc(a[1])+'</a>').join("")+'</div></div></details></li>';
   el.innerHTML='<h3>Urgente agora · '+it.length+'</h3>'
     +(it.length?'<ul class="u-l">'+it.map(li).join("")+'</ul>'+(it.length>MAX?'<button type="button" class="mu-tudo" id="u-tudo">Ver os '+it.length+'</button>':'')
       :'<p class="meta">Nada vencendo hoje ou amanhã.</p>');
@@ -1808,19 +1833,16 @@ const lFis=(function(){
    Tudo acontece no navegador: o .xlsx é lido com a SheetJS que mora em vendor/, agrupado pela mesma
    régua dos relatórios que já saem à mão, e impresso em A4 (Imprimir > Salvar como PDF).
    O mesmo arquivo alimenta a aba Produção dos sócios, pelo app de Edição (apelido + PIN).
-   Prazo não entra em lugar nenhum: é indicador do conjunto, não critério entre sócios. */
+   Prazo não entra em lugar nenhum: é indicador do conjunto, não critério entre sócios.
+   Desde 17/11/2026 nada de régua mora aqui: o banco de entregas vem da aba Entregas_HRVJ da
+   planilha (pelo build), o repasse e a lista de quem lança ficam na Producao_Params e são
+   aplicados pelo app de Edição. O navegador guarda só um cache de 3 horas da última gravação. */
+const REL_ENTREGAS = (D && D.entregas_hrvj) || [];
 const lRel = (function(){
   const corpo = $("#rel-corpo");
-  const KB = "trx-rel-base", KR = "trx-rel-repasse", CK = "central-mural-cred", KH = "trx-rel-entregas";
-  /* Banco de entregas: todo relatório diário sai da diferença contra o total da entrega anterior,
-     que é como a conta é feita desde 04/11/2026. A semente abaixo são os relatórios já emitidos
-     para o HRVJ; o que for emitido daqui para a frente entra por cima, neste navegador. */
-  const ENTREGAS_SEED = [["04/11/2026",143],["05/11/2026",202],["09/11/2026",263],["10/11/2026",291],
-                         ["11/11/2026",299],["12/11/2026",308],["13/11/2026",322],["16/11/2026",334]];
+  const KB = "trx-rel-base", CK = "central-mural-cred", KH = "trx-rel-entregas-cache";
   const NOMEADAS = ["Pelve feminina","Crânio e encéfalo","Abdome superior","Pelve masculina","Abdome total",
                     "Coluna lombar","Joelho direito","Coluna cervical","Joelho esquerdo","Colangiorressonância"];
-  const SOCIOS = ["marcos mendes sales","bruno yoshimitsu","henrique silveira","vinicius alves bezerra","diogo de carvalho"];
-  const REP_PADRAO = "padrao=60\nRafael Bringe Freitas=70\nLetícia Gonçalves da Costa=70\nJoyce Freire Gonçalves de Melo=70\nFlavia Sprenger=55";
   let D = null, carregando = false;
 
   const money = v => "R$ " + (Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1894,23 +1916,13 @@ const lRel = (function(){
              modalidade: maior(mods)||"RM", instituicao: maior(inst)||"" };
   }
 
-  function repasseMapa(){
-    const txt = ls(KR) || REP_PADRAO;
-    const m = { padrao: 60 };
-    txt.split("\n").forEach(l=>{ const i=l.indexOf("="); if(i<1) return;
-      const k=l.slice(0,i).trim(), v=parseFloat(l.slice(i+1).replace(",","."));
-      if(k && !isNaN(v)) m[sem(k)==="padrao"?"padrao":sem(k)] = v; });
-    return m;
-  }
-  const repasseDe = (nome,m) => m[sem(nome)] !== undefined ? m[sem(nome)] : m.padrao;
-  const ehSocio = nome => SOCIOS.some(x=>sem(nome).indexOf(x)>=0);
-
   /* ---------- banco de entregas ---------- */
   const dIso = d => { const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(d||"").trim()); return m ? m[3]+m[2]+m[1] : ""; };
   function entregas(){
-    let extra=[]; try{ extra=JSON.parse(ls(KH)||"[]")||[]; }catch(e){ extra=[]; }
+    // a planilha é a fonte; o cache local só cobre a hora entre gravar e a rodada seguinte do build
+    let extra=[]; try{ const c=JSON.parse(ls(KH)||"null"); if(c && c.em && Date.now()-c.em < 3*3600*1000) extra=c.lista||[]; }catch(e){ extra=[]; }
     const m={};
-    ENTREGAS_SEED.concat(extra).forEach(e=>{ if(e && e[0] && e[1]) m[e[0]]=parseInt(e[1],10)||0; });
+    REL_ENTREGAS.concat(extra).forEach(e=>{ if(e && e[0] && e[1]) m[e[0]]=parseInt(e[1],10)||0; });
     return Object.keys(m).map(d=>[d,m[d]]).sort((a,b)=>dIso(a[0])<dIso(b[0])?-1:1);
   }
   function entregaAnterior(ate){
@@ -1919,11 +1931,28 @@ const lRel = (function(){
     es.forEach(e=>{ if(dIso(e[0]) < lim) r = e; });
     return r || (es.length ? null : null);
   }
-  function registra(data,total){
-    let extra=[]; try{ extra=JSON.parse(ls(KH)||"[]")||[]; }catch(e){ extra=[]; }
-    extra = extra.filter(e=>e[0]!==data).concat([[data,parseInt(total,10)||0]]);
-    ls(KH, JSON.stringify(extra));
+  // credencial do app de Edição: a mesma do Mural; pede uma vez e guarda
+  function credRel(){
+    let c = null; try{ c = JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){}
+    if(c) return c;
+    const ap = prompt("Apelido do app de Edição:"); if(!ap) return null;
+    const pin = prompt("PIN:"); if(!pin) return null;
+    return { apelido: ap.trim().toLowerCase(), pin: pin.trim() };
+  }
+  async function posta(corpo){
+    const c = credRel(); if(!c) throw new Error("Sem apelido e PIN nada é gravado.");
+    corpo.cred = c;
+    const r = await fetch(EDIT_URL, {method:"POST", body: JSON.stringify(corpo)});
+    const j = await r.json();
+    if(!j.ok){ if(String(j.erro||"").indexOf("LOGIN")>=0){ try{localStorage.removeItem(CK);}catch(e){} } throw new Error(j.erro||"Não deu para gravar."); }
+    try{ localStorage.setItem(CK, JSON.stringify(c)); }catch(e){}
+    return j;
+  }
+  async function registra(data,total,pacote){
+    const j = await posta({action:"entregaGuardar", e:{emissao:data, total:parseInt(total,10)||0, pacote:pacote||0}});
+    ls(KH, JSON.stringify({em:Date.now(), lista:j.entregas||[]}));
     ls(KB, String(total)); ls(KB+"-data", data);
+    return j;
   }
 
   /* ---------- o documento A4, no padrão dos relatórios que já saem ---------- */
@@ -2065,7 +2094,9 @@ const lRel = (function(){
     const ant = entregaAnterior(hoje());
     const base = ant ? ant[1] : (parseInt(ls(KB)||"0",10) || 0);
     const baseQuando = ant ? ant[0] : (ls(KB+"-data") || "");
-    const rep = ls(KR) || REP_PADRAO;
+    const es = entregas(), ultE = es.length ? es[es.length-1] : null;
+    const parcial = ultE && D.total < ultE[1];
+    const perProd = (D.ultimo||hoje()).slice(3,5)+"/"+(D.ultimo||hoje()).slice(6,10);
     const novos = Math.max(0, D.total - base);
     corpo.innerHTML = dropo
       + '<div class="kpis">'
@@ -2073,6 +2104,7 @@ const lRel = (function(){
          'Radiologistas|'+D.radiologistas, 'Modalidade|'+D.modalidade, 'Instituição|'+(D.instituicao||"—")]
         .map(x=>{const p=x.split("|");return '<div class="kpi" style="cursor:default"><span class="v">'+esc(p[1])+'</span><span class="k">'+esc(p[0])+'</span></div>';}).join("")
       + '</div>'
+      + (parcial ? '<div class="band" style="border-left:4px solid var(--bad);"><b class="d-bad">Este arquivo parece parcial.</b> Ele tem '+D.total+' exames e a última entrega guardada, de '+esc(ultE[0])+', já tinha '+ultE[1]+'. Exporte no sistema o período inteiro, do início do contrato até hoje: o relatório e a produção trabalham com o acumulado.</div>' : '')
       + '<div class="pr-sec">Dados do relatório</div><div class="band"><div class="pr-regua">'
       + '<div><label>Cliente<br><input id="rl-cliente" style="width:100%" value="Hospital Regional do Vale do Jaguaribe (HRVJ) · ISGH"></label></div>'
       + '<div><label>Contrato<br><input id="rl-contrato" style="width:100%" value="Pacote 500 RM"></label>'
@@ -2090,14 +2122,16 @@ const lRel = (function(){
       + '<span class="meta" id="rl-msg"></span></div>'
       + '<p class="meta">O botão abre a janela de impressão do navegador: escolha <b>Salvar como PDF</b>. A conta do intervalo sai sozinha contra a última entrega da lista aqui embaixo. Depois de enviar o relatório, clique em <b>Guardar como última entrega</b> para que o de amanhã compare com este.</p>'
       + '<div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button type="button" id="rl-guardar">Guardar como última entrega</button><span class="meta" id="rl-guardado"></span></div>'
-      + '<details class="band"><summary>Repasse por médico (usado só na produção interna)</summary>'
-      + '<p class="meta">Uma linha por regra, no formato <b>Nome=valor</b>. A linha <b>padrao</b> vale para quem não estiver na lista.</p>'
-      + '<textarea id="rl-rep" rows="6" style="width:100%;font-family:var(--f-mono)">'+esc(rep)+'</textarea>'
-      + '<button type="button" id="rl-repsalvar">Salvar</button></details>'
+      + '<div class="pr-sec">Produção e cobrança</div>'
+      + '<div class="band"><p class="meta" style="margin:0 0 8px"><b>Atualizar a produção</b> grava na planilha a produção de <b>'+esc(perProd)+'</b> do HRVJ com tudo que está neste arquivo ('+esc(D.primeiro)+' a '+esc(D.ultimo)+') e substitui o que já estava lançado para esse mês. Por isso o arquivo tem de ser o acumulado. O repasse de cada médico é aplicado pela planilha (aba Producao_Params), não por esta tela.</p>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end"><label>Medição<br><select id="rl-mednum">'+["A-1","A-2","B-1","B-2","B-3","B-4","B-5","B-6"].map(n=>'<option'+(n===(ls("trx-rel-mednum")||"A-2")?' selected':'')+'>'+n+'</option>').join("")+'</select></label>'
+      + '<label>Laudos de RM da medição<br><input id="rl-medqt" type="number" style="width:110px" value="'+D.total+'"></label>'
+      + '<button type="button" id="rl-medgravar">Registrar a medição na planilha de cobrança</button><span class="meta" id="rl-medmsg"></span></div>'
+      + '<p class="meta" style="margin:8px 0 0">Use depois de enviar o fechamento ao hospital: grava os laudos e a data do relatório na linha da medição, e a cobrança passa a acompanhar a nota e o pagamento. O campo vem com o total do arquivo: da segunda medição em diante, desconte o que já foi faturado nas anteriores.</p></div>'
       + '<div class="pr-sec">Entregas já emitidas</div>'
-      + '<div class="band"><p class="meta" style="margin:0 0 8px">O número em destaque de cada relatório é a diferença contra o total da entrega anterior. Esta lista já vem com os relatórios emitidos desde 04/11/2026.</p>'
+      + '<div class="band"><p class="meta" style="margin:0 0 8px">O número em destaque de cada relatório é a diferença contra o total da entrega anterior. A lista mora na planilha (aba Entregas_HRVJ) e vale para qualquer computador.</p>'
       + '<div class="tbl"><table><thead><tr><th>Emissão</th><th>Total acumulado</th><th>Liberados no intervalo</th></tr></thead><tbody>'
-      + entregas().map((e,i,a)=>'<tr><td class="mono">'+esc(e[0])+'</td><td class="mono">'+e[1]+'</td><td class="mono">'+(i?(e[1]-a[i-1][1]):"—")+'</td></tr>').join("")
+      + es.map((e,i,a)=>'<tr><td class="mono">'+esc(e[0])+'</td><td class="mono">'+e[1]+'</td><td class="mono">'+(i?(e[1]-a[i-1][1]):"—")+'</td></tr>').join("")
       + '</tbody></table></div></div>'
       + '<div class="pr-sec">Como ficou a distribuição</div>'
       + '<div class="tbl"><table><thead><tr><th>Tipo de exame</th><th>Qtd.</th></tr></thead><tbody>'
@@ -2147,39 +2181,36 @@ const lRel = (function(){
     const msg = t => { const m=$("#rl-msg"); if(m) m.textContent=t; };
     $("#rl-diario").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docDiario(f)); });
     $("#rl-fech").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docFechamento(f)); });
-    $("#rl-guardar").addEventListener("click", ()=>{ const em = $("#rl-emissao").value||hoje();
-      registra(em, D.total);
-      $("#rl-guardado").textContent = "Guardado: a entrega de "+em+" com "+D.total+" laudos entrou no banco, e a próxima compara com ela.";
-      tela(); });
-    $("#rl-repsalvar").addEventListener("click", ()=>{ ls(KR, $("#rl-rep").value); msg("Repasse salvo neste navegador."); });
+    $("#rl-guardar").addEventListener("click", async ()=>{ const em = $("#rl-emissao").value||hoje();
+      const g = $("#rl-guardado"), f = campos();
+      g.textContent = "Guardando na planilha…";
+      try{ await registra(em, D.total, f.pacote);
+        tela(); const g2=$("#rl-guardado"); if(g2) g2.textContent = "Guardado na planilha: a entrega de "+em+" com "+D.total+" laudos. A próxima compara com ela, em qualquer computador.";
+      }catch(e){ g.textContent = String((e&&e.message)||e); } });
+    $("#rl-medgravar").addEventListener("click", async ()=>{ const m=$("#rl-medmsg");
+      const numero=$("#rl-mednum").value, qt=parseInt($("#rl-medqt").value,10)||0, em=$("#rl-emissao").value||hoje();
+      if(!confirm("Gravar "+qt+" laudos de RM na medição "+numero+", com relatório enviado em "+em+"?")) return;
+      ls("trx-rel-mednum",numero); m.textContent="Gravando…";
+      try{ const j = await posta({action:"medicaoGravar", m:{numero:numero, laudos:qt, enviadoEm:em}});
+        m.textContent = "Gravado na medição "+j.numero+": "+j.laudos+" laudos"+(j.antes&&String(j.antes)!==String(j.laudos)?" (antes estava "+j.antes+")":"")+".";
+      }catch(e){ m.textContent = String((e&&e.message)||e); } });
     $("#rl-prod").addEventListener("click", ()=>mandarProducao(msg));
   }
   function guardaPrefs(f){ ls("trx-rel-preco",String(f.preco)); ls("trx-rel-pacote",String(f.pacote)); ls("trx-rel-prazo",f.prazoPg); ls("trx-rel-medicao",f.medicao); }
 
   async function mandarProducao(msg){
     const f = campos();
-    const mapa = repasseMapa();
     const per = (D.ultimo||hoje()).slice(6,10)+"-"+(D.ultimo||hoje()).slice(3,5);
+    if(!confirm("Gravar a produção de "+per+" do HRVJ com os "+D.total+" exames deste arquivo ("+D.primeiro+" a "+D.ultimo+")? O que já estava lançado para esse mês será substituído.")) return;
     const linhas = Object.keys(D.med).sort((a,b)=>D.med[b]-D.med[a]).map(n=>({
-      medico:n, socio:ehSocio(n), exames:D.med[n],
-      receita:+(D.med[n]*f.preco).toFixed(2), repasse:+(D.med[n]*repasseDe(n,mapa)).toFixed(2),
+      medico:n, exames:D.med[n], receita:+(D.med[n]*f.preco).toFixed(2),
       obs:"Lançado pela aba Relatórios em "+f.emissao+" ("+D.primeiro+" a "+D.ultimo+")"
     }));
-    let c = null; try{ c = JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){}
-    if(!c){
-      const ap = prompt("Apelido do app de Edição:"); if(!ap) return;
-      const pin = prompt("PIN:"); if(!pin) return;
-      c = { apelido: ap.trim().toLowerCase(), pin: pin.trim() };
-    }
     msg("Atualizando a produção…");
     try{
-      const r = await fetch(EDIT_URL, {method:"POST", body: JSON.stringify({action:"producaoLancar", cred:c,
-        dados:{periodo:per, contrato:"HRVJ", modalidade:(f.mod==="RM"?"RM":f.mod), linhas:linhas}})});
-      const j = await r.json();
-      if(!j.ok) throw new Error(j.erro||"Não deu para atualizar.");
-      try{ localStorage.setItem(CK, JSON.stringify(c)); }catch(e){}
-      msg("Produção atualizada: "+j.gravou+" médicos no período "+j.periodo+". A aba Produção dos sócios mostra na próxima rodada da Central.");
-    }catch(e){ msg("Não deu para atualizar a produção: "+String((e&&e.message)||e)); }
+      const j = await posta({action:"producaoLancar", dados:{periodo:per, contrato:"HRVJ", modalidade:(f.mod==="RM"?"RM":f.mod), linhas:linhas}});
+      msg("Produção de "+per+" atualizada: "+j.gravou+" linhas gravadas"+(j.tirou?", "+j.tirou+" substituídas":"")+". Aparece na aba Produção dos sócios na próxima rodada.");
+    }catch(e){ msg(String((e&&e.message)||e)); }
   }
 
   function render(){ if(!corpo.innerHTML.trim()) tela(); }

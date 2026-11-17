@@ -77,7 +77,7 @@ jobs:
           python scripts/build_central.py --pipeline pipeline.json --licitacoes licitacoes.json \
             --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET" \
             --documentos documentos.json --destaque destaque_isgh.json --dossie isgh_dossie.json \
-            --producao producao.json --contratos contratos.json --mural mural.json --tarefas tarefas.json --equipe equipe.json --objetivos objetivos.json
+            --producao producao.json --contratos contratos.json --mural mural.json --tarefas tarefas.json --equipe equipe.json --objetivos objetivos.json --entregas entregas_hrvj.json
       - name: Verificação automática (motores e regras)
         run: |
           set -a; . ./mods.env; set +a
