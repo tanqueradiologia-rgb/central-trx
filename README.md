@@ -14,6 +14,13 @@ Página de acompanhamento da TRX Diagnóstico Digital: clínicas particulares, l
 | `scripts/build_central.py` | transforma as planilhas no arquivo de dados da página |
 | `.github/workflows/atualizar.yml` | agenda e publica |
 
+## Layout v2 (17/11/2026)
+A página segue a linguagem do site trx.med.br: degradê navy→turquesa (#0e3958→#0094bd) na aba ativa, nos botões e no painel de abertura; fundo #f9fafb, bordas #d7dfea e cantos de 12px.
+- A aba **Início** é a aba padrão e concentra o que antes aparecia em todas as abas: o painel do dia (números), a fila Hoje, as validades, os avisos do sistema, o resumo do ISGH e o Mural. As outras abas mostram só a própria frente.
+- Na fila Hoje cada item ocupa uma linha; tocar abre o texto, os links e o Feito/Ciente/Observação.
+- O resumo do ISGH mostra os três itens mais urgentes de cada bloco; o resto fica no dossiê (aba ISGH).
+- Validades mostram cinco à vista; avisos do sistema e calendário do mês ficam recolhidos.
+
 ## Produção dos sócios (aba nova, 11/11/2026)
 A aba **Produção dos sócios** da página mostra o coeficiente de esforço e o score de cada médico por período. Ela nasceu do pedido do Marcos de desenvolver com o Henrique (controle financeiro) a medição da produção dos sócios.
 
