@@ -1,5 +1,6 @@
 /**
- * Central TRX · Edição — v15 (17/11/2026): Objetivos da semana da equipe (aba Objetivos).
+ * Central TRX · Edição — v15 (17/11/2026): Objetivos da semana (aba Objetivos) e e-mail para a
+ *   equipe enviado pela Central (conta da TRX, resposta para quem escreveu; registro na aba Emails).
  *   v14 (16/11/2026): Feito, Ciente e Observação nas tarefas do bloco Hoje
  *   (aba Tarefas_Status na Pipeline TRX). v13 (15/11/2026): Mural da equipe (aba Mural).
  * App web (projeto próprio, separado dos scripts da planilha) que lê e grava na
@@ -171,6 +172,7 @@ function doPost(e) {
     else if (p.action === 'tarefaMarcar') out = tarefaMarcar(p.cred, p.t);
     else if (p.action === 'objetivoNovo') out = objetivoNovo(p.cred, p.o);
     else if (p.action === 'objetivoMarcar') out = objetivoMarcar(p.cred, p.o);
+    else if (p.action === 'emailEnviar') out = emailEnviar(p.cred, p.m);
     else throw new Error('Ação desconhecida.');
     out.ok = true;
   } catch (err) {
@@ -609,4 +611,44 @@ function objetivoMarcar(cred, o) {
     if (obs) sh.getRange(l, 8).setValue(obs);
   } finally { lock.releaseLock(); }
   return { objetivos: objetivosLer_() };
+}
+
+/* ---------------- e-mail para a equipe pela Central (v15, 17/11/2026) ----------------
+ * A pessoa escolhe destinatários da aba Equipe (por apelido), escreve e envia. O e-mail sai
+ * da conta da TRX com o nome de quem escreveu, resposta (Reply-To) e cópia para ela.
+ * Só vai para endereços da aba Equipe; cada envio fica registrado na aba Emails. */
+
+const ABA_EMAILS = 'Emails';
+
+function emailEnviar(cred, m) {
+  const eu = exigir_(cred);
+  m = m || {};
+  const eq = equipeComPin_();
+  const aps = (m.para || []).map(function (x) { return String(x).trim().toLowerCase(); });
+  const dest = eq.filter(function (q) { return q.email && aps.indexOf(q.apelido) >= 0; })
+    .map(function (q) { return q.email; })
+    .filter(function (e, i, arr) { return arr.indexOf(e) === i; });
+  if (!dest.length) throw new Error('Escolha pelo menos uma pessoa da equipe.');
+  const assunto = String(m.assunto || '').trim().slice(0, 150);
+  const corpo = String(m.corpo || '').trim();
+  if (!assunto) throw new Error('Escreva o assunto.');
+  if (!corpo) throw new Error('Escreva a mensagem.');
+  if (corpo.length > 6000) throw new Error('Mensagem longa demais (máximo 6000 caracteres).');
+  if (MailApp.getRemainingDailyQuota() < dest.length) throw new Error('A cota diária de e-mails da conta da TRX acabou. Tente amanhã.');
+  const nome = eu.nome || eu.email;
+  const opts = {
+    to: dest.join(','),
+    subject: '[TRX] ' + assunto,
+    body: corpo + '\n\n--\n' + nome + ' · enviado pela Central TRX. Responda este e-mail para falar com ' + nome + '.',
+    name: nome + ' · Central TRX'
+  };
+  if (eu.email) { opts.replyTo = eu.email; if (dest.indexOf(eu.email) < 0) opts.cc = eu.email; }
+  MailApp.sendEmail(opts);
+  try {
+    const ss = planilha_();
+    let sh = ss.getSheetByName(ABA_EMAILS);
+    if (!sh) { sh = ss.insertSheet(ABA_EMAILS); sh.getRange(1, 1, 1, 4).setValues([['Quando', 'Autor', 'Para', 'Assunto']]); sh.setFrozenRows(1); }
+    sh.appendRow([Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm'), nome, dest.join(', '), assunto]);
+  } catch (e) {}
+  return { enviados: dest.length };
 }

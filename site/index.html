@@ -432,6 +432,18 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 .eqp .eq-a a{font-size:12px;font-weight:600;color:var(--turq);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:2px 9px}
 .eqp .eq-a a:hover{border-color:var(--turq)}
 .eqp .eq-todos{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+.eqp .eq-sel{display:flex;align-items:center;gap:6px;cursor:pointer}
+.eqp .eq-sel input{accent-color:#0380a7}
+.eqp .eq-a button{font:inherit;font-size:12px;font-weight:600;color:var(--turq);background:none;border:1px solid var(--line);border-radius:999px;padding:2px 9px;cursor:pointer}
+.eqp .eq-a button:hover{border-color:var(--turq)}
+.eqp .eq-mail{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.eqp .eq-para{font-size:13px}
+.eqp .lk{font:inherit;font-size:13px;background:none;border:0;padding:0;color:var(--turq);font-weight:600;cursor:pointer}
+.eqp .eq-mail input,.eqp .eq-mail textarea{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);resize:vertical}
+.eqp .eq-env{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.eqp .eq-env input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.eqp .eq-env button{font:inherit;font-size:13px;font-weight:600;padding:6px 14px;border:0;border-radius:10px;background:var(--grad);color:#f8fafc;cursor:pointer}
+.eqp .eq-env button:disabled{opacity:.6}
 .btn-grad{display:inline-block;background:var(--grad);color:#f8fafc;text-decoration:none;font-size:13px;font-weight:600;border-radius:10px;padding:6px 14px}
 .ini-hero .ih-n b small{font-size:14px;opacity:.75}
 </style>
@@ -1621,18 +1633,49 @@ const lFis=(function(){
   const b=$("#u-tudo"); if(b) b.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); b.textContent=ab?"Mostrar só os "+MAX+" primeiros":"Ver os "+it.length; });
 })();
 
-/* ---------- EQUIPE E CONTATOS (17/11/2026): aba Equipe da Pipeline TRX, sem PIN ---------- */
+/* ---------- EQUIPE E CONTATOS (17/11/2026): aba Equipe da Pipeline TRX, sem PIN ----------
+   E-mail pela própria Central: marca as pessoas, escreve e envia. Sai da conta da TRX pelo app
+   de Edição v15, com resposta e cópia para quem escreveu. */
 (function(){
-  const EQ=D.equipe||[], el=$("#equipe"); if(!el||!EQ.length) return;
-  const todos=EQ.map(p=>p.e).filter(Boolean);
-  el.innerHTML='<h3>Equipe e contatos</h3><ul class="eq-l">'+EQ.map(p=>'<li><span class="eq-av">'+esc((p.n||"?").charAt(0))+'</span><span class="eq-n"><b>'+esc(p.n)+'</b>'
-      +(p.pa?'<span class="meta">'+esc(p.pa)+'</span>':'<span class="meta">@'+esc(p.ap)+'</span>')+'</span><span class="eq-a">'
+  const EQ=(D.equipe||[]).filter(p=>p.ap), el=$("#equipe"); if(!el||!EQ.length) return;
+  const CK="central-mural-cred";
+  const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
+  el.innerHTML='<h3>Equipe e contatos</h3><ul class="eq-l">'+EQ.map(p=>'<li><label class="eq-sel" title="Incluir no e-mail"><input type="checkbox" value="'+esc(p.ap)+'"><span class="eq-av">'+esc((p.n||"?").charAt(0))+'</span></label>'
+      +'<span class="eq-n"><b>'+esc(p.n)+'</b><span class="meta">'+esc(p.pa||("@"+p.ap))+'</span></span><span class="eq-a">'
       +(p.tel?'<a href="https://wa.me/'+esc(p.tel)+'" target="_blank" rel="noopener" title="WhatsApp de '+esc(p.n)+'">WhatsApp</a>':'')
-      +(p.e?'<a href="mailto:'+esc(p.e)+'" title="'+esc(p.e)+'">E-mail</a>':'')+'</span></li>').join("")+'</ul>'
-    +(todos.length?'<div class="eq-todos"><a class="btn-grad" href="mailto:?bcc='+encodeURIComponent(todos.join(","))+'&subject='+encodeURIComponent("TRX · ")+'">E-mail para a equipe toda</a>'
-      +'<button type="button" class="mu-tudo" id="eq-cp">Copiar os e-mails</button></div>':'');
+      +(p.e?'<button type="button" data-ap="'+esc(p.ap)+'" title="'+esc(p.e)+'">E-mail</button>':'')+'</span></li>').join("")+'</ul>'
+    +'<form class="eq-mail" autocomplete="off"><div class="eq-para"><b>Para:</b> <span id="eq-para">ninguém marcado</span> · <button type="button" class="lk" id="eq-todos">todos</button> · <button type="button" class="lk" id="eq-limpa">limpar</button></div>'
+    +'<input id="eq-as" maxlength="150" placeholder="Assunto"><textarea id="eq-msg" rows="3" maxlength="6000" placeholder="Mensagem"></textarea>'
+    +'<div class="eq-env"><span id="eq-cred"></span><button type="submit" id="eq-bt">Enviar e-mail</button><span class="meta" id="eq-st"></span></div></form>';
   el.hidden=false;
-  const cp=$("#eq-cp"); if(cp) cp.addEventListener("click",async()=>{ try{ await navigator.clipboard.writeText(todos.join(", ")); cp.textContent="Copiados"; }catch(_){ cp.textContent="Não deu para copiar"; } setTimeout(()=>cp.textContent="Copiar os e-mails",1600); });
+  const cx=[...el.querySelectorAll(".eq-sel input")];
+  function para(){ const n=cx.filter(x=>x.checked).map(x=>EQ.find(p=>p.ap===x.value).n); $("#eq-para").textContent=n.length?n.join(", "):"ninguém marcado"; }
+  function renderCred(){ const c=cred(); $("#eq-cred").innerHTML=c?'como <b>'+esc(c.apelido)+'</b>':'<input id="eq-ap" placeholder="apelido" size="8" autocapitalize="none"> <input id="eq-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">'; }
+  renderCred(); window.addEventListener("central-cred",renderCred);
+  cx.forEach(x=>x.addEventListener("change",para));
+  $("#eq-todos").addEventListener("click",()=>{ cx.forEach(x=>x.checked=true); para(); });
+  $("#eq-limpa").addEventListener("click",()=>{ cx.forEach(x=>x.checked=false); para(); });
+  el.querySelectorAll(".eq-a button").forEach(b=>b.addEventListener("click",()=>{ cx.forEach(x=>x.checked=x.value===b.dataset.ap); para(); $("#eq-as").focus(); }));
+  el.querySelector(".eq-mail").addEventListener("submit",async ev=>{
+    ev.preventDefault(); const st=$("#eq-st"), bt=$("#eq-bt");
+    const sel=cx.filter(x=>x.checked).map(x=>x.value), as=$("#eq-as").value.trim(), msg=$("#eq-msg").value.trim();
+    if(!sel.length){ st.textContent="Marque quem recebe."; return; }
+    if(!as||!msg){ st.textContent="Escreva assunto e mensagem."; return; }
+    let c=cred();
+    if(!c){ const ap=(($("#eq-ap")||{}).value||"").trim().toLowerCase(), pin=(($("#eq-pin")||{}).value||"").trim();
+      if(!ap||!pin){ st.textContent="Preencha apelido e PIN (os mesmos do app de Edição)."; return; } c={apelido:ap,pin:pin}; }
+    bt.disabled=true; st.textContent="Enviando…";
+    try{
+      const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:"emailEnviar",cred:c,m:{para:sel,assunto:as,corpo:msg}})});
+      const j=await r.json(); if(!j.ok) throw new Error(j.erro||"Não deu para enviar.");
+      const novo=!cred(); try{ localStorage.setItem(CK,JSON.stringify(c)); }catch(_){} if(novo) window.dispatchEvent(new Event("central-cred"));
+      $("#eq-as").value=""; $("#eq-msg").value=""; cx.forEach(x=>x.checked=false); para();
+      st.textContent="Enviado para "+j.enviados+(j.enviados===1?" pessoa.":" pessoas.");
+    }catch(err){ const m=String((err&&err.message)||err);
+      st.textContent=m.indexOf("LOGIN")>=0?"Apelido ou PIN não conferem.":/desconhecida/.test(m)?"O app de Edição ainda está na versão antiga; falta implantar a v15.":"Não deu: "+m;
+      if(m.indexOf("LOGIN")>=0){ try{localStorage.removeItem(CK);}catch(_){} renderCred(); }
+    }finally{ bt.disabled=false; }
+  });
 })();
 
 /* ---------- OBJETIVOS DA SEMANA (17/11/2026): aba Objetivos da Pipeline TRX, app de Edição v15 ---------- */
