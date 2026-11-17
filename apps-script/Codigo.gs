@@ -1,5 +1,6 @@
 /**
- * Central TRX · Edição — v14 (16/11/2026): Feito, Ciente e Observação nas tarefas do bloco Hoje
+ * Central TRX · Edição — v15 (17/11/2026): Objetivos da semana da equipe (aba Objetivos).
+ *   v14 (16/11/2026): Feito, Ciente e Observação nas tarefas do bloco Hoje
  *   (aba Tarefas_Status na Pipeline TRX). v13 (15/11/2026): Mural da equipe (aba Mural).
  * App web (projeto próprio, separado dos scripts da planilha) que lê e grava na
  * "Pipeline TRX — Prospecção (fonte da verdade)" pelo ID em PLANILHA_ID.
@@ -168,6 +169,8 @@ function doPost(e) {
     if (p.action === 'muralGet') out = muralGet(p.cred);
     else if (p.action === 'muralPostar') out = muralPostar(p.cred, p.msg);
     else if (p.action === 'tarefaMarcar') out = tarefaMarcar(p.cred, p.t);
+    else if (p.action === 'objetivoNovo') out = objetivoNovo(p.cred, p.o);
+    else if (p.action === 'objetivoMarcar') out = objetivoMarcar(p.cred, p.o);
     else throw new Error('Ação desconhecida.');
     out.ok = true;
   } catch (err) {
@@ -535,4 +538,75 @@ function tarefaMarcar(cred, t) {
       String(t.titulo || '').slice(0, 200), String(t.origem || '').slice(0, 40), st, obs]);
   } finally { lock.releaseLock(); }
   return { quando: agora, autor: eu.nome || eu.email };
+}
+
+/* ---------------- objetivos da semana (v15, 17/11/2026) ----------------
+ * Aba Objetivos da Pipeline TRX, uma linha por objetivo. Qualquer pessoa da equipe com
+ * apelido + PIN propõe um objetivo para a semana (com dono) e marca Feito ou Não deu,
+ * com observação. Semana = data da segunda-feira (dd/MM/yyyy). A Central mostra a semana
+ * corrente e o que ficou aberto das anteriores. */
+
+const ABA_OBJ = 'Objetivos';
+const CAB_OBJ = ['Semana', 'Objetivo', 'Dono', 'Status', 'Criado', 'Autor', 'Atualizado', 'Observacao'];
+
+function objetivosAba_() {
+  const ss = planilha_();
+  let sh = ss.getSheetByName(ABA_OBJ);
+  if (!sh) {
+    sh = ss.insertSheet(ABA_OBJ);
+    sh.getRange(1, 1, 1, CAB_OBJ.length).setValues([CAB_OBJ]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function segunda_(d) {
+  const x = new Date(d.getTime());
+  const dw = (Number(Utilities.formatDate(x, TZ, 'u')) + 6) % 7;   // segunda = 0
+  x.setDate(x.getDate() - dw);
+  return Utilities.formatDate(x, TZ, 'dd/MM/yyyy');
+}
+
+function objetivosLer_() {
+  const sh = objetivosAba_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, CAB_OBJ.length).getDisplayValues()
+    .map(function (r, i) { return { l: i + 2, sem: r[0], t: r[1], dono: r[2], st: r[3], a: r[5], q: r[6] || r[4], obs: r[7] }; })
+    .filter(function (o) { return o.t; });
+}
+
+function objetivoNovo(cred, o) {
+  const eu = exigir_(cred);
+  o = o || {};
+  const t = String(o.objetivo || '').trim(), dono = String(o.dono || '').trim();
+  if (!t) throw new Error('Escreva o objetivo.');
+  if (t.length > 300) throw new Error('Objetivo longo demais (máximo 300 caracteres).');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('A planilha está ocupada. Tente de novo em alguns segundos.');
+  const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
+  try {
+    objetivosAba_().appendRow([segunda_(new Date()), t, dono.slice(0, 60) || (eu.nome || eu.email), 'aberto', agora, eu.nome || eu.email, '', '']);
+  } finally { lock.releaseLock(); }
+  return { objetivos: objetivosLer_() };
+}
+
+function objetivoMarcar(cred, o) {
+  const eu = exigir_(cred);
+  o = o || {};
+  const st = String(o.status || '').trim().toLowerCase();
+  if (['aberto', 'feito', 'nao deu'].indexOf(st) < 0) throw new Error('Status inválido.');
+  const l = Number(o.linha), obs = String(o.obs || '').trim().slice(0, 400);
+  const sh = objetivosAba_();
+  if (!(l >= 2 && l <= sh.getLastRow())) throw new Error('Objetivo não encontrado.');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('A planilha está ocupada. Tente de novo em alguns segundos.');
+  const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
+  try {
+    const atual = sh.getRange(l, 1, 1, CAB_OBJ.length).getDisplayValues()[0];
+    if (String(atual[1]).trim() !== String(o.objetivo || '').trim()) throw new Error('A lista mudou; recarregue a página.');
+    sh.getRange(l, 4).setValue(st);
+    sh.getRange(l, 7).setValue(agora + ' · ' + (eu.nome || eu.email));
+    if (obs) sh.getRange(l, 8).setValue(obs);
+  } finally { lock.releaseLock(); }
+  return { objetivos: objetivosLer_() };
 }

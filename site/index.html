@@ -394,6 +394,46 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 #avisos summary h3{display:inline;margin:0}#avisos summary::after{content:" ▸";color:var(--muted)}#avisos details[open] summary::after{content:" ▾"}
 #avisos details[open] ul{margin-top:8px}
 .acoes{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.urg{border-left:3px solid var(--bad)}
+.urg h3{color:var(--bad)}
+.urg .u-l{list-style:none;margin:0;padding:0}
+.urg:not(.tudo) .u-l li:nth-child(n+9){display:none}
+.urg .u-l li{border-top:1px solid var(--line)}
+.urg .u-l a{display:flex;align-items:baseline;gap:10px;padding:8px 2px;color:var(--ink);text-decoration:none;font-size:14px}
+.urg .u-l a:hover{background:var(--surface2)}
+.urg .u-l b{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.urg .u-d{font-size:12px;font-weight:700;white-space:nowrap;min-width:118px}
+.urg .u-d.venc{color:var(--bad)}.urg .u-d.hoje{color:var(--warn)}.urg .u-d.amanha{color:var(--turq)}
+.urg .u-of{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);white-space:nowrap}
+.urg .mu-tudo,.eqp .mu-tudo{font:inherit;font-size:13px;color:var(--turq);font-weight:600;background:none;border:0;padding:6px 0 0;cursor:pointer}
+.hoje-band .hj-sd{border-top:1px solid var(--line)}
+.hoje-band .hj-sd>summary{cursor:pointer;padding:8px 16px;font-size:13px;color:var(--muted)}
+.obj .ob-l{list-style:none;margin:0;padding:0}
+.obj .ob-l li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.obj .ob-ck{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--turq);margin-top:3px}
+.obj li.st-feito .ob-ck{background:var(--ok);border-color:var(--ok)}
+.obj li.st-feito .ob-t b{text-decoration:line-through;color:var(--muted)}
+.obj li.st-nao-deu .ob-ck{border-color:var(--bad);border-style:dashed}
+.obj .ob-t{flex:1;min-width:0;display:flex;flex-direction:column;font-size:14px}
+.obj .ob-ac{display:flex;gap:4px;flex:none}
+.obj .ob-ac button{font:inherit;font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);cursor:pointer}
+.obj .ob-ac button:hover{border-color:var(--turq)}
+.obj .ob-f{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.obj .ob-f input,.obj .ob-f select{font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.obj .ob-f #ob-t{flex:1;min-width:180px}
+.obj .ob-f button{font:inherit;font-size:13px;padding:6px 14px;border:0;border-radius:10px;background:var(--grad);color:#f8fafc;cursor:pointer}
+.obj .ob-st{margin:4px 0 0;min-height:1em}
+.eqp .eq-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr;gap:0}
+.eqp .eq-l li{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+.eqp .eq-av{flex:none;width:30px;height:30px;border-radius:50%;background:var(--grad);color:#f8fafc;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.eqp .eq-n{flex:1;min-width:0;display:flex;flex-direction:column;font-size:14px;line-height:1.3}
+.eqp .eq-n .meta{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eqp .eq-a{display:flex;gap:6px;flex:none}
+.eqp .eq-a a{font-size:12px;font-weight:600;color:var(--turq);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+.eqp .eq-a a:hover{border-color:var(--turq)}
+.eqp .eq-todos{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+.btn-grad{display:inline-block;background:var(--grad);color:#f8fafc;text-decoration:none;font-size:13px;font-weight:600;border-radius:10px;padding:6px 14px}
+.ini-hero .ih-n b small{font-size:14px;opacity:.75}
 </style>
 
 </head>
@@ -434,13 +474,13 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     <div class="ini-hero" id="ini-hero"></div>
     <div class="ini-grid">
       <div class="ini-col">
+        <div id="urg" class="avisos urg" hidden></div>
         <div id="hoje" class="hoje-band" hidden></div>
       </div>
       <div class="ini-col">
-        <div class="avisos docs-al" id="docs-al" hidden></div>
-        <div class="avisos" id="avisos" hidden></div>
-        <div id="isgh" class="isgh-band" hidden></div>
+        <div id="obj" class="avisos obj"></div>
         <div id="mural" class="avisos mural-band" hidden></div>
+        <div id="equipe" class="avisos eqp" hidden></div>
       </div>
     </div>
   </section>
@@ -468,6 +508,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <th data-k="ord">Ordem</th><th data-k="n">Quem</th><th data-k="tp" class="hide-sm">Frente</th><th data-k="sc">Score</th><th data-k="fase" class="hide-sm">Fase</th><th data-k="dt">Prazo ou toque</th><th data-k="acao" class="hide-sm">Próxima ação</th>
     </tr></thead><tbody id="t-prioridades"></tbody></table></div>
     <div class="more" id="m-prioridades"></div>
+    <div class="avisos" id="avisos" hidden></div>
   </section>
 
   <section class="pane" id="pane-clinicas" hidden>
@@ -569,6 +610,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <h2>Fiscal e Jurídico</h2>
       <span class="meta">Área do Henrique (financeiro e contratos) e da Ana (jurídico e documentos). As fontes são a aba Contratos e a aba Documentos da planilha Documentos TRX; para corrigir, edite a planilha.</span>
     </div>
+    <div class="avisos docs-al" id="docs-al" hidden></div>
     <div class="kpis" id="k-fiscal"></div>
     <div id="fis-corpo"></div>
   </section>
@@ -1077,11 +1119,14 @@ const lPr = makeList({
     lista=itens(atual).filter(it=>!estado(atual,it.k).st).slice(0,14);
     const arq=arquivadas(atual), c=cred();
     const opts=pessoas.map(p=>'<option'+(p===atual?' selected':'')+'>'+esc(p)+'</option>').join("");
-    el.innerHTML='<div class="hj-top"><h2>Hoje</h2><select id="hj-quem">'+opts+'</select>'
-      +'<span class="hj-n">'+(lista.length?lista.length+(lista.length===1?' item':' itens')+' · toque para abrir e marcar':'nada em aberto')+'</span>'
+    el.innerHTML='<div class="hj-top"><h2>Minha fila</h2><select id="hj-quem">'+opts+'</select>'
+      +'<span class="hj-n">'+(lista.length?lista.length+(lista.length===1?' item':' itens'):'nada em aberto')+'</span>'
       +'<span class="hj-cred meta">'+(c?'marcando como <b>'+esc(c.apelido)+'</b> · <a href="#" id="hj-troca">trocar</a>'
         :'para marcar: <input id="hj-ap" placeholder="apelido" size="9" autocapitalize="none"> <input id="hj-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">')+'</span></div>'
-      +(lista.length?'<ul class="hj-lista">'+lista.map(linha).join("")+'</ul>':'<div class="hj-vazio">Nada com prazo nos próximos 7 dias para '+esc(atual)+'.</div>')
+      +(()=>{ if(!lista.length) return '<div class="hj-vazio">Nada com prazo nos próximos 7 dias para '+esc(atual)+'.</div>';
+        const cd=[], sd=[]; lista.forEach((it,n)=>(it.dt?cd:sd).push(linha(it,n)));
+        return (cd.length?'<ul class="hj-lista">'+cd.join("")+'</ul>':'<div class="hj-vazio">Nada com prazo para '+esc(atual)+'.</div>')
+          +(sd.length?'<details class="hj-sd"><summary>Sem data · '+sd.length+'</summary><ul class="hj-lista">'+sd.join("")+'</ul></details>':''); })()
       +(arq.length?'<details class="hj-arq"><summary>Arquivadas nos últimos 15 dias · '+arq.length+'</summary><ul>'+arq.map(e=>
           '<li><span class="tag '+(e.st==="feito"?'ok':'ci')+'">'+(e.st==="feito"?'✓ Feito':'Ciente')+'</span> <b>'+esc(e.t||"tarefa")+'</b>'
           +(e.of?' <span class="hj-of">'+esc(e.of)+'</span>':'')+' <span class="meta">· '+esc(e.a)+' em '+esc(e.q)+'</span>'+obsHtml(e.obs)+'</li>').join("")+'</ul></details>':'');
@@ -1555,27 +1600,114 @@ const lFis=(function(){
   return {render};
 })();
 
+/* ---------- URGENTE AGORA (17/11/2026): o que vence hoje ou amanhã ou já venceu, de todos os assuntos ---------- */
+(function(){
+  const el=$("#urg"); if(!el) return;
+  const it=[];
+  PR.filter(p=>p.prazo&&p.dt&&!passou(p.dt)&&dias(p.dt)!==null&&dias(p.dt)<=1)
+    .forEach(p=>it.push({d:dias(p.dt),dt:p.dt,t:p.n,of:p.tp,s:p.acao||p.fase,r:p.resp,href:"#prioridades"}));
+  (D.destaque_isgh||[]).filter(i=>i.dt&&dias(i.dt)!==null&&dias(i.dt)<=1)
+    .forEach(i=>it.push({d:dias(i.dt),dt:i.dt,t:i.t,of:"ISGH",s:"",r:i.resp,href:"#isgh"}));
+  (D.documentos_alerta||[]).filter(x=>x.venc)
+    .forEach(x=>it.push({d:x.val?dias(x.val):-1,dt:x.val||"",t:x.doc,of:"Documento",s:"vencido",r:x.resp,href:"#fiscal"}));
+  it.sort((a,b)=>(a.d??0)-(b.d??0));
+  const MAX=8;
+  const li=x=>'<li><a href="'+x.href+'"><span class="u-d '+(x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):'')+'</span>'
+    +'<b>'+esc(x.t)+'</b><span class="u-of">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</a></li>';
+  el.innerHTML='<h3>Urgente agora · '+it.length+'</h3>'
+    +(it.length?'<ul class="u-l">'+it.map(li).join("")+'</ul>'+(it.length>MAX?'<button type="button" class="mu-tudo" id="u-tudo">Ver os '+it.length+'</button>':'')
+      :'<p class="meta">Nada vencendo hoje ou amanhã.</p>');
+  el.hidden=false;
+  const b=$("#u-tudo"); if(b) b.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); b.textContent=ab?"Mostrar só os "+MAX+" primeiros":"Ver os "+it.length; });
+})();
+
+/* ---------- EQUIPE E CONTATOS (17/11/2026): aba Equipe da Pipeline TRX, sem PIN ---------- */
+(function(){
+  const EQ=D.equipe||[], el=$("#equipe"); if(!el||!EQ.length) return;
+  const todos=EQ.map(p=>p.e).filter(Boolean);
+  el.innerHTML='<h3>Equipe e contatos</h3><ul class="eq-l">'+EQ.map(p=>'<li><span class="eq-av">'+esc((p.n||"?").charAt(0))+'</span><span class="eq-n"><b>'+esc(p.n)+'</b>'
+      +(p.pa?'<span class="meta">'+esc(p.pa)+'</span>':'<span class="meta">@'+esc(p.ap)+'</span>')+'</span><span class="eq-a">'
+      +(p.tel?'<a href="https://wa.me/'+esc(p.tel)+'" target="_blank" rel="noopener" title="WhatsApp de '+esc(p.n)+'">WhatsApp</a>':'')
+      +(p.e?'<a href="mailto:'+esc(p.e)+'" title="'+esc(p.e)+'">E-mail</a>':'')+'</span></li>').join("")+'</ul>'
+    +(todos.length?'<div class="eq-todos"><a class="btn-grad" href="mailto:?bcc='+encodeURIComponent(todos.join(","))+'&subject='+encodeURIComponent("TRX · ")+'">E-mail para a equipe toda</a>'
+      +'<button type="button" class="mu-tudo" id="eq-cp">Copiar os e-mails</button></div>':'');
+  el.hidden=false;
+  const cp=$("#eq-cp"); if(cp) cp.addEventListener("click",async()=>{ try{ await navigator.clipboard.writeText(todos.join(", ")); cp.textContent="Copiados"; }catch(_){ cp.textContent="Não deu para copiar"; } setTimeout(()=>cp.textContent="Copiar os e-mails",1600); });
+})();
+
+/* ---------- OBJETIVOS DA SEMANA (17/11/2026): aba Objetivos da Pipeline TRX, app de Edição v15 ---------- */
+(function(){
+  const el=$("#obj"); if(!el) return;
+  const CK="central-mural-cred";
+  const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
+  const seg=d=>{ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; };
+  const br=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();
+  const SEG=seg(new Date()), SEX=new Date(SEG); SEX.setDate(SEX.getDate()+4);
+  const semD=s=>{ const m=/(\d{2})\/(\d{2})\/(\d{4})/.exec(s||""); return m?new Date(+m[3],+m[2]-1,+m[1]):null; };
+  let OB=D.objetivos||[];
+  const nomes=(D.equipe||[]).map(p=>p.n);
+  function vis(){ return OB.filter(o=>{ const d=semD(o.sem); if(!d) return false; if(d.getTime()===SEG.getTime()) return true; return d<SEG && o.st==="aberto"; }); }
+  function render(msg){
+    const L=vis(), c=cred();
+    window.OBJ_SEMANA={t:L.length,f:L.filter(o=>o.st==="feito").length}; window.dispatchEvent(new Event("central-obj"));
+    el.innerHTML='<h3>Objetivos da semana · '+String(SEG.getDate()).padStart(2,"0")+' a '+br(SEX).slice(0,5)+'</h3>'
+      +(L.length?'<ul class="ob-l">'+L.map(o=>{ const ant=semD(o.sem)<SEG;
+        return '<li class="st-'+esc(o.st.replace(" ","-"))+'" data-l="'+o.l+'"><span class="ob-ck" aria-hidden="true"></span><span class="ob-t"><b>'+esc(o.t)+'</b>'
+          +'<span class="meta">'+esc(o.dono||"sem dono")+(ant?' · <span class="d-warn">vem da semana de '+esc(o.sem.slice(0,5))+'</span>':'')+(o.st==="feito"?' · feito':o.st==="nao deu"?' · não deu':'')+(o.obs?' · '+esc(o.obs):'')+'</span></span>'
+          +(o.st==="aberto"?'<span class="ob-ac"><button type="button" data-st="feito">Feito</button><button type="button" data-st="nao deu">Não deu</button></span>'
+            :'<span class="ob-ac"><button type="button" data-st="aberto">Reabrir</button></span>')+'</li>'; }).join("")+'</ul>'
+        :'<p class="meta">Nenhum objetivo para esta semana ainda.</p>')
+      +'<form class="ob-f" autocomplete="off"><input id="ob-t" maxlength="300" placeholder="Novo objetivo da semana">'
+      +'<select id="ob-d"><option value="">Dono</option>'+nomes.map(n=>'<option>'+esc(n)+'</option>').join("")+'</select>'
+      +(c?'':'<input id="ob-ap" placeholder="apelido" size="8" autocapitalize="none"><input id="ob-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">')
+      +'<button type="submit">Adicionar</button></form><p class="meta ob-st">'+esc(msg||"")+'</p>';
+    el.querySelector(".ob-f").addEventListener("submit",ev=>{ ev.preventDefault(); const t=$("#ob-t").value.trim(); if(!t) return; enviar("objetivoNovo",{objetivo:t,dono:$("#ob-d").value}); });
+    el.querySelectorAll(".ob-ac button").forEach(b=>b.addEventListener("click",()=>{ const l=+b.closest("li").dataset.l, o=OB.find(x=>x.l===l); if(!o) return;
+      let obs=""; if(b.dataset.st==="nao deu"){ obs=(prompt("O que travou? (opcional)")||"").trim(); }
+      enviar("objetivoMarcar",{linha:l,objetivo:o.t,status:b.dataset.st,obs:obs}); }));
+  }
+  async function enviar(action,o){
+    let c=cred();
+    if(!c){ const ap=(($("#ob-ap")||{}).value||"").trim().toLowerCase(), pin=(($("#ob-pin")||{}).value||"").trim();
+      if(!ap||!pin){ el.querySelector(".ob-st").textContent="Preencha apelido e PIN (os mesmos do app de Edição)."; return; }
+      c={apelido:ap,pin:pin}; }
+    el.querySelector(".ob-st").textContent="Salvando…";
+    try{
+      const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:action,cred:c,o:o})});
+      const j=await r.json(); if(!j.ok) throw new Error(j.erro||"Não deu para salvar.");
+      const novo=!cred(); try{ localStorage.setItem(CK,JSON.stringify(c)); }catch(_){}
+      OB=(j.objetivos||[]).map(x=>({l:x.l,sem:x.sem,t:x.t,dono:x.dono,st:String(x.st||"aberto").toLowerCase(),a:x.a,q:x.q,obs:x.obs}));
+      render("Salvo."); if(novo) window.dispatchEvent(new Event("central-cred"));
+    }catch(err){ const m=String((err&&err.message)||err);
+      if(m.indexOf("LOGIN")>=0){ try{localStorage.removeItem(CK);}catch(_){} render("Apelido ou PIN não conferem."); }
+      else el.querySelector(".ob-st").textContent=/desconhecida/.test(m)?"O app de Edição ainda está na versão antiga; falta implantar a v15.":"Não deu: "+m; }
+  }
+  window.addEventListener("central-cred",()=>{ if(!el.contains(document.activeElement)) render(); });
+  render();
+})();
+
 /* ---------- painel de abertura da aba Início (layout v2, 17/11/2026) ---------- */
 (function(){
   const el=$("#ini-hero"); if(!el) return;
   function pinta(){
     const nHoje=document.querySelectorAll("#hoje .hj-lista>li").length;
-    const pz7=PR.filter(p=>p.dt&&!passou(p.dt)&&dias(p.dt)!==null&&dias(p.dt)<=7).length;
-    const ig=(D.destaque_isgh||[]).filter(i=>i.dt&&dias(i.dt)!==null&&dias(i.dt)<0).length;
-    const val=(D.documentos_alerta||[]).length;
+    const nUrg=document.querySelectorAll("#urg li").length;
+    const pzh=PR.filter(p=>p.prazo&&p.dt&&!passou(p.dt)&&dias(p.dt)!==null&&dias(p.dt)<=1).length;
+    const ob=window.OBJ_SEMANA||{t:0,f:0};
     const mu=(D.mural||[]).length;
     let dia=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"}); dia=dia.charAt(0).toUpperCase()+dia.slice(1);
     const c=(href,n,t,al)=>'<a href="'+href+'"'+(al&&n?' class="al"':'')+'><b>'+n+'</b><span>'+t+'</span></a>';
     el.innerHTML='<div class="ih-t"><span class="ih-ey">Central TRX · hoje</span><span class="ih-d">'+esc(dia)+'</span></div><div class="ih-n">'
-      +c("#inicio",nHoje,"itens na sua fila")
-      +c("#prioridades",pz7,"prazos e toques em 7 dias")
-      +c("#isgh",ig,"ISGH vencidos",true)
-      +c("#inicio",val,"validades a resolver",true)
+      +c("#inicio",nUrg,"urgentes agora",true)
+      +c("#prioridades",pzh,"prazos hoje e amanhã")
+      +c("#inicio",nHoje,"na sua fila")
+      +'<a href="#inicio"><b>'+ob.f+'<small>/'+ob.t+'</small></b><span>objetivos da semana</span></a>'
       +c("#inicio",mu,"recados no mural")+'</div>';
     $("#n-inicio").textContent=nHoje||"";
   }
   pinta();
   const h=$("#hoje"); if(h) new MutationObserver(pinta).observe(h,{childList:true});
+  window.addEventListener("central-obj",pinta);
 })();
 
 /* ---------- abas ---------- */

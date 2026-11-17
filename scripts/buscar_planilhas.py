@@ -109,6 +109,23 @@ except Exception as e:
     json.dump({"values": []}, open("tarefas.json", "w", encoding="utf-8"))
     print(f"::warning::Nao consegui ler a aba Tarefas_Status: {e}")
 
+# Equipe e Objetivos da semana (17/11/2026): contatos da equipe e objetivos na aba Início.
+# Da aba Equipe só saem Nome, Email, Apelido, Ativo, Papel e Telefone; a coluna PIN não é lida.
+try:
+    ev = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Equipe!A1:F80").execute()
+    json.dump(ev, open("equipe.json", "w", encoding="utf-8"), ensure_ascii=False)
+    print(f"OK: equipe {len(ev.get('values', []))} linhas")
+except Exception as e:
+    json.dump({"values": []}, open("equipe.json", "w", encoding="utf-8"))
+    print(f"::warning::Nao consegui ler a aba Equipe: {e}")
+try:
+    ov = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Objetivos!A1:H600").execute()
+    json.dump(ov, open("objetivos.json", "w", encoding="utf-8"), ensure_ascii=False)
+    print(f"OK: objetivos {len(ov.get('values', []))} linhas")
+except Exception as e:
+    json.dump({"values": []}, open("objetivos.json", "w", encoding="utf-8"))
+    print(f"::warning::Nao consegui ler a aba Objetivos: {e}")
+
 # O xlsx do robô do Mac (LICIT_ID) deixou de ser baixado em 02/10/2026: o radar do Mac foi
 # aposentado e a planilha Google de licitações é a única fonte.
 open("mods.env", "w").write(f"MOD_PIPELINE={mod(PIPELINE_ID)}\n")

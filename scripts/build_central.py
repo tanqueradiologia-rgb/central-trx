@@ -430,6 +430,53 @@ def tarefas_status(path):
     return list(est.values())
 
 
+def _linhas(path):
+    try:
+        v = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return [], []
+    rows = v.get("values") if isinstance(v, dict) else v
+    if not rows or len(rows) < 2:
+        return [], []
+    return [str(h).strip() for h in rows[0]], rows[1:]
+
+
+def equipe(path):
+    """Aba Equipe da Pipeline TRX (17/11/2026): contatos para a aba Início. Sai só quem está
+    ativo e é pessoa (as contas 'conta da empresa' e 'conta pessoal' ficam de fora).
+    PIN e Edicao não são lidos."""
+    H, rows = _linhas(path)
+    out = []
+    for r in rows:
+        d = dict(zip(H, r + [""] * (len(H) - len(r))))
+        nome = txt(d.get("Nome"), 60)
+        if not nome or "conta" in nome.lower():
+            continue
+        if str(d.get("Ativo") or "").strip().lower() in ("não", "nao", "n", "false", "0"):
+            continue
+        tel = re.sub(r"\D", "", str(d.get("Telefone") or ""))
+        if tel and len(tel) <= 11:
+            tel = "55" + tel
+        out.append({"n": nome, "ap": txt(d.get("Apelido"), 30).lower(), "e": txt(d.get("Email"), 80),
+                    "pa": txt(d.get("Papel"), 80), "tel": tel})
+    return out
+
+
+def objetivos(path):
+    """Aba Objetivos da Pipeline TRX (17/11/2026), escrita pelo app de Edição v15."""
+    H, rows = _linhas(path)
+    out = []
+    for i, r in enumerate(rows, start=2):
+        d = dict(zip(H, r + [""] * (len(H) - len(r))))
+        t = txt(d.get("Objetivo"), 300)
+        if not t:
+            continue
+        out.append({"l": i, "sem": txt(d.get("Semana"), 12), "t": t, "dono": txt(d.get("Dono"), 60),
+                    "st": txt(d.get("Status"), 12).lower() or "aberto", "a": txt(d.get("Autor"), 60),
+                    "q": txt(d.get("Atualizado"), 60) or txt(d.get("Criado"), 20), "obs": txt(d.get("Observacao"), 400)})
+    return out
+
+
 def mural(path):
     """Aba Mural da Pipeline TRX (15/11/2026): recados gerais da equipe, postados pelo
     app de Edição v13. A Central mostra os 30 mais recentes em todas as áreas."""
@@ -763,6 +810,8 @@ def main():
     ap.add_argument("--producao", default="", help="producao.json (abas Producao_Params, Producao_Socios e Escala_Socios)")
     ap.add_argument("--mural", default="", help="mural.json (aba Mural da Pipeline TRX)")
     ap.add_argument("--tarefas", default="", help="tarefas.json (aba Tarefas_Status da Pipeline TRX)")
+    ap.add_argument("--equipe", default="", help="equipe.json (aba Equipe da Pipeline TRX, sem PIN)")
+    ap.add_argument("--objetivos", default="", help="objetivos.json (aba Objetivos da Pipeline TRX)")
     ap.add_argument("--contratos", default="", help="contratos.json (aba Contratos da Documentos TRX)")
     a = ap.parse_args()
 
@@ -824,6 +873,8 @@ def main():
         "producao_socios": producao_socios(a.producao) if a.producao else {},
         "mural": mural(a.mural) if a.mural else [],
         "tarefas_status": tarefas_status(a.tarefas) if a.tarefas else [],
+        "equipe": equipe(a.equipe) if a.equipe else [],
+        "objetivos": objetivos(a.objetivos) if a.objetivos else [],
         "fiscal": {"contratos": contratos(a.contratos) if a.contratos else [],
                     "documentos": documentos_todos(a.documentos) if a.documentos else [],
                     "contratos_fonte": {"id": DOCS_SHEET, "gid": CONTRATOS_GID}},
