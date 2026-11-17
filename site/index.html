@@ -300,7 +300,7 @@ nav.tabs a[aria-current="page"]{background:var(--grad);color:var(--grad-ink)}
 nav.tabs a[aria-current="page"] .n{color:var(--grad-ink);opacity:.8}
 nav.tabs .n{font-size:11px;margin-left:5px}
 .tema{font-size:12px;padding:4px 10px}
-.tema-nav{margin:0 0 0 auto}#sair{margin:0 0 0 4px}
+.tema-nav{margin:0}#sair{margin:0}
 section.pane{gap:16px;padding-block:20px 0}
 /* cartões */
 .kpi,.band,.tbl,.agenda,.avisos,.dossie .dc,.pr-fat .c,.rt-col,.ag-col{border-radius:var(--r);border-color:var(--line)}
@@ -388,6 +388,12 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 .mural-band .mu-linha button{background:var(--grad);color:#f8fafc;border:0;border-radius:10px}
 .mural-band textarea{border-radius:10px}
 .docs-al{border-left:3px solid var(--bad)}
+.docs-al:not(.tudo) li:nth-child(n+6){display:none}
+.docs-al .mu-tudo{font:inherit;font-size:13px;color:var(--turq);font-weight:600;background:none;border:0;padding:6px 0 0;cursor:pointer}
+#avisos summary{cursor:pointer;list-style:none}#avisos summary::-webkit-details-marker{display:none}
+#avisos summary h3{display:inline;margin:0}#avisos summary::after{content:" ▸";color:var(--muted)}#avisos details[open] summary::after{content:" ▾"}
+#avisos details[open] ul{margin-top:8px}
+.acoes{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 </style>
 
 </head>
@@ -403,21 +409,21 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
         <div class="sub">Clínicas, licitações e prazos da TRX</div>
         </div>
       </div>
-      <div class="fresh" id="fresh"><span class="dot"></span><span id="freshTxt">Carregando dados…</span></div>
+      <div class="acoes"><div class="fresh" id="fresh"><span class="dot"></span><span id="freshTxt">Carregando dados…</span></div>
+      <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
+      <button class="tema" id="sair" type="button" hidden title="Apaga a senha guardada neste aparelho">Sair</button></div>
     </div>
     <nav class="tabs" aria-label="Frentes">
       <a href="#inicio" data-tab="inicio">Início<span class="n" id="n-inicio"></span></a>
       <a href="#prioridades" data-tab="prioridades">Prioridades<span class="n" id="n-prioridades"></span></a>
-      <a href="#clinicas" data-tab="clinicas">Clínicas particulares<span class="n" id="n-clinicas"></span></a>
-      <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
-      <a href="#quadro" data-tab="quadro">Quadro nacional<span class="n" id="n-quadro"></span></a>
+      <a href="#clinicas" data-tab="clinicas" title="Clínicas particulares">Clínicas<span class="n" id="n-clinicas"></span></a>
+      <a href="#licitacoes" data-tab="licitacoes" title="Licitações e prazos">Licitações<span class="n" id="n-licitacoes"></span></a>
+      <a href="#quadro" data-tab="quadro" title="Quadro nacional">Quadro<span class="n" id="n-quadro"></span></a>
       <a href="#isgh" data-tab="isgh">ISGH<span class="n" id="n-isgh"></span></a>
       <a href="#roteiro" data-tab="roteiro">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
-      <a href="#producao" data-tab="producao">Produção dos sócios<span class="n" id="n-producao"></span></a>
-      <a href="#fiscal" data-tab="fiscal">Fiscal e Jurídico<span class="n" id="n-fiscal"></span></a>
-      <button class="tema tema-nav" id="tema" type="button">Tema escuro</button>
-      <button class="tema" id="sair" type="button" hidden title="Apaga a senha guardada neste aparelho">Sair</button>
+      <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
+      <a href="#fiscal" data-tab="fiscal" title="Fiscal e Jurídico">Fiscal<span class="n" id="n-fiscal"></span></a>
     </nav>
     <div id="saude" class="saude" hidden></div>
   </div>
@@ -1189,11 +1195,12 @@ const lPr = makeList({
   try{ const DA=D.documentos_alerta||[], DF=D.documentos_fonte||{};
     if(DA.length){ const el=$("#docs-al"); el.hidden=false;
       const url=l=>"https://docs.google.com/spreadsheets/d/"+DF.id+"/edit#gid="+DF.gid+"&range=A"+l;
-      el.innerHTML='<h3>Validades para resolver · '+DA.length+'</h3><ul>'+DA.map(x=>'<li><a href="'+url(x.l)+'" target="_blank" rel="noopener"><b>'+esc(x.doc)+'</b></a> · '+
+      el.innerHTML='<h3>Validades para resolver · '+DA.length+'</h3><ul>'+DA.map(x=>'<li><a href="'+url(x.l)+'" target="_blank" rel="noopener"'+(x.mot?' title="'+esc(x.mot)+'"':'')+'><b>'+esc(x.doc)+'</b></a> · '+
         (x.venc?'<span class="tag v">VENCIDO'+(x.val?' em '+fData(x.val):'')+'</span> <span class="meta">o Marcos irá regularizar</span>'
          :x.breve?'<span class="tag b">'+esc(x.breve)+(x.val?' · '+fData(x.val):'')+'</span>'
          :'<span class="tag d">DESATUALIZADO</span>')+
-        (x.mot?' · '+esc(x.mot):'')+(x.resp?' <span class="meta">· '+esc(x.resp)+'</span>':'')+'</li>').join("")+'</ul>'; } }catch(e){}
+        (x.resp?' <span class="meta">· '+esc(x.resp)+'</span>':'')+'</li>').join("")+'</ul>'+(DA.length>5?'<button type="button" class="mu-tudo" id="da-tudo">Ver as '+DA.length+'</button>':'');
+      const b=$("#da-tudo"); if(b) b.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); b.textContent=ab?"Mostrar só as cinco primeiras":"Ver as "+DA.length; }); } }catch(e){}
   // Mural da equipe (15/11/2026): recados da aba Mural da Pipeline TRX, visíveis em todas as áreas.
   // Posição: topo da página, logo após o Hoje e antes da Prioridade máxima (Marcos, 15/11/2026).
   // Publicação ali mesmo (15/11/2026 à noite): o formulário posta no app de Edição (doPost JSON),
@@ -1241,7 +1248,7 @@ const lPr = makeList({
   // avisos da verificação automática, cada um numa linha (os prazos já aparecem na agenda)
   try{ const S=window.SAUDE; if(S){ const al=(S.alertas||[]).filter(a=>!/vencem em até 7 dias/.test(a)), av=S.avisos||[];
     if(al.length||av.length){ const el=$("#avisos"); el.hidden=false;
-      el.innerHTML='<h3>Avisos do sistema</h3><ul>'+al.map(a=>'<li class="al">'+esc(a)+'</li>').join("")+av.map(a=>'<li>'+esc(a)+'</li>').join("")+'</ul>'; } } }catch(e){}
+      el.innerHTML='<details><summary><h3>Avisos do sistema · '+(al.length+av.length)+'</h3></summary><ul>'+al.map(a=>'<li class="al">'+esc(a)+'</li>').join("")+av.map(a=>'<li>'+esc(a)+'</li>').join("")+'</ul></details>'; } } }catch(e){}
 })();
 
 
@@ -1557,11 +1564,11 @@ const lFis=(function(){
     const ig=(D.destaque_isgh||[]).filter(i=>i.dt&&dias(i.dt)!==null&&dias(i.dt)<0).length;
     const val=(D.documentos_alerta||[]).length;
     const mu=(D.mural||[]).length;
-    const dia=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+    let dia=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"}); dia=dia.charAt(0).toUpperCase()+dia.slice(1);
     const c=(href,n,t,al)=>'<a href="'+href+'"'+(al&&n?' class="al"':'')+'><b>'+n+'</b><span>'+t+'</span></a>';
     el.innerHTML='<div class="ih-t"><span class="ih-ey">Central TRX · hoje</span><span class="ih-d">'+esc(dia)+'</span></div><div class="ih-n">'
       +c("#inicio",nHoje,"itens na sua fila")
-      +c("#prioridades",pz7,"prazos em 7 dias")
+      +c("#prioridades",pz7,"prazos e toques em 7 dias")
       +c("#isgh",ig,"ISGH vencidos",true)
       +c("#inicio",val,"validades a resolver",true)
       +c("#inicio",mu,"recados no mural")+'</div>';
