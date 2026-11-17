@@ -423,6 +423,14 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 #avisos summary h3{display:inline;margin:0}#avisos summary::after{content:" ▸";color:var(--muted)}#avisos details[open] summary::after{content:" ▾"}
 #avisos details[open] ul{margin-top:8px}
 .acoes{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.urg .u-cv{list-style:none;margin:8px 0 0;padding:6px 0 0 10px;border-left:2px solid var(--line);font-size:13px}
+.urg .u-cv li{padding:2px 0;border:0}
+.urg .u-cv li.cl{color:var(--turq)}
+.urg .u-pd{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.urg .u-pd input{flex:1;min-width:200px;font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.urg .u-pd button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border:0;border-radius:10px;background:var(--grad);color:#f8fafc;cursor:pointer}
+.urg .u-pd button:disabled{opacity:.6}
+.urg .u-st{flex-basis:100%}
 .urg{border-left:3px solid var(--bad)}
 .urg h3{color:var(--bad)}
 .urg .u-l{list-style:none;margin:0;padding:0}
@@ -1712,15 +1720,51 @@ const lFis=(function(){
   // documento vencido sempre no topo (Marcos, 17/11/2026); depois o resto pela data
   it.sort((a,b)=>((a.of==="Documento"?0:1)-(b.of==="Documento"?0:1))||((a.d??0)-(b.d??0)));
   const MAX=8;
+  /* Pedir ao Claude (17/11/2026): o pedido vai para a aba Tarefas_Status como observação "@claude ..."
+     (Pessoa "Urgente", Chave por item); a tarefa "Pedidos @claude da Central" responde na mesma chave,
+     e a resposta aparece aqui embaixo do item. */
+  const ukey=x=>("urg|"+x.of+"|"+x.t).slice(0,80);
+  const TS=(D.tarefas_status||[]).filter(e=>e.p==="Urgente");
+  let LOCU=[]; try{ LOCU=JSON.parse(localStorage.getItem("central-urg-ped")||"[]").filter(e=>Date.now()-e.ts<3*864e5); }catch(_){}
+  function conversa(x){
+    const k=ukey(x), e=TS.find(e=>e.k===k), obs=(e?e.obs:[]).slice();
+    LOCU.filter(l=>l.k===k && !obs.some(o=>o.o===l.o)).forEach(l=>obs.push({q:l.q,a:l.a,o:l.o}));
+    if(!obs.length) return '';
+    return '<ul class="u-cv">'+obs.map(o=>'<li class="'+(/^claude/i.test(o.a||"")?'cl':'')+'"><span class="meta">'+esc(o.q)+' · '+esc(o.a)+'</span> '+esc(o.o)+'</li>').join("")+'</ul>';
+  }
+  const pedir=x=>'<form class="u-pd" data-k="'+esc(ukey(x))+'" autocomplete="off"><input maxlength="560" placeholder="Pedir ao Claude: o que você quer que eu resolva aqui?"><button type="submit">Pedir ao Claude</button><span class="meta u-st"></span></form>';
   const li=x=>'<li><details><summary><span class="u-d '+(x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):'')+'</span>'
     +'<b>'+esc(x.t)+'</b><span class="u-of">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</summary>'
     +'<div class="u-x">'+x.x.map(t=>'<p>'+esc(t)+'</p>').join("")+(x.r?'<p class="meta">Com: '+esc(x.r)+'</p>':'')
-    +'<div class="u-ac">'+x.ac.filter(Boolean).map(a=>'<a href="'+esc(a[0])+'"'+(a[2]?' target="_blank" rel="noopener"':'')+'>'+esc(a[1])+'</a>').join("")+'</div></div></details></li>';
+    +'<div class="u-ac">'+x.ac.filter(Boolean).map(a=>'<a href="'+esc(a[0])+'"'+(a[2]?' target="_blank" rel="noopener"':'')+'>'+esc(a[1])+'</a>').join("")+'</div>'
+    +conversa(x)+pedir(x)+'</div></details></li>';
   el.innerHTML='<h3>Urgente agora · '+it.length+'</h3>'
     +(it.length?'<ul class="u-l">'+it.map(li).join("")+'</ul>'+(it.length>MAX?'<button type="button" class="mu-tudo" id="u-tudo">Ver os '+it.length+'</button>':'')
       :'<p class="meta">Nada vencendo hoje ou amanhã.</p>');
   el.hidden=false;
   const b=$("#u-tudo"); if(b) b.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); b.textContent=ab?"Mostrar só os "+MAX+" primeiros":"Ver os "+it.length; });
+  const CK="central-mural-cred";
+  el.querySelectorAll(".u-pd").forEach(f=>f.addEventListener("submit",async ev=>{
+    ev.preventDefault();
+    const st=f.querySelector(".u-st"), bt=f.querySelector("button"), inp=f.querySelector("input");
+    const txt=inp.value.trim(); if(!txt){ st.textContent="Escreva o pedido."; return; }
+    let c=null; try{ c=JSON.parse(localStorage.getItem(CK)||"null"); }catch(_){}
+    if(!c){ st.textContent="Entre primeiro com apelido e PIN no Mural ou na Minha fila."; return; }
+    const x=it.find(i=>ukey(i)===f.dataset.k); if(!x) return;
+    bt.disabled=true; st.textContent="Enviando…";
+    try{
+      const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:"tarefaMarcar",cred:c,
+        t:{pessoa:"Urgente",chave:f.dataset.k,titulo:x.t,origem:x.of,status:"",obs:"@claude "+txt}})});
+      const j=await r.json(); if(!j.ok) throw new Error(j.erro||"Não deu para enviar.");
+      LOCU.push({k:f.dataset.k,q:j.quando,a:j.autor,o:"@claude "+txt,ts:Date.now()});
+      try{ localStorage.setItem("central-urg-ped",JSON.stringify(LOCU)); }catch(_){}
+      inp.value=""; st.textContent="Pedido enviado. O Claude responde aqui na próxima rodada (10h37, 13h37, 16h37, 19h37 ou 22h37).";
+      const cv=document.createElement("ul"); cv.className="u-cv"; cv.innerHTML='<li><span class="meta">'+esc(j.quando)+' · '+esc(j.autor)+'</span> @claude '+esc(txt)+'</li>';
+      f.parentNode.insertBefore(cv,f);
+    }catch(err){ const m=String((err&&err.message)||err);
+      st.textContent=m.indexOf("LOGIN")>=0?"Apelido ou PIN não conferem.":"Não deu: "+m;
+    }finally{ bt.disabled=false; }
+  }));
 })();
 
 /* ---------- EQUIPE E CONTATOS (17/11/2026): aba Equipe da Pipeline TRX, sem PIN ----------
