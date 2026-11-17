@@ -8,10 +8,21 @@
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}.saude{margin:8px 0 2px;padding:8px 12px;border-radius:8px;font-size:13px;line-height:1.45;border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent)}
 .saude summary{cursor:pointer;font-weight:600}.saude ul{margin:6px 0 0 18px;padding:0}
 #rel-doc{display:none}
+/* o relatório não herda a tabela, o th e o td da Central (17/11/2026) */
+#rel-doc,#rel-doc *{box-sizing:border-box}
+#rel-doc{font-size:11px;line-height:1.45;color:#28313e;background:#fff}
+#rel-doc table{min-width:0 !important;width:100%;table-layout:fixed}
+#rel-doc th{background:transparent;cursor:default;user-select:auto;border-bottom:0;vertical-align:middle}
+#rel-doc td{vertical-align:middle}
+#rel-doc th[data-dir]::after{content:none}
+#rel-doc p,#rel-doc ul,#rel-doc h1,#rel-doc h2{margin-top:0}
+#rel-doc .rel-pag{width:210mm;height:297mm;overflow:hidden;break-after:page;page-break-after:always}
+#rel-doc .rel-pag:last-child{break-after:auto;page-break-after:auto}
 @media print{
   body.imprimindo > *{display:none !important}
   body.imprimindo #rel-doc{display:block !important}
-  body.imprimindo{background:#fff}
+  body.imprimindo{background:#fff;margin:0;padding:0}
+  html:has(body.imprimindo){padding:0 !important}
   /* sem isto o navegador apaga os fundos ao gerar o PDF e o relatório sai sem cor (17/11/2026) */
   body.imprimindo #rel-doc, body.imprimindo #rel-doc *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
   @page{size:A4;margin:0}
@@ -1979,7 +1990,7 @@ const lRel = (function(){
     + '<span style="height:1px;background:'+LINHA+';flex-grow:1"></span></div>';
   const faixa = sub => '<div style="background:'+NAVY+';background-image:'+GRAD+';border-bottom:4px solid '+CIANO+';padding:22px 48px;display:flex;justify-content:space-between;align-items:center;gap:28px">'
     + '<img src="marca/trx-simplificado-negativo.svg" alt="TRX Diagnóstico Digital" style="width:158px;height:auto;display:block">'
-    + '<div style="text-align:right">'+kick("Telerradiologia · "+sub,CIANO,"10px","0.18em")
+    + '<div style="text-align:right;flex:1;min-width:0">'+kick("Telerradiologia · "+sub,CIANO,"10px","0.18em")
     + '<h1 style="margin:6px 0 0;font-family:'+CS+';font-size:25px;font-weight:700;line-height:1.1;letter-spacing:0.01em;text-transform:uppercase;color:#fff">'
     + (sub==="Fechamento de medição" ? "Relatório de faturamento" : "Relatório de exames laudados") + '</h1></div></div>';
   const tiras = pares => '<div style="background:'+TINTA+';border-bottom:1px solid #cfe7ef;padding:12px 48px;display:grid;grid-template-columns:repeat('+pares.length+',minmax(0,1fr));gap:16px">'
@@ -1993,7 +2004,7 @@ const lRel = (function(){
     + kick("Responsável técnico")+'<div style="margin-top:4px;font-size:14px;font-weight:700;color:'+NAVY+'">Dr. Marcos Mendes Sales</div>'
     + '<div style="font-size:11px;color:'+TXT2+';font-variant-numeric:tabular-nums">CRM-DF 26.054 · RQE 17.170</div></div>'
     + '<div style="text-align:right;font-size:11px;line-height:1.5;color:'+TXT2+'"><strong style="color:'+NAVY+'">TRX DIGNOSTICO DIGITAL LTDA</strong><br>Emitido em '+esc(emissao)+'</div></div>';
-  const pagina = dentro => '<div style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:'+TXT+';position:relative;overflow:hidden;display:flex;flex-direction:column;font-family:\'Open Sans\',Arial,sans-serif">'
+  const pagina = dentro => '<div class="rel-pag" style="width:210mm;height:297mm;box-sizing:border-box;background:#fff;color:'+TXT+';position:relative;overflow:hidden;display:flex;flex-direction:column;font-family:\'Open Sans\',Arial,sans-serif">'
     + '<img src="marca/trx-simplificado.svg" alt="" aria-hidden="true" style="position:absolute;right:10px;bottom:60px;width:200px;height:200px;opacity:0.04">' + dentro + '</div>';
 
   function listaOutros(){
@@ -2002,9 +2013,9 @@ const lRel = (function(){
   }
   function tabela(comValor, preco){
     const itens = D.principais.concat(D.qtOutros?[["Outros ("+listaOutros()+")", D.qtOutros]]:[]);
-    const th = (t,w,dir) => '<th scope="col" style="text-align:'+(dir||"left")+';padding:6px 12px;'+(w?"width:"+w+";":"")+'font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff">'+t+'</th>';
+    const th = (t,w,dir) => '<th scope="col" style="text-align:'+(dir||"left")+';padding:7px 12px;white-space:nowrap;'+(w?"width:"+w+";":"")+'font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff">'+t+'</th>';
     return '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:'+NAVY+';background-image:'+GRADH+'">'
-      + th("Tipo de exame") + th("Qtd.","56px","right") + (comValor?th("Valor","120px","right"):"")
+      + th("Tipo de exame") + th("Qtd.","70px","right") + (comValor?th("Valor","130px","right"):"")
       + '</tr></thead><tbody>'
       + itens.map((x,i)=>'<tr style="'+(i%2?"background:"+TINTA:"")+'">'
         + '<td style="padding:4px 12px;border-bottom:1px solid '+LINHA+'">'+esc(x[0])+'</td>'
@@ -2022,7 +2033,7 @@ const lRel = (function(){
     return pagina(faixa("Produção finalizada")
       + tiras([["Cliente",f.cliente],["Período de apuração",D.primeiro+" a "+f.emissao],["Emissão",f.emissao],["Modalidade",f.modNome]])
       + '<div style="flex-grow:1;padding:16px 48px 0;display:flex;flex-direction:column;gap:11px">'
-      + '<div>'+sec("Resumo executivo")+'<p style="margin:0;font-size:11.5px;line-height:1.55;text-align:justify">Produção de exames de '+esc(f.modNome)+' do hospital laudados pela TRX Diagnóstico Digital. O destaque abaixo traz o que foi liberado desde a última atualização; o total do período acumula os exames já finalizados e devolvidos ao sistema de laudos da unidade.</p></div>'
+      + '<div>'+sec("Resumo executivo")+'<p style="margin:0;font-size:11.5px;line-height:1.55;text-align:left;hyphens:auto">Produção de exames de '+esc(f.modNome)+' do hospital laudados pela TRX Diagnóstico Digital. O destaque abaixo traz o que foi liberado desde a última atualização; o total do período acumula os exames já finalizados e devolvidos ao sistema de laudos da unidade.</p></div>'
       + '<div style="background:'+NAVY+';background-image:'+GRAD+';border-radius:6px;padding:14px 22px;display:flex;align-items:center;gap:20px"><div style="flex-shrink:0">'
       + kick("Atualização de "+f.emissao,CIANO,"9px","0.14em")
       + '<div style="margin-top:2px;font-size:42px;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums">'+novos+'</div></div>'
@@ -2033,7 +2044,7 @@ const lRel = (function(){
       + '<div>'+sec("Distribuição por tipo de exame")+tabela(false)+'</div>'
       + '<div>'+sec("Corpo clínico e condições de entrega")
       + '<div style="background:'+TINTA+';border-left:3px solid '+CIANO2+';padding:9px 14px;font-size:11.5px;line-height:1.5"><strong>Equipe responsável pelos laudos.</strong> '+D.radiologistas+' médicos radiologistas com título de especialista e RQE ativo, habilitados em telerradiologia.</div>'
-      + '<ul style="margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.5"><li>Período apurado de '+esc(D.primeiro.slice(0,5))+' a '+esc(f.emissao)+'. Exames recebidos após essa data entram no próximo relatório.</li>'
+      + '<ul style="margin:8px 0 0;padding-left:16px;font-size:11.5px;line-height:1.5"><li>Período apurado de '+esc(D.primeiro.slice(0,5))+' a '+esc(f.emissao)+'. Exames recebidos após essa data entram no próximo relatório.</li>'
       + '<li>Todos os laudos assinados com certificado digital ICP-Brasil e inseridos no sistema de laudos da unidade.</li></ul></div>'
       + assina(f.emissao) + '</div>' + rodape("Documento gerado para auditoria e controle interno"));
   }
@@ -2044,7 +2055,7 @@ const lRel = (function(){
     return pagina(faixa("Fechamento de medição")
       + tiras([["Cliente",f.cliente],["Medição",f.medicao],["Período apurado",D.primeiro+" a "+D.ultimo],["Emissão",f.emissao]])
       + '<div style="flex-grow:1;padding:14px 48px 0;display:flex;flex-direction:column;gap:9px">'
-      + '<div>'+sec("Resumo da medição")+'<p style="margin:0;font-size:11px;line-height:1.5;text-align:justify">Fechamento do período de execução dos laudos de '+esc(f.modNome)+' do hospital. Todos os exames abaixo foram finalizados, assinados com certificado digital ICP-Brasil e devolvidos ao sistema de laudos da unidade dentro do período apurado.</p></div>'
+      + '<div>'+sec("Resumo da medição")+'<p style="margin:0;font-size:11px;line-height:1.5;text-align:left;hyphens:auto">Fechamento do período de execução dos laudos de '+esc(f.modNome)+' do hospital. Todos os exames abaixo foram finalizados, assinados com certificado digital ICP-Brasil e devolvidos ao sistema de laudos da unidade dentro do período apurado.</p></div>'
       + '<div style="background:'+NAVY+';background-image:'+GRAD+';border-radius:6px;padding:13px 22px;display:flex;align-items:center;gap:22px"><div style="flex-shrink:0">'
       + kick("Valor total a faturar",CIANO,"9px","0.14em")
       + '<div style="margin-top:2px;font-size:36px;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums">'+money(D.total*f.preco)+'</div></div>'
@@ -2055,7 +2066,7 @@ const lRel = (function(){
       + cartoes([[f.mod,"Modalidade"],[f.contratoRot,"Contrato"],["ICP-Brasil","Assinatura dos laudos"],[f.prazoPg,"Prazo de pagamento"]])
       + '<div>'+sec("Composição do faturamento por tipo de exame")+tabela(true,f.preco)+'</div>'
       + '<div>'+sec("Condições de faturamento")
-      + '<ul style="margin:0;padding-left:18px;font-size:10.5px;line-height:1.5">'
+      + '<ul style="margin:0;padding-left:16px;font-size:10.5px;line-height:1.5">'
       + '<li>Valores brutos, conforme proposta aceita. As retenções tributárias correm por conta da TRX, sem acréscimo na nota fiscal: a NF sai pelo valor unitário multiplicado pelo quantitativo.</li>'
       + '<li>Medição quinzenal. Pagamento em até '+esc(f.prazoPg)+' contados da apresentação da nota fiscal.</li>'
       + (saldo!==null?'<li>Saldo do pacote de '+f.pacote+' laudos após esta medição: '+saldo+' laudos.</li>':'')
