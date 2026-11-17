@@ -453,6 +453,32 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 .eqp .eq-env button:disabled{opacity:.6}
 .btn-grad{display:inline-block;background:var(--grad);color:#f8fafc;text-decoration:none;font-size:13px;font-weight:600;border-radius:10px;padding:6px 14px}
 .ini-hero .ih-n b small{font-size:14px;opacity:.75}
+/* ===== aba Kit (17/11/2026): modelos no padrão gráfico da TRX ===== */
+.kt-grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:920px){.kt-grid{grid-template-columns:1fr}}
+.kt-col{display:flex;flex-direction:column;gap:12px}
+.kt-f{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.kt-f>span{font-family:var(--f-display);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.kt-f input,.kt-f select,.kt-f textarea{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);resize:vertical}
+.kt-f textarea{min-height:88px;line-height:1.5}
+.kt-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.kt-btns button{font:inherit;font-size:13px;font-weight:600;padding:7px 14px;border:0;border-radius:10px;background:var(--grad);color:#f8fafc;cursor:pointer}
+.kt-btns button.sec{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.kt-vis{border:1px solid var(--line);border-radius:var(--r);background:var(--surface2);padding:14px;overflow:auto;max-height:78vh}
+.kt-vis .folha{box-shadow:0 2px 14px rgba(14,57,88,.16);margin:0 auto}
+.kt-drop{border:2px dashed var(--line);border-radius:var(--r);padding:12px;text-align:center;font-size:13px;color:var(--muted);cursor:pointer}
+.kt-drop.on{border-color:var(--turq);background:var(--accent-soft);color:var(--ink)}
+.kt-cores{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:8px}
+.kt-cor{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);cursor:pointer;text-align:left;font:inherit;padding:0}
+.kt-cor i{display:block;height:32px}
+.kt-cor span{display:block;padding:5px 9px;font-size:11px;line-height:1.4;color:var(--muted)}
+.kt-cor b{display:block;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
+.kt-wa{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.kt-wa canvas{width:200px;height:200px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.kt-wa .kt-col{flex:1 1 220px}
+.kt-st{font-size:13px;color:var(--muted);min-height:1.2em}
+.kt-reg{font-size:13px;line-height:1.55}
+.kt-reg li{margin-bottom:4px}
 </style>
 
 </head>
@@ -483,6 +509,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
       <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
+      <a href="#kit" data-tab="kit" title="Modelos no padrão gráfico da TRX">Kit<span class="n" id="n-kit"></span></a>
       <a href="#fiscal" data-tab="fiscal" title="Fiscal e Jurídico">Fiscal<span class="n" id="n-fiscal"></span></a>
     </nav>
     <div id="saude" class="saude" hidden></div>
@@ -631,6 +658,14 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <span class="meta">Suba a planilha que o sistema exporta e a Central monta o relatório pronto para enviar ao cliente. O arquivo é lido aqui no seu navegador e não sai dele. O mesmo arquivo atualiza a aba Produção.</span>
     </div>
     <div id="rel-corpo"></div>
+  </section>
+
+  <section class="pane" id="pane-kit" hidden>
+    <div class="pr-top">
+      <h2>Kit TRX</h2>
+      <span class="meta">O padrão da casa pronto para usar: ofício, comunicado, ata, proposta e e-mail, mais a imagem de grupo do WhatsApp e as cores da marca.</span>
+    </div>
+    <div id="kit-corpo"></div>
   </section>
 
   <section class="pane" id="pane-fiscal" hidden>
@@ -1776,7 +1811,12 @@ const lFis=(function(){
    Prazo não entra em lugar nenhum: é indicador do conjunto, não critério entre sócios. */
 const lRel = (function(){
   const corpo = $("#rel-corpo");
-  const KB = "trx-rel-base", KR = "trx-rel-repasse", CK = "central-mural-cred";
+  const KB = "trx-rel-base", KR = "trx-rel-repasse", CK = "central-mural-cred", KH = "trx-rel-entregas";
+  /* Banco de entregas: todo relatório diário sai da diferença contra o total da entrega anterior,
+     que é como a conta é feita desde 04/11/2026. A semente abaixo são os relatórios já emitidos
+     para o HRVJ; o que for emitido daqui para a frente entra por cima, neste navegador. */
+  const ENTREGAS_SEED = [["04/11/2026",143],["05/11/2026",202],["09/11/2026",263],["10/11/2026",291],
+                         ["11/11/2026",299],["12/11/2026",308],["13/11/2026",322],["16/11/2026",334]];
   const NOMEADAS = ["Pelve feminina","Crânio e encéfalo","Abdome superior","Pelve masculina","Abdome total",
                     "Coluna lombar","Joelho direito","Coluna cervical","Joelho esquerdo","Colangiorressonância"];
   const SOCIOS = ["marcos mendes sales","bruno yoshimitsu","henrique silveira","vinicius alves bezerra","diogo de carvalho"];
@@ -1864,6 +1904,27 @@ const lRel = (function(){
   }
   const repasseDe = (nome,m) => m[sem(nome)] !== undefined ? m[sem(nome)] : m.padrao;
   const ehSocio = nome => SOCIOS.some(x=>sem(nome).indexOf(x)>=0);
+
+  /* ---------- banco de entregas ---------- */
+  const dIso = d => { const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(d||"").trim()); return m ? m[3]+m[2]+m[1] : ""; };
+  function entregas(){
+    let extra=[]; try{ extra=JSON.parse(ls(KH)||"[]")||[]; }catch(e){ extra=[]; }
+    const m={};
+    ENTREGAS_SEED.concat(extra).forEach(e=>{ if(e && e[0] && e[1]) m[e[0]]=parseInt(e[1],10)||0; });
+    return Object.keys(m).map(d=>[d,m[d]]).sort((a,b)=>dIso(a[0])<dIso(b[0])?-1:1);
+  }
+  function entregaAnterior(ate){
+    const lim = dIso(ate||hoje()), es = entregas();
+    let r = null;
+    es.forEach(e=>{ if(dIso(e[0]) < lim) r = e; });
+    return r || (es.length ? null : null);
+  }
+  function registra(data,total){
+    let extra=[]; try{ extra=JSON.parse(ls(KH)||"[]")||[]; }catch(e){ extra=[]; }
+    extra = extra.filter(e=>e[0]!==data).concat([[data,parseInt(total,10)||0]]);
+    ls(KH, JSON.stringify(extra));
+    ls(KB, String(total)); ls(KB+"-data", data);
+  }
 
   /* ---------- o documento A4, no padrão dos relatórios que já saem ---------- */
   const NAVY="#0e3a5a", CIANO="#4cbecf", CIANO2="#0095bd", CINZA="#f4f2f2", LINHA="#dfe0e2", TXT="#28313e", TXT2="#334861";
@@ -2001,12 +2062,14 @@ const lRel = (function(){
       + '<div class="meta" style="margin-top:6px">ou clique para escolher o arquivo. Vale a apuração do dia e o Relatório Nota fiscal, em .xlsx ou .csv.</div>'
       + '<input type="file" id="rl-file" accept=".xlsx,.xls,.csv" hidden></div>';
     if(!D){ corpo.innerHTML = dropo + '<p class="meta" id="rl-st"></p>'; ligaDrop(); return; }
-    const base = parseInt(ls(KB)||"0",10) || 0;
+    const ant = entregaAnterior(hoje());
+    const base = ant ? ant[1] : (parseInt(ls(KB)||"0",10) || 0);
+    const baseQuando = ant ? ant[0] : (ls(KB+"-data") || "");
     const rep = ls(KR) || REP_PADRAO;
     const novos = Math.max(0, D.total - base);
     corpo.innerHTML = dropo
       + '<div class="kpis">'
-      + ['Exames no arquivo|'+D.total, 'Desde a última entrega|'+novos, 'Período|'+D.primeiro+" a "+D.ultimo,
+      + ['Exames no arquivo|'+D.total, 'Desde a entrega de '+(baseQuando||'antes')+'|'+novos, 'Período|'+D.primeiro+" a "+D.ultimo,
          'Radiologistas|'+D.radiologistas, 'Modalidade|'+D.modalidade, 'Instituição|'+(D.instituicao||"—")]
         .map(x=>{const p=x.split("|");return '<div class="kpi" style="cursor:default"><span class="v">'+esc(p[1])+'</span><span class="k">'+esc(p[0])+'</span></div>';}).join("")
       + '</div>'
@@ -2016,7 +2079,7 @@ const lRel = (function(){
       + '<label>Medição<br><input id="rl-medicao" style="width:100%" value="'+esc(ls("trx-rel-medicao")||"1ª quinzena · A-1")+'"></label></div>'
       + '<div><label>Emissão<br><input id="rl-emissao" style="width:100%" value="'+hoje()+'"></label>'
       + '<label>Valor por laudo<br><input id="rl-preco" style="width:100%" value="'+esc(ls("trx-rel-preco")||"99")+'"></label></div>'
-      + '<div><label>Total da entrega anterior<br><input id="rl-base" type="number" style="width:100%" value="'+base+'"></label>'
+      + '<div><label>Total da entrega anterior'+(baseQuando?' <span class="meta">('+esc(baseQuando)+')</span>':'')+'<br><input id="rl-base" type="number" style="width:100%" value="'+base+'"></label>'
       + '<label>Pacote contratado<br><input id="rl-pacote" type="number" style="width:100%" value="'+esc(ls("trx-rel-pacote")||"500")+'"></label>'
       + '<label>Prazo de pagamento<br><input id="rl-prazo" style="width:100%" value="'+esc(ls("trx-rel-prazo")||"10 dias")+'"></label></div>'
       + '</div></div>'
@@ -2025,12 +2088,17 @@ const lRel = (function(){
       + '<button type="button" id="rl-fech">Fechamento para nota fiscal</button>'
       + '<button type="button" id="rl-prod">Atualizar a produção na Central</button>'
       + '<span class="meta" id="rl-msg"></span></div>'
-      + '<p class="meta">O botão abre a janela de impressão do navegador: escolha <b>Salvar como PDF</b>. Depois de enviar o relatório diário, clique em <b>Guardar como última entrega</b> para que o número de amanhã saia certo.</p>'
+      + '<p class="meta">O botão abre a janela de impressão do navegador: escolha <b>Salvar como PDF</b>. A conta do intervalo sai sozinha contra a última entrega da lista aqui embaixo. Depois de enviar o relatório, clique em <b>Guardar como última entrega</b> para que o de amanhã compare com este.</p>'
       + '<div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button type="button" id="rl-guardar">Guardar como última entrega</button><span class="meta" id="rl-guardado"></span></div>'
       + '<details class="band"><summary>Repasse por médico (usado só na produção interna)</summary>'
       + '<p class="meta">Uma linha por regra, no formato <b>Nome=valor</b>. A linha <b>padrao</b> vale para quem não estiver na lista.</p>'
       + '<textarea id="rl-rep" rows="6" style="width:100%;font-family:var(--f-mono)">'+esc(rep)+'</textarea>'
       + '<button type="button" id="rl-repsalvar">Salvar</button></details>'
+      + '<div class="pr-sec">Entregas já emitidas</div>'
+      + '<div class="band"><p class="meta" style="margin:0 0 8px">O número em destaque de cada relatório é a diferença contra o total da entrega anterior. Esta lista já vem com os relatórios emitidos desde 04/11/2026.</p>'
+      + '<div class="tbl"><table><thead><tr><th>Emissão</th><th>Total acumulado</th><th>Liberados no intervalo</th></tr></thead><tbody>'
+      + entregas().map((e,i,a)=>'<tr><td class="mono">'+esc(e[0])+'</td><td class="mono">'+e[1]+'</td><td class="mono">'+(i?(e[1]-a[i-1][1]):"—")+'</td></tr>').join("")
+      + '</tbody></table></div></div>'
       + '<div class="pr-sec">Como ficou a distribuição</div>'
       + '<div class="tbl"><table><thead><tr><th>Tipo de exame</th><th>Qtd.</th></tr></thead><tbody>'
       + D.principais.map(x=>'<tr><td>'+esc(x[0])+'</td><td class="mono">'+x[1]+'</td></tr>').join("")
@@ -2079,8 +2147,10 @@ const lRel = (function(){
     const msg = t => { const m=$("#rl-msg"); if(m) m.textContent=t; };
     $("#rl-diario").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docDiario(f)); });
     $("#rl-fech").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docFechamento(f)); });
-    $("#rl-guardar").addEventListener("click", ()=>{ ls(KB, String(D.total)); ls(KB+"-data", $("#rl-emissao").value||hoje());
-      $("#rl-guardado").textContent = "Guardado: a próxima entrega compara com "+D.total+" laudos."; });
+    $("#rl-guardar").addEventListener("click", ()=>{ const em = $("#rl-emissao").value||hoje();
+      registra(em, D.total);
+      $("#rl-guardado").textContent = "Guardado: a entrega de "+em+" com "+D.total+" laudos entrou no banco, e a próxima compara com ela.";
+      tela(); });
     $("#rl-repsalvar").addEventListener("click", ()=>{ ls(KR, $("#rl-rep").value); msg("Repasse salvo neste navegador."); });
     $("#rl-prod").addEventListener("click", ()=>mandarProducao(msg));
   }
@@ -2117,12 +2187,470 @@ const lRel = (function(){
 })();
 
 /* ---------- abas ---------- */
-const TABS=["inicio","prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao","relatorios","fiscal"];
+/* ---------- KIT TRX (17/11/2026): o padrão da casa pronto para usar ----------
+   A pessoa escolhe o modelo, escreve ou solta um arquivo, e sai o documento no padrão
+   gráfico da TRX: ofício em papel timbrado, comunicado interno, ata, proposta e e-mail.
+   Também sai a imagem de grupo do WhatsApp, no mesmo desenho das que já estão na pasta
+   "Aplicacoes - Fotos de grupo" do Drive. O arquivo que a pessoa solta é lido aqui no
+   navegador e não sai dele. Fonte do padrão: Kit de Modelos Corporativos TRX. */
+const lKit = (function(){
+  const corpo = $("#kit-corpo");
+  const KA = "trx-kit-assina", KM = "trx-kit-modelo";
+  const NAVY="#0e3a5a", CIANO="#4cbecf", CIANO2="#0095bd", CINZA="#f4f2f2", LINHA="#dfe0e2",
+        TXT="#28313e", TXT2="#334861", GRAFITE="#262f3e";
+  // aspas simples: o valor entra dentro de style="..." e aspas duplas fechariam o atributo
+  const CS = "'Open Sans SemiCondensed','Open Sans','Arial Narrow',Arial,sans-serif";
+  const BODY = "'Open Sans',Arial,sans-serif";
+  const MES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+
+  const ls = (k,v) => { try{ return v===undefined ? localStorage.getItem(k) : (localStorage.setItem(k,v), v); }catch(e){ return null; } };
+  const g  = id => { const e=document.getElementById(id); return e ? String(e.value||"").trim() : ""; };
+  const z2 = n => String(n).padStart(2,"0");
+  const hoje = () => { const d=new Date(); return z2(d.getDate())+"/"+z2(d.getMonth()+1)+"/"+d.getFullYear(); };
+  const extenso = () => { const d=new Date(); return d.getDate()+" de "+MES[d.getMonth()]+" de "+d.getFullYear(); };
+  const linhas = t => String(t||"").split("\n").map(s=>s.trim()).filter(Boolean);
+  const semAc = s => String(s==null?"":s).normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const slug = s => semAc(s).toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"") || "grupo";
+
+  /* ---------- peças do documento A4 ---------- */
+  const folha = dentro => '<div class="folha" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:'+TXT
+    + ';padding:56px 72px 48px;display:flex;flex-direction:column;font-family:'+BODY+'">'+dentro+'</div>';
+  const rot = t => '<div style="font-family:'+CS+';font-size:12px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:'+TXT2+'">'+esc(t)+'</div>';
+  const cabeca = etiqueta => '<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px;padding-bottom:16px;border-bottom:2px solid '+NAVY+'">'
+    + '<img src="marca/trx-simplificado.svg" alt="TRX Diagnóstico Digital" style="width:158px;height:auto;display:block">'
+    + (etiqueta
+       ? '<div style="background:'+NAVY+';color:#fff;font-family:'+CS+';font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:6px 14px;border-radius:6px">'+esc(etiqueta)+'</div>'
+       : '<div style="text-align:right;font-size:11px;line-height:1.55;color:'+TXT2+'">TRX DIGNOSTICO DIGITAL LTDA<br>CNPJ 39.686.707/0001-39 · Brasília-DF<br>trx.med.br</div>')
+    + '</div>';
+  const pe = nota => '<div style="border-top:1px solid '+LINHA+';padding-top:14px;margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:24px;font-size:10px;line-height:1.5;color:'+TXT2+'">'
+    + '<span>'+esc(nota)+'</span><span>trx.med.br</span></div>';
+  const paras = (t,sz) => '<div style="display:flex;flex-direction:column;gap:12px;font-size:'+(sz||14)+'px;line-height:1.65">'
+    + (linhas(t).map(p=>'<p style="margin:0">'+esc(p)+'</p>').join("") || '<p style="margin:0;color:'+TXT2+'">[escreva o texto no campo ao lado]</p>') + '</div>';
+  const blocos = ps => '<div style="display:flex;flex-direction:column;gap:12px">'
+    + ps.filter(p=>p[1]).map(p=>'<div style="border-left:3px solid '+NAVY+';padding:2px 0 2px 14px">'+rot(p[0])
+      + '<div style="font-size:14px;line-height:1.55;margin-top:4px">'+esc(p[1])+'</div></div>').join("") + '</div>';
+  const assinatura = a => '<div style="width:300px;border-top:1px solid '+TXT+';padding-top:8px;font-size:14px;line-height:1.5">'
+    + '<div style="font-weight:600">'+esc(a.nome||"[NOME COMPLETO]")+'</div>'
+    + '<div style="font-size:13px;color:'+TXT2+'">'+esc(a.cargo||"[cargo]")+' · TRX Diagnóstico Digital</div>'
+    + (a.reg ? '<div style="font-size:13px;color:'+TXT2+';font-variant-numeric:tabular-nums">'+esc(a.reg)+'</div>' : '') + '</div>';
+  const tiras = ps => '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;background:'+CINZA
+    + ';border:1px solid '+LINHA+';border-radius:8px;padding:16px 18px">'
+    + ps.map(p=>'<div>'+rot(p[0])+'<div style="font-size:14px;margin-top:3px">'+esc(p[1]||"")+'</div></div>').join("")+'</div>';
+  const titulo = t => '<h1 style="margin:0 0 12px;font-family:'+CS+';font-size:30px;font-weight:700;line-height:1.15;color:'+NAVY+'">'+esc(t||"[TÍTULO]")+'</h1>';
+
+  /* ---------- os modelos ---------- */
+  const MOD = {
+    oficio: {
+      n:"Ofício em papel timbrado", tipo:"a4", arq:"Oficio",
+      campos:[["dest","Para quem vai","Secretaria Municipal de Saúde de ..."],
+              ["cargo","Cargo ou setor de quem recebe","Comissão de Contratação"],
+              ["assunto","Assunto, em uma linha","Pedido de esclarecimento ao Pregão 00/2026"],
+              ["saud","Tratamento","Prezados senhores"]],
+      rotTexto:"Corpo do ofício, um parágrafo por linha",
+      monta(v,a){
+        return folha(cabeca("")
+          + '<div style="flex-grow:1;display:flex;flex-direction:column;gap:24px;padding-top:36px">'
+          + '<p style="margin:0;font-size:14px;line-height:1.5;text-align:right;color:'+TXT2+'">Brasília-DF, '+esc(extenso())+'</p>'
+          + '<div style="display:flex;flex-direction:column;gap:4px;font-size:14px;line-height:1.5">'
+          + '<div><span style="font-weight:600">A</span> '+esc(v.dest||"[NOME DA INSTITUIÇÃO]")+'</div>'
+          + (v.cargo?'<div style="color:'+TXT2+'">'+esc(v.cargo)+'</div>':'')+'</div>'
+          + '<div style="font-size:14px;line-height:1.5">'+rot("Assunto")
+          + '<div style="margin-top:4px;font-weight:600">'+esc(v.assunto||"[ASSUNTO]")+'</div></div>'
+          + '<div style="display:flex;flex-direction:column;gap:12px;font-size:14px;line-height:1.65">'
+          + '<p style="margin:0">'+esc(v.saud||"Prezados senhores")+',</p></div>'
+          + paras(v.texto)
+          + '<div style="font-size:14px;line-height:1.65">Permanecemos à disposição para os esclarecimentos necessários.</div>'
+          + '<div style="padding-top:28px;font-size:14px">Atenciosamente,</div>'
+          + '<div style="margin-top:44px">'+assinatura(a)+'</div></div>'
+          + pe("TRX DIGNOSTICO DIGITAL LTDA · CNPJ 39.686.707/0001-39 · Brasília-DF"));
+      }
+    },
+    comunicado: {
+      n:"Comunicado interno", tipo:"a4", arq:"Comunicado",
+      campos:[["num","Número","001/2026"],["para","Para","Equipe comercial"],
+              ["titulo","O que está sendo comunicado, em uma linha","Nova régua de preço para pregões de TC e RX"],
+              ["muda","O que muda na prática",""],["quando","A partir de quando",""],["duvida","Quem procurar em caso de dúvida",""]],
+      rotTexto:"Corpo do comunicado, um parágrafo por linha",
+      monta(v,a){
+        return folha(cabeca("Comunicado interno")
+          + '<div style="flex-grow:1;display:flex;flex-direction:column;gap:22px;padding-top:26px">'
+          + tiras([["Número",v.num||"[000/2026]"],["Data",hoje()],["Para",v.para||"[equipe ou setor]"],["De",(a.nome||"[nome]")+(a.cargo?" · "+a.cargo:"")]])
+          + '<div>'+titulo(v.titulo)+paras(v.texto,15)+'</div>'
+          + blocos([["O que muda na prática",v.muda],["A partir de quando",v.quando],["Quem procurar em caso de dúvida",v.duvida]])
+          + '<div style="margin-top:auto;padding-top:26px">'+assinatura(a)+'</div></div>'
+          + pe("Documento interno · TRX DIGNOSTICO DIGITAL LTDA · CNPJ 39.686.707/0001-39"));
+      }
+    },
+    ata: {
+      n:"Ata de reunião", tipo:"a4", arq:"Ata",
+      campos:[["assunto","Reunião sobre","Fechamento da medição do HRVJ"],
+              ["hora","Horário","09h00 às 10h00"],["local","Onde","Google Meet"],
+              ["parts","Quem participou, separados por vírgula","Marcos, Natália, Carla"],
+              ["encam","Encaminhamentos, um por linha com o dono e o prazo",""]],
+      rotTexto:"O que foi decidido, um ponto por linha",
+      monta(v,a){
+        const enc = linhas(v.encam);
+        return folha(cabeca("Ata de reunião")
+          + '<div style="flex-grow:1;display:flex;flex-direction:column;gap:22px;padding-top:26px">'
+          + tiras([["Assunto",v.assunto||"[assunto]"],["Data",hoje()],["Horário",v.hora||"[hh:mm]"],["Onde",v.local||"[local]"]])
+          + '<div>'+rot("Quem participou")+'<div style="font-size:14px;line-height:1.6;margin-top:4px">'+esc(v.parts||"[nomes]")+'</div></div>'
+          + '<div>'+rot("O que foi decidido")+'<div style="margin-top:8px">'+paras(v.texto)+'</div></div>'
+          + (enc.length ? '<div>'+rot("Encaminhamentos")+'<ol style="margin:8px 0 0;padding-left:20px;font-size:14px;line-height:1.7">'
+              + enc.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol></div>' : '')
+          + '<div style="margin-top:auto;padding-top:26px">'+rot("Quem registrou")
+          + '<div style="margin-top:6px">'+assinatura(a)+'</div></div></div>'
+          + pe("Documento interno · TRX DIGNOSTICO DIGITAL LTDA · CNPJ 39.686.707/0001-39"));
+      }
+    },
+    proposta: {
+      n:"Proposta comercial", tipo:"a4", arq:"Proposta",
+      campos:[["cliente","Para quem","Hospital ..."],
+              ["objeto","Objeto, em uma linha","Laudo a distância de tomografia computadorizada"],
+              ["valor","Preço","R$ 53,00 por exame laudado"],
+              ["prazo","Prazo de entrega do laudo","Rotina em até 24 horas, urgência em até 1 hora"],
+              ["validade","Validade da proposta","30 dias"]],
+      rotTexto:"O que está incluído, um item por linha",
+      monta(v,a){
+        const its = linhas(v.texto);
+        return folha(cabeca("Proposta comercial")
+          + '<div style="flex-grow:1;display:flex;flex-direction:column;gap:22px;padding-top:26px">'
+          + '<div>'+titulo(v.objeto)
+          + '<div style="font-size:14px;line-height:1.6;color:'+TXT2+'">Para '+esc(v.cliente||"[cliente]")+' · Brasília-DF, '+esc(extenso())+'</div></div>'
+          + tiras([["Preço",v.valor||"[preço]"],["Prazo do laudo",v.prazo||"[prazo]"],["Validade da proposta",v.validade||"30 dias"],["Início",'Imediato após o aceite']])
+          + (its.length ? '<div>'+rot("O que está incluído")+'<ul style="margin:8px 0 0;padding-left:20px;font-size:14px;line-height:1.7">'
+              + its.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>' : '')
+          + '<div>'+rot("Quem executa")+'<div style="font-size:14px;line-height:1.65;margin-top:4px">'
+          + 'Corpo clínico próprio de médicos radiologistas com registro no CRM e RQE em radiologia e diagnóstico por imagem, '
+          + 'com plantão de 24 horas, sete dias por semana. Laudo assinado digitalmente e entregue no sistema do contratante.</div></div>'
+          + '<div style="margin-top:auto;padding-top:26px">'+assinatura(a)+'</div></div>'
+          + pe("TRX DIGNOSTICO DIGITAL LTDA · CNPJ 39.686.707/0001-39 · Brasília-DF"));
+      }
+    },
+    email: {
+      n:"E-mail no padrão TRX", tipo:"email", arq:"Email",
+      campos:[["assunto","Assunto do e-mail","Relatório de exames laudados"],
+              ["saud","Tratamento","Prezados senhores"],
+              ["fecho","Fecho","Atenciosamente"]],
+      rotTexto:"Corpo do e-mail, um parágrafo por linha",
+      monta(v,a){
+        const ps = linhas(v.texto);
+        const corpoP = (ps.length?ps:["[escreva o texto no campo ao lado]"])
+          .map(p=>'<p style="margin:0 0 12px">'+esc(p)+'</p>').join("");
+        return '<div style="background:'+CINZA+';padding:22px 0;font-family:Arial,Helvetica,sans-serif">'
+          + '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" style="width:640px;max-width:100%;margin:0 auto;background:#ffffff;border:1px solid '+LINHA+'">'
+          + '<tr><td style="background:'+NAVY+';padding:18px 28px">'
+          + '<div style="font-family:\'Arial Narrow\',Arial,sans-serif;font-size:20px;font-weight:bold;letter-spacing:3px;color:#ffffff">TRX DIAGNÓSTICO DIGITAL</div>'
+          + '<div style="font-size:11px;letter-spacing:2px;color:'+CIANO+';padding-top:4px">TELERRADIOLOGIA · PLANTÃO 24 HORAS</div></td></tr>'
+          + '<tr><td style="padding:26px 28px 6px;font-size:15px;line-height:1.65;color:'+TXT+'">'
+          + '<p style="margin:0 0 12px">'+esc(v.saud||"Prezados senhores")+',</p>'+corpoP+'</td></tr>'
+          + '<tr><td style="padding:6px 28px 24px;font-size:15px;line-height:1.65;color:'+TXT+'">'
+          + '<p style="margin:0 0 16px">'+esc(v.fecho||"Atenciosamente")+',</p>'
+          + '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-left:3px solid '+CIANO2+';padding-left:12px;font-size:13px;line-height:1.6;color:'+TXT2+'">'
+          + '<span style="font-size:15px;font-weight:bold;color:'+NAVY+'">'+esc(a.nome||"[NOME COMPLETO]")+'</span><br>'
+          + esc(a.cargo||"[cargo]")+' · TRX Diagnóstico Digital'
+          + (a.reg?'<br>'+esc(a.reg):'')
+          + (a.email?'<br>'+esc(a.email):'')
+          + (a.tel?' · '+esc(a.tel):'')
+          + '</td></tr></table></td></tr>'
+          + '<tr><td style="background:'+CINZA+';border-top:1px solid '+LINHA+';padding:12px 28px;font-size:11px;line-height:1.6;color:'+TXT2+'">'
+          + 'TRX DIGNOSTICO DIGITAL LTDA · CNPJ 39.686.707/0001-39 · Brasília-DF · trx.med.br</td></tr>'
+          + '</table></div>';
+      }
+    }
+  };
+
+  /* ---------- ler o que a pessoa soltar: .txt, .md e .docx ---------- */
+  async function textoDoArquivo(file){
+    const nome = (file.name||"").toLowerCase();
+    if(/\.(txt|md|csv)$/.test(nome)) return await file.text();
+    if(/\.docx$/.test(nome)) return docx(await file.arrayBuffer());
+    if(/\.doc$/.test(nome)) throw new Error("O .doc antigo não abre aqui. Salve como .docx ou cole o texto.");
+    throw new Error("Mande um arquivo .docx, .txt ou .md, ou cole o texto no campo.");
+  }
+  async function docx(buf){
+    if(typeof DecompressionStream!=="function") throw new Error("Este navegador não abre .docx. Cole o texto no campo.");
+    const dv=new DataView(buf), u8=new Uint8Array(buf);
+    let fim=-1;
+    for(let i=u8.length-22;i>=0 && i>u8.length-66000;i--){ if(dv.getUint32(i,true)===0x06054b50){ fim=i; break; } }
+    if(fim<0) throw new Error("Arquivo .docx ilegível.");
+    const qt=dv.getUint16(fim+10,true); let p=dv.getUint32(fim+16,true);
+    const td=new TextDecoder();
+    for(let i=0;i<qt;i++){
+      const metodo=dv.getUint16(p+10,true), tamC=dv.getUint32(p+20,true);
+      const lN=dv.getUint16(p+28,true), lE=dv.getUint16(p+30,true), lC=dv.getUint16(p+32,true);
+      const off=dv.getUint32(p+42,true);
+      const nome=td.decode(u8.subarray(p+46,p+46+lN));
+      if(nome==="word/document.xml"){
+        const nL=dv.getUint16(off+26,true), eL=dv.getUint16(off+28,true);
+        const ini=off+30+nL+eL, dados=u8.subarray(ini,ini+tamC);
+        let xml;
+        if(metodo===0) xml=td.decode(dados);
+        else xml=await new Response(new Blob([dados]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+        return xml.replace(/<w:tab[^>]*\/>/g," ").replace(/<w:br[^>]*\/>/g,"\n").replace(/<\/w:p>/g,"\n")
+          .replace(/<[^>]+>/g,"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"')
+          .replace(/&#39;/g,"'").replace(/&amp;/g,"&")
+          .split("\n").map(s=>s.trim()).filter(Boolean).join("\n");
+      }
+      p+=46+lN+lE+lC;
+    }
+    throw new Error("Esse .docx não tem texto legível.");
+  }
+
+  /* ---------- imprimir e copiar ---------- */
+  function imprimir(html){
+    let box=document.getElementById("rel-doc");
+    if(!box){ box=document.createElement("div"); box.id="rel-doc"; document.body.appendChild(box); }
+    box.innerHTML=html;
+    document.body.classList.add("imprimindo");
+    const limpa=()=>{ document.body.classList.remove("imprimindo"); window.removeEventListener("afterprint",limpa); };
+    window.addEventListener("afterprint",limpa);
+    setTimeout(()=>{ window.print(); setTimeout(limpa,1500); },120);
+  }
+  async function copiaRico(html,texto){
+    try{
+      await navigator.clipboard.write([new ClipboardItem({
+        "text/html": new Blob([html],{type:"text/html"}),
+        "text/plain": new Blob([texto],{type:"text/plain"})
+      })]);
+      return true;
+    }catch(e){
+      try{
+        const d=document.createElement("div");
+        d.contentEditable="true"; d.innerHTML=html;
+        d.style.cssText="position:fixed;left:-10000px;top:0;white-space:pre-wrap";
+        document.body.appendChild(d);
+        const r=document.createRange(); r.selectNodeContents(d);
+        const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        const ok=document.execCommand("copy");
+        s.removeAllRanges(); d.remove();
+        return ok;
+      }catch(e2){ return false; }
+    }
+  }
+  function baixa(nome,conteudo,tipo){
+    const b=new Blob([conteudo],{type:tipo||"text/html;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(b); a.download=nome; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1200);
+  }
+
+  /* ---------- a imagem de grupo do WhatsApp ----------
+     Mesma geometria das imagens que já estão na pasta do Drive: símbolo de 360px centrado
+     em (500,400), régua ciano de 181x5 em y=636, nome com 47px de altura de caixa alta com
+     a base em y=776, e TRX em ciano com 19px de caixa alta com a base em y=828. */
+  let simboloCache = {};
+  function simbolo(branco){
+    const k = branco?"b":"c";
+    if(simboloCache[k]) return simboloCache[k];
+    simboloCache[k] = fetch("marca/favicon-512.svg").then(r=>r.text()).then(sv=>{
+      const t = branco ? sv.replace(/fill:\s*url\(#[^)]+\)/g,"fill:#ffffff") : sv;
+      const url = URL.createObjectURL(new Blob([t],{type:"image/svg+xml"}));
+      return new Promise((ok,err)=>{ const im=new Image(512,512); im.onload=()=>ok(im); im.onerror=err; im.src=url; });
+    });
+    return simboloCache[k];
+  }
+  function ajusta(ctx, texto, alvoCaixa, peso, tracking){
+    let sz = 100;
+    ctx.letterSpacing = Math.round(sz*tracking)+"px";
+    ctx.font = peso+" "+sz+'px "Open Sans SemiCondensed","Open Sans",Arial,sans-serif';
+    const m = ctx.measureText("H");
+    const caixa = (m.actualBoundingBoxAscent||72);
+    sz = Math.round(sz*alvoCaixa/caixa);
+    ctx.letterSpacing = Math.round(sz*tracking)+"px";
+    ctx.font = peso+" "+sz+'px "Open Sans SemiCondensed","Open Sans",Arial,sans-serif';
+    return sz;
+  }
+  async function desenhaWa(){
+    const cv=document.getElementById("kt-wa-cv"); if(!cv) return;
+    const ctx=cv.getContext("2d"), N=1000;
+    const nome=(g("kt-wa-nome")||"NOME DO GRUPO").toUpperCase();
+    const claro=(document.getElementById("kt-wa-var")||{}).value==="claro";
+    ctx.clearRect(0,0,N,N);
+    if(claro){ ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,N,N); }
+    else { const gr=ctx.createLinearGradient(0,0,N,N); gr.addColorStop(0,NAVY); gr.addColorStop(1,GRAFITE); ctx.fillStyle=gr; ctx.fillRect(0,0,N,N); }
+    try{ await document.fonts.load('700 70px "Open Sans SemiCondensed"'); }catch(e){}
+    try{ const im=await simbolo(!claro); ctx.drawImage(im,282.5,182.5,435,435); }catch(e){}  /* o desenho tem folga dentro do viewBox: assim a marca mede 360 e fica igual às imagens da pasta */
+    ctx.fillStyle=CIANO; ctx.fillRect(410,636,181,5);
+    ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+    ctx.fillStyle = claro ? NAVY : "#ffffff";
+    let alvo=47, sz=ajusta(ctx,nome,alvo,"700",0.12);
+    while(ctx.measureText(nome).width>840 && alvo>22){ alvo-=2; sz=ajusta(ctx,nome,alvo,"700",0.12); }
+    ctx.fillText(nome,500,776);
+    ctx.fillStyle = claro ? CIANO2 : CIANO;
+    ajusta(ctx,"TRX",19,"600",0.34);
+    ctx.fillText("TRX",500+Math.round(19*0.34/2),828);
+    ctx.letterSpacing="0px";
+  }
+  function baixaWa(){
+    const cv=document.getElementById("kt-wa-cv"); if(!cv) return;
+    cv.toBlob(b=>{
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(b); a.download="TRX_grupo_"+slug(g("kt-wa-nome")||"grupo")+"_1000.png";
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1200);
+    },"image/png");
+  }
+
+  /* ---------- tela ---------- */
+  function assina(){
+    let a={}; try{ a=JSON.parse(ls(KA)||"{}")||{}; }catch(e){ a={}; }
+    const sel=document.getElementById("kt-quem");
+    if(sel && sel.value){
+      const p=(D.equipe||[]).find(x=>x.ap===sel.value);
+      if(p){ a={nome:p.n, cargo:a.cargo||p.pa||"", reg:a.reg||"", email:p.e||"", tel:p.tel?("+"+p.tel):""}; }
+    }
+    if(document.getElementById("kt-nome")){
+      a.nome=g("kt-nome")||a.nome; a.cargo=g("kt-cargo-assina")||a.cargo; a.reg=g("kt-reg")||a.reg;
+    }
+    return a;
+  }
+  function valores(m){
+    const v={texto:g("kt-texto")};
+    MOD[m].campos.forEach(c=>{ v[c[0]]=g("kt-c-"+c[0]); });
+    return v;
+  }
+  function desenha(){
+    const m=(document.getElementById("kt-modelo")||{}).value||"oficio";
+    const a=assina(), v=valores(m), doc=MOD[m].monta(v,a);
+    const vis=document.getElementById("kt-vis");
+    const assuntoBar = MOD[m].tipo==="email"
+      ? '<div style="display:flex;gap:8px;align-items:baseline;padding:0 0 10px;font-size:13px">'
+        + '<span style="font-family:var(--f-display);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">Assunto</span>'
+        + '<b>'+esc(v.assunto||"[assunto do e-mail]")+'</b></div>'
+      : '';
+    if(vis) vis.innerHTML = assuntoBar + (MOD[m].tipo==="a4"
+      ? '<div style="zoom:.72">'+doc+'</div>'
+      : '<div style="zoom:.92">'+doc+'</div>');
+    const bt=document.getElementById("kt-copia");
+    if(bt) bt.textContent = MOD[m].tipo==="email" ? "Copiar para o e-mail" : "Copiar o documento";
+    try{ ls(KM,m); }catch(e){}
+    try{ ls(KA,JSON.stringify(a)); }catch(e){}
+  }
+  function formulario(m){
+    const mo=MOD[m];
+    return mo.campos.map(c=>'<label class="kt-f"><span>'+esc(c[1])+'</span><input id="kt-c-'+c[0]+'" placeholder="'+esc(c[2]||"")+'"></label>').join("")
+      + '<label class="kt-f"><span>'+esc(mo.rotTexto)+'</span><textarea id="kt-texto" rows="7" placeholder="Uma linha em branco separa os parágrafos."></textarea></label>';
+  }
+  function tela(){
+    const eq=(D.equipe||[]).filter(p=>p.ap);
+    let a={}; try{ a=JSON.parse(ls(KA)||"{}")||{}; }catch(e){}
+    const m0 = MOD[ls(KM)] ? ls(KM) : "oficio";
+    corpo.innerHTML =
+      '<div class="band"><h3>Documento no padrão TRX</h3>'
+      + '<p class="meta" style="margin:0 0 12px">Escolha o modelo, escreva ou solte um arquivo, e imprima em PDF. O arquivo é lido aqui no seu navegador e não sai dele.</p>'
+      + '<div class="kt-grid"><div class="kt-col">'
+      + '<label class="kt-f"><span>Modelo</span><select id="kt-modelo">'
+      + Object.keys(MOD).map(k=>'<option value="'+k+'"'+(k===m0?' selected':'')+'>'+esc(MOD[k].n)+'</option>').join("")+'</select></label>'
+      + '<div class="kt-drop" id="kt-drop">Solte aqui um .docx, .txt ou .md para trazer o texto, ou clique para escolher'
+      + '<input type="file" id="kt-file" accept=".docx,.txt,.md,.csv" hidden></div>'
+      + '<div class="kt-campos" id="kt-campos">'+formulario(m0)+'</div>'
+      + '<div style="border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:10px">'
+      + '<label class="kt-f"><span>Quem assina</span><select id="kt-quem"><option value="">escrever à mão</option>'
+      + eq.map(p=>'<option value="'+esc(p.ap)+'">'+esc(p.n)+'</option>').join("")+'</select></label>'
+      + '<label class="kt-f"><span>Nome</span><input id="kt-nome" value="'+esc(a.nome||"")+'" placeholder="Natália ..."></label>'
+      + '<label class="kt-f"><span>Cargo</span><input id="kt-cargo-assina" value="'+esc(a.cargo||"")+'" placeholder="Sócia-administradora"></label>'
+      + '<label class="kt-f"><span>Registro, se for médico</span><input id="kt-reg" value="'+esc(a.reg||"")+'" placeholder="CRM-DF 00.000 · RQE 00.000"></label>'
+      + '</div>'
+      + '<div class="kt-btns"><button type="button" id="kt-pdf">Imprimir em PDF</button>'
+      + '<button type="button" class="sec" id="kt-copia">Copiar o documento</button>'
+      + '<button type="button" class="sec" id="kt-html">Baixar o arquivo</button></div>'
+      + '<div class="kt-st" id="kt-st"></div>'
+      + '</div><div class="kt-vis" id="kt-vis"></div></div></div>'
+
+      + '<div class="band"><h3>Imagem de grupo do WhatsApp</h3>'
+      + '<p class="meta" style="margin:0 0 12px">Mesmo desenho das imagens que já estão na pasta Aplicacoes - Fotos de grupo, no Drive. Sai em PNG de 1000 por 1000.</p>'
+      + '<div class="kt-wa"><canvas id="kt-wa-cv" width="1000" height="1000"></canvas><div class="kt-col">'
+      + '<label class="kt-f"><span>Nome do grupo</span><input id="kt-wa-nome" placeholder="COMERCIAL" maxlength="26"></label>'
+      + '<label class="kt-f"><span>Fundo</span><select id="kt-wa-var"><option value="navy">Navy, o padrão</option><option value="claro">Branco</option></select></label>'
+      + '<div class="kt-btns"><button type="button" id="kt-wa-bx">Baixar o PNG</button></div>'
+      + '<p class="meta" style="margin:0">O arquivo sai como TRX_grupo_nome_1000.png. Guarde na pasta do Drive para a próxima pessoa achar.</p>'
+      + '</div></div></div>'
+
+      + '<div class="band"><h3>Marca</h3>'
+      + '<p class="meta" style="margin:0 0 12px">Clique na cor para copiar o código. Fonte: Open Sans para texto e Open Sans SemiCondensed para título e rótulo.</p>'
+      + '<div class="kt-cores">'
+      + [["Navy",NAVY,"Título, faixa e assinatura"],["Azul",CIANO2,"Marcador de seção e link"],
+         ["Ciano",CIANO,"Régua e destaque sobre o navy"],["Grafite",GRAFITE,"Fim do degradê e letra do logo"],
+         ["Cinza",CINZA,"Fundo de faixa e de tabela"],["Linha",LINHA,"Borda e divisória"]]
+        .map(c=>'<button type="button" class="kt-cor" data-cor="'+c[1]+'"><i style="background:'+c[1]+'"></i><span><b>'+c[1]+'</b>'+esc(c[0])+', '+esc(c[2])+'</span></button>').join("")
+      + '</div>'
+      + '<ul class="kt-reg" style="margin:12px 0 0;padding-left:18px">'
+      + '<li>Razão social, sempre com a grafia do contrato: <b>TRX DIGNOSTICO DIGITAL LTDA</b>. Nome de marca: TRX Diagnóstico Digital.</li>'
+      + '<li>CNPJ 39.686.707/0001-39 · Brasília-DF · trx.med.br</li>'
+      + '<li>Logo sobre fundo claro: <a href="marca/trx-simplificado.svg" download>trx-simplificado.svg</a>. Sobre fundo navy: <a href="marca/trx-simplificado-negativo.svg" download>trx-simplificado-negativo.svg</a>. Só o símbolo: <a href="marca/favicon-512.svg" download>favicon-512.svg</a>.</li>'
+      + '</ul></div>';
+
+    const st=document.getElementById("kt-st");
+    const diz=(t)=>{ if(st) st.textContent=t||""; };
+
+    document.getElementById("kt-modelo").addEventListener("change",e=>{
+      document.getElementById("kt-campos").innerHTML=formulario(e.target.value);
+      liga(); desenha();
+    });
+    document.getElementById("kt-quem").addEventListener("change",()=>{
+      const p=(D.equipe||[]).find(x=>x.ap===g("kt-quem"));
+      if(p){ document.getElementById("kt-nome").value=p.n; if(!g("kt-cargo-assina")) document.getElementById("kt-cargo-assina").value=p.pa||""; }
+      desenha();
+    });
+    ["kt-nome","kt-cargo-assina","kt-reg"].forEach(id=>document.getElementById(id).addEventListener("input",desenha));
+
+    const drop=document.getElementById("kt-drop"), file=document.getElementById("kt-file");
+    drop.addEventListener("click",()=>file.click());
+    drop.addEventListener("dragover",e=>{ e.preventDefault(); drop.classList.add("on"); });
+    drop.addEventListener("dragleave",()=>drop.classList.remove("on"));
+    drop.addEventListener("drop",e=>{ e.preventDefault(); drop.classList.remove("on"); if(e.dataTransfer.files[0]) pega(e.dataTransfer.files[0]); });
+    file.addEventListener("change",e=>{ if(e.target.files[0]) pega(e.target.files[0]); });
+    async function pega(f){
+      diz("Lendo "+f.name+"...");
+      try{
+        const t=await textoDoArquivo(f);
+        const ta=document.getElementById("kt-texto");
+        if(ta){ ta.value=t; desenha(); }
+        diz("Texto trazido de "+f.name+". Confira os parágrafos antes de imprimir.");
+      }catch(err){ diz(err.message||"Não consegui ler esse arquivo."); }
+    }
+
+    document.getElementById("kt-pdf").addEventListener("click",()=>{
+      const m=g("kt-modelo"), doc=MOD[m].monta(valores(m),assina());
+      imprimir(MOD[m].tipo==="a4" ? doc : '<div style="width:794px;margin:0 auto">'+doc+'</div>');
+    });
+    document.getElementById("kt-copia").addEventListener("click",async()=>{
+      const m=g("kt-modelo"), doc=MOD[m].monta(valores(m),assina());
+      const tmp=document.createElement("div"); tmp.innerHTML=doc;
+      const ok=await copiaRico(doc,(tmp.textContent||"").replace(/\n{3,}/g,"\n\n").trim());
+      diz(ok?"Copiado. Agora é só colar no e-mail ou no documento.":"O navegador não deixou copiar. Use o botão de baixar.");
+    });
+    document.getElementById("kt-html").addEventListener("click",()=>{
+      const m=g("kt-modelo"), doc=MOD[m].monta(valores(m),assina());
+      const pagina='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>'+esc(MOD[m].n)+' TRX</title></head><body style="margin:0;background:#fff">'+doc+'</body></html>';
+      baixa(MOD[m].arq+"_TRX_"+hoje().replace(/\//g,"-")+".html",pagina);
+      diz("Arquivo baixado. Ele abre no navegador e no Word.");
+    });
+    document.getElementById("kt-wa-nome").addEventListener("input",desenhaWa);
+    document.getElementById("kt-wa-var").addEventListener("change",desenhaWa);
+    document.getElementById("kt-wa-bx").addEventListener("click",baixaWa);
+    corpo.querySelectorAll(".kt-cor").forEach(b=>b.addEventListener("click",()=>{
+      const c=b.getAttribute("data-cor");
+      try{ navigator.clipboard.writeText(c); }catch(e){}
+      b.querySelector("b").textContent="copiado";
+      setTimeout(()=>{ b.querySelector("b").textContent=c; },900);
+    }));
+
+    function liga(){
+      corpo.querySelectorAll("#kt-campos input,#kt-campos textarea").forEach(e=>e.addEventListener("input",desenha));
+    }
+    liga(); desenha(); desenhaWa();
+  }
+
+  return { render: tela };
+})();
+
+const TABS=["inicio","prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao","relatorios","kit","fiscal"];
 const rendered={};
 function show(tab){
   if(!TABS.includes(tab)) tab="inicio";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({inicio:{render(){}},prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,relatorios:lRel,fiscal:lFis})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({inicio:{render(){}},prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,relatorios:lRel,kit:lKit,fiscal:lFis})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
