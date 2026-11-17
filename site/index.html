@@ -1696,7 +1696,8 @@ const lFis=(function(){
   (D.documentos_alerta||[]).filter(x=>x.venc)
     .forEach(x=>it.push({d:x.val?dias(x.val):-1,dt:x.val||"",t:x.doc,of:"Documento",r:x.resp,x:["Documento vencido"+(x.val?" em "+fData(x.val):"")+". O Marcos regulariza; a Carla acompanha."],
       ac:[["#fiscal","Ver em Fiscal e Jurídico"]]}));
-  it.sort((a,b)=>(a.d??0)-(b.d??0));
+  // documento vencido sempre no topo (Marcos, 17/11/2026); depois o resto pela data
+  it.sort((a,b)=>((a.of==="Documento"?0:1)-(b.of==="Documento"?0:1))||((a.d??0)-(b.d??0)));
   const MAX=8;
   const li=x=>'<li><details><summary><span class="u-d '+(x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):'')+'</span>'
     +'<b>'+esc(x.t)+'</b><span class="u-of">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</summary>'
