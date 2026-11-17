@@ -275,6 +275,119 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 .pr-regua b{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 @media (max-width:640px){.brand h1{font-size:22px}.brand .logo{height:24px}.kpi .v{font-size:20px}.count{margin-left:0;width:100%}header.top{position:static}table{min-width:0}.hide-sm{display:none}.clip{max-width:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* ===== Layout v2 (17/11/2026): mesma linguagem do site trx.med.br =====
+   Degradê navy→turquesa (#0e3958→#0094bd) em botão primário, aba ativa e painel de abertura;
+   fundo #f9fafb, bordas #d7dfea, cantos de 12px, rótulos de seção em turquesa. */
+:root{--bg:#f9fafb;--surface2:#f2f5f9;--line:#d7dfea;--r:12px;--turq:#0380a7;
+  --grad:linear-gradient(135deg,#0e3958 0%,#0380a7 60%,#0094bd 100%);--grad-ink:#f8fafc;--hero:linear-gradient(135deg,#0b2b44 0%,#0e3958 45%,#0380a7 100%)}
+:root[data-theme="dark"]{--bg:#080e17;--surface:#0f1824;--surface2:#152131;--line:#22324a;--turq:#4cbecf;--accent-soft:#12324a;
+  --grad:linear-gradient(135deg,#0e3958 0%,#0380a7 60%,#0094bd 100%);--hero:linear-gradient(135deg,#0e3958 0%,#0a4f72 55%,#0380a7 100%)}
+header.top{background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(14,57,88,.04)}
+header.top::after{content:"";display:block;height:3px;background:var(--grad)}
+.top-in{padding-block:10px 0;gap:8px}
+.brand{align-items:center}
+.brand h1{font-weight:700;letter-spacing:.01em;font-size:24px}
+.brand h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+:root[data-theme="dark"] .brand h1 span{background:linear-gradient(135deg,#4cbecf,#0094bd);-webkit-background-clip:text;background-clip:text}
+.brand .sub{font-size:12px;letter-spacing:.02em}
+.fresh{font-size:12px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.fresh.stale{padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--warn) 14%,var(--surface));border-color:color-mix(in srgb,var(--warn) 55%,transparent);cursor:help}
+nav.tabs{gap:4px;padding-bottom:8px;align-items:center;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{font-size:14px;letter-spacing:.02em;padding:6px 12px;border:0;border-radius:999px;color:var(--muted)}
+nav.tabs a:hover{background:var(--surface2);color:var(--ink)}
+nav.tabs a[aria-current="page"]{background:var(--grad);color:var(--grad-ink)}
+nav.tabs a[aria-current="page"] .n{color:var(--grad-ink);opacity:.8}
+nav.tabs .n{font-size:11px;margin-left:5px}
+.tema{font-size:12px;padding:4px 10px}
+.tema-nav{margin:0 0 0 auto}#sair{margin:0 0 0 4px}
+section.pane{gap:16px;padding-block:20px 0}
+/* cartões */
+.kpi,.band,.tbl,.agenda,.avisos,.dossie .dc,.pr-fat .c,.rt-col,.ag-col{border-radius:var(--r);border-color:var(--line)}
+.kpi{position:relative;overflow:hidden;padding:14px 16px 12px;transition:border-color .15s,box-shadow .15s}
+.kpi::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--grad);opacity:.9}
+.kpi.bad::before{background:var(--bad)} .kpi.warn::before{background:var(--warn)} .kpi.ok::before{background:var(--ok)}
+.kpi:hover{box-shadow:0 6px 18px rgba(14,57,88,.08)}
+.kpi .v{font-size:26px;font-weight:700}
+.kpi .k{font-size:12px}
+/* rótulos de seção em turquesa, como os do site */
+.band h3,.avisos h3,.pr-sec,.ag-col h3,.isgh-band h3,.dossie h2{color:var(--turq)}
+.band h3::before,.avisos h3::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--grad);margin-right:8px;vertical-align:1px}
+.ag-head h2,.pr-top h2{font-weight:700}
+th{background:var(--surface2);color:var(--muted)}
+tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
+/* botões */
+.btn{border-radius:10px}
+.links a.btn-edit,.hoje-band .hj-mk button,.gate button{background:var(--grad);border:0;color:#f8fafc;border-radius:10px}
+.seg button[aria-pressed="true"]{background:var(--grad);color:#f8fafc}
+.filters input,.filters select{border-radius:10px}
+.filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.filters .count{padding-bottom:8px}
+/* calendário recolhido */
+.cal-box{border-top:1px solid var(--line);padding-top:10px}
+.cal-box>summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--turq)}
+.cal-box[open]>summary{margin-bottom:10px}
+/* ===== aba Início ===== */
+.ini-hero{background:var(--hero);color:#f8fafc;border-radius:16px;padding:18px 20px;display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;position:relative;overflow:hidden}
+.ini-hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(76,190,207,.35),transparent 70%)}
+.ini-hero .ih-t{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.ini-hero .ih-ey{font-family:var(--f-display);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#9fe0ea}
+.ini-hero .ih-d{font-family:var(--f-display);font-weight:700;font-size:22px;text-transform:capitalize}
+.ini-hero .ih-n{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+.ini-hero .ih-n a{display:flex;flex-direction:column;min-width:108px;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#f8fafc;text-decoration:none}
+.ini-hero .ih-n a:hover{background:rgba(255,255,255,.14)}
+.ini-hero .ih-n b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:24px;line-height:1.1}
+.ini-hero .ih-n span{font-size:12px;color:#cfe7ee}
+.ini-hero .ih-n a.al b{color:#ffb4b8}
+.ini-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start}
+.ini-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.ini-col>div{margin:0!important}
+@media (max-width:900px){.ini-grid{grid-template-columns:1fr}}
+/* Hoje: uma linha por item; abre ao tocar */
+.hoje-band{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.hoje-band .hj-top{background:var(--surface);padding:12px 16px}
+.hoje-band h2{font-size:16px;color:var(--ink)}
+.hoje-band h2::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--grad);margin-right:8px;vertical-align:2px}
+.hoje-band ul.hj-lista{padding:0}
+.hoje-band ul.hj-lista>li{padding:0;border-bottom:1px solid var(--line)}
+.hoje-band button.hj-l1{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:baseline;gap:10px;padding:10px 16px;cursor:pointer;font-size:14px;color:var(--ink)}
+.hoje-band button.hj-l1:hover{background:var(--surface2)}
+.hoje-band button.hj-l1:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.hoje-band button.hj-l1 b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.hoje-band button.hj-l1::after{content:"▸";color:var(--muted);font-size:12px}
+.hoje-band li.aberto>button.hj-l1{background:var(--accent-soft)}
+.hoje-band li.aberto>button.hj-l1 b{white-space:normal}
+.hoje-band li.aberto>button.hj-l1::after{content:"▾"}
+.hoje-band .hj-pz{min-width:96px;font-size:12px}
+.hoje-band .hj-of{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);white-space:nowrap}
+.hoje-band .hj-nobs{font-size:11px;color:var(--turq);white-space:nowrap}
+.hoje-band .hj-corpo{display:none;padding:2px 16px 12px 122px}
+.hoje-band li.aberto .hj-corpo{display:block}
+.hoje-band .hj-corpo .hj-x,.hoje-band .hj-corpo .hj-ac,.hoje-band .hj-corpo .hj-obs,.hoje-band .hj-corpo .hj-mk{margin-left:0}
+.hoje-band .hj-arq{padding:8px 16px}
+@media (max-width:640px){.hoje-band .hj-corpo{padding-left:16px}.hoje-band .hj-pz{min-width:0}.hoje-band .hj-of{display:none}}
+/* ISGH: resumo; o detalhe fica no dossiê */
+.isgh-band{border:1px solid var(--line);border-radius:var(--r)}
+.isgh-band .ig-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--grad)}
+.isgh-band .ig-top h2{margin:0;color:#f8fafc;font-family:var(--f-display);font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.isgh-band .ig-top a{color:#f8fafc;font-size:13px;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:2px 10px}
+.isgh-band .ig-top a:hover{background:rgba(255,255,255,.12)}
+.isgh-band .ig-grid{grid-template-columns:1fr 1fr;gap:12px 16px}
+.isgh-band h3 b{font-family:var(--f-mono);color:var(--ink);margin-left:4px}
+.isgh-band li{margin:3px 0}
+.isgh-band .pz{color:var(--muted);font-weight:600;font-size:12px}.isgh-band .pz.venc{color:var(--bad)}
+.isgh-band .ig-mais{font-size:12px;color:var(--turq);font-weight:600;text-decoration:none}
+@media (max-width:640px){.isgh-band .ig-grid{grid-template-columns:1fr}}
+/* Mural: quatro recados à vista */
+.mural-band{border-left:1px solid var(--line)}
+.mural-band #mu-lista{list-style:none;padding:0;margin:8px 0 0}
+.mural-band #mu-lista li{padding:6px 0;border-top:1px solid var(--line)}
+.mural-band:not(.tudo) #mu-lista li:nth-child(n+5){display:none}
+.mural-band .mu-tudo{font:inherit;font-size:13px;color:var(--turq);font-weight:600;background:none;border:0;padding:6px 0 0;cursor:pointer}
+.mural-band .mu-linha{margin:6px 0 4px}
+.mural-band .mu-linha button{background:var(--grad);color:#f8fafc;border:0;border-radius:10px}
+.mural-band textarea{border-radius:10px}
+.docs-al{border-left:3px solid var(--bad)}
 </style>
 
 </head>
@@ -287,12 +400,13 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
         <img class="logo logo-dark" src="marca/trx-simplificado-negativo.svg" alt="" width="96" height="32">
         <div>
         <h1>Central <span>TRX</span></h1>
-        <div class="sub">Clínicas, licitações, credenciamentos e pregões da TRX, pela classificação da Dor · para alterar, abra a linha e toque em Editar</div>
+        <div class="sub">Clínicas, licitações e prazos da TRX</div>
         </div>
       </div>
       <div class="fresh" id="fresh"><span class="dot"></span><span id="freshTxt">Carregando dados…</span></div>
     </div>
     <nav class="tabs" aria-label="Frentes">
+      <a href="#inicio" data-tab="inicio">Início<span class="n" id="n-inicio"></span></a>
       <a href="#prioridades" data-tab="prioridades">Prioridades<span class="n" id="n-prioridades"></span></a>
       <a href="#clinicas" data-tab="clinicas">Clínicas particulares<span class="n" id="n-clinicas"></span></a>
       <a href="#licitacoes" data-tab="licitacoes">Licitações e prazos<span class="n" id="n-licitacoes"></span></a>
@@ -310,18 +424,27 @@ footer{color:var(--muted);font-size:13px;margin-top:24px;display:flex;flex-direc
 </header>
 
 <main class="wrap">
-<div id="hoje" class="hoje-band" hidden></div>
-<div id="mural" class="avisos mural-band" hidden></div>
-<div id="isgh" class="isgh-band" hidden></div>
+  <section class="pane" id="pane-inicio" hidden>
+    <div class="ini-hero" id="ini-hero"></div>
+    <div class="ini-grid">
+      <div class="ini-col">
+        <div id="hoje" class="hoje-band" hidden></div>
+      </div>
+      <div class="ini-col">
+        <div class="avisos docs-al" id="docs-al" hidden></div>
+        <div class="avisos" id="avisos" hidden></div>
+        <div id="isgh" class="isgh-band" hidden></div>
+        <div id="mural" class="avisos mural-band" hidden></div>
+      </div>
+    </div>
+  </section>
   <section class="pane" id="pane-prioridades" hidden>
     <div class="agenda">
-      <div class="ag-head"><h2>Agenda</h2><span class="meta">Prazos de licitação e toques combinados com clínicas. Clique num item ou num dia para ver na lista.</span></div>
+      <div class="ag-head"><h2>Agenda</h2><span class="meta">Clique num item ou num dia para filtrar a lista.</span></div>
       <div class="ag-cols" id="ag-cols"></div>
       <div class="ag-enc" id="ag-enc" hidden></div>
-      <div class="cal" id="cal"></div>
+      <details class="cal-box"><summary>Calendário do mês</summary><div class="cal" id="cal"></div></details>
     </div>
-    <div class="avisos docs-al" id="docs-al" hidden></div>
-    <div class="avisos" id="avisos" hidden></div>
     <div class="chipsel" id="sel-prioridades" hidden></div>
     <div class="kpis" id="k-prioridades"></div>
     <div class="band"><h3>Tudo o que está ativo, pela classificação da Dor</h3><div class="bar" id="bar-prioridades"></div><div class="legend" id="leg-prioridades"></div></div>
@@ -538,19 +661,18 @@ if(!D){
   const SECS = [["contrato","Contrato HRVJ em execução"],["funil","Funil das 8 unidades"],["pendencias","Pendências com prazo"],["riscos","Riscos"]];
   const by = {};
   it.forEach(i => { const k = norm(i.sec); (by[k] = by[k] || []).push(i); });
-  let h = '<h2>Prioridade máxima · ISGH</h2><div class="ig-grid">';
+  let h = '<div class="ig-top"><h2>ISGH · prioridade máxima</h2><a href="#isgh">Abrir o dossiê</a></div><div class="ig-grid">';
   let tem = false;
   for(const [k, titulo] of SECS){
     const l = by[k] || [];
     if(!l.length) continue;
     tem = true;
-    h += '<div><h3>' + esc(titulo) + '</h3><ul>' + l.map(i => {
-      let s = '<li><b>' + esc(i.t) + '</b>' + (i.x ? ' — ' + esc(i.x) : '');
-      if(i.dt){ const dd = dias(i.dt); s += ' <span class="pz">' + fData(i.dt) + (dd !== null && dd <= 3 ? (dd < 0 ? ' · vencido' : dd === 0 ? ' · hoje' : ' · ' + dd + 'd') : '') + '</span>'; }
-      if(i.resp) s += ' <span class="resp">· ' + esc(i.resp) + '</span>';
-      if(i.lk) s += ' <a href="' + esc(i.lk) + '" target="_blank" rel="noopener">Detalhe ↗</a>';
+    const ord = l.slice().sort((a,b)=>(a.dt?dias(a.dt):999)-(b.dt?dias(b.dt):999));
+    h += '<div class="ig-c"><h3>' + esc(titulo) + ' <b>' + l.length + '</b></h3><ul>' + ord.slice(0,3).map(i => {
+      let s = '<li>' + esc(i.t);
+      if(i.dt){ const dd = dias(i.dt); s += ' <span class="pz' + (dd !== null && dd < 0 ? ' venc' : '') + '">' + fData(i.dt) + (dd !== null && dd < 0 ? ' · vencido' : dd === 0 ? ' · hoje' : '') + '</span>'; }
       return s + '</li>';
-    }).join('') + '</ul></div>';
+    }).join('') + '</ul>' + (l.length > 3 ? '<a class="ig-mais" href="#isgh">+' + (l.length-3) + ' no dossiê</a>' : '') + '</div>';
   }
   h += '</div>';
   if(!tem) return;
@@ -585,8 +707,8 @@ function licLink(linha){ const f=D.fontes.licitacoes; return f.sheet ? "https://
     const min = g ? Math.floor((Date.now()-g.getTime())/6e4) : 9999;
     let atraso="";
     if(min>90){ atraso = min<120 ? min+" min" : Math.floor(min/60)+"h"+String(min%60).padStart(2,"0"); }
-    $("#freshTxt").innerHTML = "Última atualização: <b>"+esc(fData(D.gerado,true))+"</b>" +
-      (atraso ? " · <b>⚠️ sem atualizar há "+atraso+"</b>. O GitHub atrasou a rodada; o dado abaixo pode estar velho. Recarregue a página mais tarde." : "");
+    $("#freshTxt").innerHTML = (atraso ? "<b>Sem atualizar há "+atraso+"</b> · dado de "+esc(fData(D.gerado,true)) : "Atualizado em <b>"+esc(fData(D.gerado,true))+"</b>");
+    el.title = atraso ? "O GitHub atrasou a rodada; o dado pode estar velho. Recarregue a página mais tarde." : "";
     el.classList.toggle("stale", !!atraso);
   }
   pinta(); setInterval(pinta, 60000);
@@ -933,12 +1055,14 @@ const lPr = makeList({
     else { if(it.x && it.x.length>60) ac = '<button type="button" data-c="'+n+'">Copiar o texto</button>';
            if(it.lk) ac += '<a href="'+esc(it.lk)+'" target="_blank" rel="noopener">Detalhe ↗</a>';
            ac += '<a href="#isgh">Ver o dossiê do ISGH</a>'; }
-    return '<li data-n="'+n+'"><div class="hj-l1"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span></div>'
+    const nObs=(estado(atual,it.k).obs||[]).length;
+    return '<li data-n="'+n+'"><button type="button" class="hj-l1" aria-expanded="false"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span>'+(nObs?'<span class="hj-nobs">'+nObs+(nObs===1?' nota':' notas')+'</span>':'')+'</button>'
+      + '<div class="hj-corpo">'
       + (it.x?'<div class="hj-x">'+esc(it.x)+'</div>':'')
       + (ac?'<div class="hj-ac">'+ac+'</div>':'')
       + obsHtml(estado(atual,it.k).obs)
       + '<form class="hj-mk" autocomplete="off"><label><input type="checkbox" value="feito"> Feito</label><label><input type="checkbox" value="ciente"> Ciente</label>'
-      + '<input class="hj-o" maxlength="600" placeholder="Observação para a equipe (opcional; comece com @claude para pedir ao Claude)"><button type="submit">Salvar</button><span class="hj-st meta"></span></form></li>';
+      + '<input class="hj-o" maxlength="600" placeholder="Observação para a equipe (opcional; comece com @claude para pedir ao Claude)"><button type="submit">Salvar</button><span class="hj-st meta"></span></form></div></li>';
   }
   const CK="central-mural-cred";   // mesma credencial do Mural: entrou num, vale no outro
   const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
@@ -948,7 +1072,7 @@ const lPr = makeList({
     const arq=arquivadas(atual), c=cred();
     const opts=pessoas.map(p=>'<option'+(p===atual?' selected':'')+'>'+esc(p)+'</option>').join("");
     el.innerHTML='<div class="hj-top"><h2>Hoje</h2><select id="hj-quem">'+opts+'</select>'
-      +'<span class="hj-n">'+(lista.length?lista.length+(lista.length===1?' item':' itens'):'nada em aberto')+'</span>'
+      +'<span class="hj-n">'+(lista.length?lista.length+(lista.length===1?' item':' itens')+' · toque para abrir e marcar':'nada em aberto')+'</span>'
       +'<span class="hj-cred meta">'+(c?'marcando como <b>'+esc(c.apelido)+'</b> · <a href="#" id="hj-troca">trocar</a>'
         :'para marcar: <input id="hj-ap" placeholder="apelido" size="9" autocapitalize="none"> <input id="hj-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">')+'</span></div>'
       +(lista.length?'<ul class="hj-lista">'+lista.map(linha).join("")+'</ul>':'<div class="hj-vazio">Nada com prazo nos próximos 7 dias para '+esc(atual)+'.</div>')
@@ -958,6 +1082,7 @@ const lPr = makeList({
     el.hidden=false;
     $("#hj-quem").addEventListener("change",e=>{ atual=e.target.value; try{localStorage.setItem("central-quem",atual);}catch(_){} render(); });
     const tr=$("#hj-troca"); if(tr) tr.addEventListener("click",ev=>{ ev.preventDefault(); try{localStorage.removeItem(CK);}catch(_){} render(); window.dispatchEvent(new Event("central-cred")); });
+    el.querySelectorAll("button.hj-l1").forEach(b=>b.addEventListener("click",()=>{ const li=b.closest("li"), ab=!li.classList.contains("aberto"); li.classList.toggle("aberto",ab); b.setAttribute("aria-expanded",ab?"true":"false"); }));
     el.querySelectorAll("button[data-c]").forEach(b=>b.addEventListener("click",async()=>{
       const t=lista[+b.dataset.c]; if(!t) return;
       try{ await navigator.clipboard.writeText(t.x); b.textContent="Copiado"; setTimeout(()=>{b.textContent="Copiar o texto";},1500); }
@@ -1075,12 +1200,13 @@ const lPr = makeList({
   // identificado pelos mesmos apelido+PIN do app, guardados neste navegador após o primeiro post.
   try{ const MU=D.mural||[]; const el=$("#mural");
     const li=x=>'<li><span class="meta">'+esc(x.q)+' · '+esc(x.a)+(x.menc?' · para '+esc(x.menc):'')+'</span> · '+esc(x.m)+'</li>';
-    el.innerHTML='<h3>Mural da equipe'+(MU.length?' · '+MU.length:'')+'</h3>'
+    el.innerHTML='<h3>Mural da equipe</h3>'
       +'<form id="mu-form" autocomplete="off">'
-      +'<textarea id="mu-msg" maxlength="1000" rows="2" placeholder="Escreva um recado para a equipe… @apelido marca alguém"></textarea>'
+      +'<textarea id="mu-msg" maxlength="1000" rows="1" placeholder="Escreva um recado para a equipe… @apelido marca alguém"></textarea>'
       +'<div class="mu-linha"><span id="mu-quem"></span><button type="submit" id="mu-bt">Publicar</button><span id="mu-st" class="meta"></span></div>'
-      +'</form><ul id="mu-lista">'+MU.map(li).join("")+'</ul>';
+      +'</form><ul id="mu-lista">'+MU.map(li).join("")+'</ul>'+(MU.length>4?'<button type="button" class="mu-tudo" id="mu-tudo">Ver os '+MU.length+' recados</button>':'');
     el.hidden=false;
+    const tb=$("#mu-tudo"); if(tb) tb.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); tb.textContent=ab?"Mostrar só os recentes":"Ver os "+MU.length+" recados"; });
     const CK="central-mural-cred";
     const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
     function renderQuem(){ const c=cred(), q=$("#mu-quem");
@@ -1422,18 +1548,41 @@ const lFis=(function(){
   return {render};
 })();
 
+/* ---------- painel de abertura da aba Início (layout v2, 17/11/2026) ---------- */
+(function(){
+  const el=$("#ini-hero"); if(!el) return;
+  function pinta(){
+    const nHoje=document.querySelectorAll("#hoje .hj-lista>li").length;
+    const pz7=PR.filter(p=>p.dt&&!passou(p.dt)&&dias(p.dt)!==null&&dias(p.dt)<=7).length;
+    const ig=(D.destaque_isgh||[]).filter(i=>i.dt&&dias(i.dt)!==null&&dias(i.dt)<0).length;
+    const val=(D.documentos_alerta||[]).length;
+    const mu=(D.mural||[]).length;
+    const dia=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+    const c=(href,n,t,al)=>'<a href="'+href+'"'+(al&&n?' class="al"':'')+'><b>'+n+'</b><span>'+t+'</span></a>';
+    el.innerHTML='<div class="ih-t"><span class="ih-ey">Central TRX · hoje</span><span class="ih-d">'+esc(dia)+'</span></div><div class="ih-n">'
+      +c("#inicio",nHoje,"itens na sua fila")
+      +c("#prioridades",pz7,"prazos em 7 dias")
+      +c("#isgh",ig,"ISGH vencidos",true)
+      +c("#inicio",val,"validades a resolver",true)
+      +c("#inicio",mu,"recados no mural")+'</div>';
+    $("#n-inicio").textContent=nHoje||"";
+  }
+  pinta();
+  const h=$("#hoje"); if(h) new MutationObserver(pinta).observe(h,{childList:true});
+})();
+
 /* ---------- abas ---------- */
-const TABS=["prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao","fiscal"];
+const TABS=["inicio","prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao","fiscal"];
 const rendered={};
 function show(tab){
-  if(!TABS.includes(tab)) tab="prioridades";
+  if(!TABS.includes(tab)) tab="inicio";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,fiscal:lFis})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({inicio:{render(){}},prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,fiscal:lFis})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
 let inicial = location.hash.slice(1);
-if(!TABS.includes(inicial)){ try{ inicial = localStorage.getItem("central-aba") || "prioridades"; }catch(e){ inicial="prioridades"; } }
+if(!TABS.includes(inicial)){ try{ inicial = localStorage.getItem("central-aba") || "inicio"; }catch(e){ inicial="inicio"; } }
 show(inicial);
 })();
 </script>
