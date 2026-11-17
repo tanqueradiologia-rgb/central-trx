@@ -176,6 +176,7 @@ function doPost(e) {
     else if (p.action === 'objetivoMarcar') out = objetivoMarcar(p.cred, p.o);
     else if (p.action === 'emailEnviar') out = emailEnviar(p.cred, p.m);
     else if (p.action === 'producaoLancar') out = producaoLancar(p.cred, p.dados);
+    else if (p.action === 'versao') out = { versao: 17 };
     else if (p.action === 'entregaGuardar') out = entregaGuardar(p.cred, p.e);
     else if (p.action === 'medicaoGravar') out = medicaoGravar(p.cred, p.m);
     else throw new Error('Ação desconhecida.');

@@ -1939,7 +1939,16 @@ const lRel = (function(){
     const pin = prompt("PIN:"); if(!pin) return null;
     return { apelido: ap.trim().toLowerCase(), pin: pin.trim() };
   }
+  // A tela nova só grava com o app de Edição v17 ou mais novo: no v16 o repasse sairia zerado.
+  let appOk = false;
+  async function confereApp(){
+    if(appOk) return;
+    let j = {}; try{ const r = await fetch(EDIT_URL, {method:"POST", body: JSON.stringify({action:"versao"})}); j = await r.json(); }catch(e){ throw new Error("Não consegui falar com o app de Edição. Tente de novo."); }
+    if(!j.ok || !(j.versao >= 17)) throw new Error("O app de Edição ainda está na versão antiga. Falta o Marcos implantar a v17; nada foi gravado.");
+    appOk = true;
+  }
   async function posta(corpo){
+    await confereApp();
     const c = credRel(); if(!c) throw new Error("Sem apelido e PIN nada é gravado.");
     corpo.cred = c;
     const r = await fetch(EDIT_URL, {method:"POST", body: JSON.stringify(corpo)});
