@@ -12,6 +12,8 @@
   body.imprimindo > *{display:none !important}
   body.imprimindo #rel-doc{display:block !important}
   body.imprimindo{background:#fff}
+  /* sem isto o navegador apaga os fundos ao gerar o PDF e o relatório sai sem cor (17/11/2026) */
+  body.imprimindo #rel-doc, body.imprimindo #rel-doc *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
   @page{size:A4;margin:0}
 }
 </style>
@@ -1967,23 +1969,25 @@ const lRel = (function(){
 
   /* ---------- o documento A4, no padrão dos relatórios que já saem ---------- */
   const NAVY="#0e3a5a", CIANO="#4cbecf", CIANO2="#0095bd", CINZA="#f4f2f2", LINHA="#dfe0e2", TXT="#28313e", TXT2="#334861";
+  // cores do site trx.med.br (17/11/2026): degradê navy→turquesa e tinta clara de ciano
+  const GRAD="linear-gradient(135deg,#0e3958 0%,#0380a7 62%,#0095bd 100%)", GRADH="linear-gradient(90deg,#0e3958 0%,#0380a7 100%)", TINTA="#eaf6fa", AZUL="#0380a7";
   // aspas simples: o valor entra dentro de style="..." e aspas duplas fechariam o atributo
   const CS = "'Open Sans SemiCondensed','Open Sans','Arial Narrow',Arial,sans-serif";
   const kick = (t,c,sz,lsp) => '<div style="font-family:'+CS+';font-size:'+(sz||"9px")+';font-weight:600;letter-spacing:'+(lsp||"0.12em")+';text-transform:uppercase;color:'+(c||TXT2)+'">'+esc(t)+'</div>';
   const sec = t => '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px"><span style="width:9px;height:9px;background:'+CIANO2+';display:block;flex-shrink:0"></span>'
     + '<h2 style="margin:0;font-family:'+CS+';font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:'+NAVY+';white-space:nowrap">'+esc(t)+'</h2>'
     + '<span style="height:1px;background:'+LINHA+';flex-grow:1"></span></div>';
-  const faixa = sub => '<div style="background:'+NAVY+';padding:22px 48px;display:flex;justify-content:space-between;align-items:center;gap:28px">'
+  const faixa = sub => '<div style="background:'+NAVY+';background-image:'+GRAD+';border-bottom:4px solid '+CIANO+';padding:22px 48px;display:flex;justify-content:space-between;align-items:center;gap:28px">'
     + '<img src="marca/trx-simplificado-negativo.svg" alt="TRX Diagnóstico Digital" style="width:158px;height:auto;display:block">'
     + '<div style="text-align:right">'+kick("Telerradiologia · "+sub,CIANO,"10px","0.18em")
     + '<h1 style="margin:6px 0 0;font-family:'+CS+';font-size:25px;font-weight:700;line-height:1.1;letter-spacing:0.01em;text-transform:uppercase;color:#fff">'
     + (sub==="Fechamento de medição" ? "Relatório de faturamento" : "Relatório de exames laudados") + '</h1></div></div>';
-  const tiras = pares => '<div style="background:'+CINZA+';border-bottom:1px solid '+LINHA+';padding:12px 48px;display:grid;grid-template-columns:repeat('+pares.length+',minmax(0,1fr));gap:16px">'
-    + pares.map(p=>'<div>'+kick(p[0])+'<div style="margin-top:3px;font-size:12px;font-weight:600;line-height:1.35">'+esc(p[1])+'</div></div>').join("")+'</div>';
+  const tiras = pares => '<div style="background:'+TINTA+';border-bottom:1px solid #cfe7ef;padding:12px 48px;display:grid;grid-template-columns:repeat('+pares.length+',minmax(0,1fr));gap:16px">'
+    + pares.map(p=>'<div>'+kick(p[0],AZUL)+'<div style="margin-top:3px;font-size:12px;font-weight:600;line-height:1.35">'+esc(p[1])+'</div></div>').join("")+'</div>';
   const cartoes = cs => '<div style="display:grid;grid-template-columns:repeat('+cs.length+',minmax(0,1fr));gap:10px">'
-    + cs.map(c=>'<div style="border:1px solid '+LINHA+';padding:8px 12px"><div style="font-size:15px;font-weight:700;line-height:1.2;color:'+NAVY+'">'+esc(c[0])+'</div>'
+    + cs.map((c,i)=>'<div style="border:1px solid '+LINHA+';border-top:3px solid '+[NAVY,AZUL,CIANO2,CIANO][i%4]+';background:'+(i%2?"#fff":TINTA)+';padding:8px 12px"><div style="font-size:15px;font-weight:700;line-height:1.2;color:'+NAVY+'">'+esc(c[0])+'</div>'
     + '<div style="margin-top:1px;font-size:10px;color:'+TXT2+'">'+esc(c[1])+'</div></div>').join("")+'</div>';
-  const rodape = nota => '<div style="background:'+CINZA+';border-top:1px solid '+LINHA+';padding:10px 48px;display:flex;justify-content:space-between;align-items:center;gap:24px;font-size:10px;color:'+TXT2+'">'
+  const rodape = nota => '<div style="height:4px;background:'+AZUL+';background-image:'+GRADH+'"></div><div style="background:'+TINTA+';padding:10px 48px;display:flex;justify-content:space-between;align-items:center;gap:24px;font-size:10px;color:'+TXT2+'">'
     + '<span>TRX Diagnóstico Digital · <strong style="color:'+NAVY+'">trx.med.br</strong> · CNPJ 39.686.707/0001-39</span><span>'+esc(nota)+'</span></div>';
   const assina = emissao => '<div style="margin-top:auto;padding-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px"><div>'
     + kick("Responsável técnico")+'<div style="margin-top:4px;font-size:14px;font-weight:700;color:'+NAVY+'">Dr. Marcos Mendes Sales</div>'
@@ -1999,10 +2003,10 @@ const lRel = (function(){
   function tabela(comValor, preco){
     const itens = D.principais.concat(D.qtOutros?[["Outros ("+listaOutros()+")", D.qtOutros]]:[]);
     const th = (t,w,dir) => '<th scope="col" style="text-align:'+(dir||"left")+';padding:6px 12px;'+(w?"width:"+w+";":"")+'font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff">'+t+'</th>';
-    return '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:'+NAVY+'">'
+    return '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:'+NAVY+';background-image:'+GRADH+'">'
       + th("Tipo de exame") + th("Qtd.","56px","right") + (comValor?th("Valor","120px","right"):"")
       + '</tr></thead><tbody>'
-      + itens.map((x,i)=>'<tr style="'+(i%2?"background:"+CINZA:"")+'">'
+      + itens.map((x,i)=>'<tr style="'+(i%2?"background:"+TINTA:"")+'">'
         + '<td style="padding:4px 12px;border-bottom:1px solid '+LINHA+'">'+esc(x[0])+'</td>'
         + '<td style="padding:4px 12px;border-bottom:1px solid '+LINHA+';text-align:right;font-weight:600;color:'+NAVY+';font-variant-numeric:tabular-nums">'+x[1]+'</td>'
         + (comValor?'<td style="padding:4px 12px;border-bottom:1px solid '+LINHA+';text-align:right;font-weight:600;color:'+NAVY+';font-variant-numeric:tabular-nums">'+money(x[1]*preco)+'</td>':'')
@@ -2019,7 +2023,7 @@ const lRel = (function(){
       + tiras([["Cliente",f.cliente],["Período de apuração",D.primeiro+" a "+f.emissao],["Emissão",f.emissao],["Modalidade",f.modNome]])
       + '<div style="flex-grow:1;padding:16px 48px 0;display:flex;flex-direction:column;gap:11px">'
       + '<div>'+sec("Resumo executivo")+'<p style="margin:0;font-size:11.5px;line-height:1.55;text-align:justify">Produção de exames de '+esc(f.modNome)+' do hospital laudados pela TRX Diagnóstico Digital. O destaque abaixo traz o que foi liberado desde a última atualização; o total do período acumula os exames já finalizados e devolvidos ao sistema de laudos da unidade.</p></div>'
-      + '<div style="background:'+NAVY+';padding:14px 22px;display:flex;align-items:center;gap:20px"><div style="flex-shrink:0">'
+      + '<div style="background:'+NAVY+';background-image:'+GRAD+';border-radius:6px;padding:14px 22px;display:flex;align-items:center;gap:20px"><div style="flex-shrink:0">'
       + kick("Atualização de "+f.emissao,CIANO,"9px","0.14em")
       + '<div style="margin-top:2px;font-size:42px;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums">'+novos+'</div></div>'
       + '<div style="font-size:12px;line-height:1.4;color:#fff;max-width:230px">exames liberados desde a última atualização'+(f.dataBase?", enviada em "+esc(f.dataBase):"")+'</div>'
@@ -2028,7 +2032,7 @@ const lRel = (function(){
       + cartoes([[f.mod,"Modalidade"],["Finalizado","Status da apuração"],["ICP-Brasil","Assinatura dos laudos"],[String(D.radiologistas),"Radiologistas na escala"]])
       + '<div>'+sec("Distribuição por tipo de exame")+tabela(false)+'</div>'
       + '<div>'+sec("Corpo clínico e condições de entrega")
-      + '<div style="background:'+CINZA+';border-left:3px solid '+CIANO2+';padding:9px 14px;font-size:11.5px;line-height:1.5"><strong>Equipe responsável pelos laudos.</strong> '+D.radiologistas+' médicos radiologistas com título de especialista e RQE ativo, habilitados em telerradiologia.</div>'
+      + '<div style="background:'+TINTA+';border-left:3px solid '+CIANO2+';padding:9px 14px;font-size:11.5px;line-height:1.5"><strong>Equipe responsável pelos laudos.</strong> '+D.radiologistas+' médicos radiologistas com título de especialista e RQE ativo, habilitados em telerradiologia.</div>'
       + '<ul style="margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.5"><li>Período apurado de '+esc(D.primeiro.slice(0,5))+' a '+esc(f.emissao)+'. Exames recebidos após essa data entram no próximo relatório.</li>'
       + '<li>Todos os laudos assinados com certificado digital ICP-Brasil e inseridos no sistema de laudos da unidade.</li></ul></div>'
       + assina(f.emissao) + '</div>' + rodape("Documento gerado para auditoria e controle interno"));
@@ -2041,7 +2045,7 @@ const lRel = (function(){
       + tiras([["Cliente",f.cliente],["Medição",f.medicao],["Período apurado",D.primeiro+" a "+D.ultimo],["Emissão",f.emissao]])
       + '<div style="flex-grow:1;padding:14px 48px 0;display:flex;flex-direction:column;gap:9px">'
       + '<div>'+sec("Resumo da medição")+'<p style="margin:0;font-size:11px;line-height:1.5;text-align:justify">Fechamento do período de execução dos laudos de '+esc(f.modNome)+' do hospital. Todos os exames abaixo foram finalizados, assinados com certificado digital ICP-Brasil e devolvidos ao sistema de laudos da unidade dentro do período apurado.</p></div>'
-      + '<div style="background:'+NAVY+';padding:13px 22px;display:flex;align-items:center;gap:22px"><div style="flex-shrink:0">'
+      + '<div style="background:'+NAVY+';background-image:'+GRAD+';border-radius:6px;padding:13px 22px;display:flex;align-items:center;gap:22px"><div style="flex-shrink:0">'
       + kick("Valor total a faturar",CIANO,"9px","0.14em")
       + '<div style="margin-top:2px;font-size:36px;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums">'+money(D.total*f.preco)+'</div></div>'
       + '<div style="margin-left:auto;display:flex;gap:22px;text-align:right">'
