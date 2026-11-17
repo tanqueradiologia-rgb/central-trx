@@ -7,6 +7,13 @@
 <meta name="robots" content="noindex,nofollow">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}.saude{margin:8px 0 2px;padding:8px 12px;border-radius:8px;font-size:13px;line-height:1.45;border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent)}
 .saude summary{cursor:pointer;font-weight:600}.saude ul{margin:6px 0 0 18px;padding:0}
+#rel-doc{display:none}
+@media print{
+  body.imprimindo > *{display:none !important}
+  body.imprimindo #rel-doc{display:block !important}
+  body.imprimindo{background:#fff}
+  @page{size:A4;margin:0}
+}
 </style>
 <title>Central TRX</title>
 <link rel="icon" type="image/svg+xml" href="marca/favicon-48.svg">
@@ -475,6 +482,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <a href="#roteiro" data-tab="roteiro">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
+      <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
       <a href="#fiscal" data-tab="fiscal" title="Fiscal e Jurídico">Fiscal<span class="n" id="n-fiscal"></span></a>
     </nav>
     <div id="saude" class="saude" hidden></div>
@@ -615,6 +623,14 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     </div>
     <div class="kpis" id="k-producao"></div>
     <div id="pr-corpo"></div>
+  </section>
+
+  <section class="pane" id="pane-relatorios" hidden>
+    <div class="pr-top">
+      <h2>Relatórios</h2>
+      <span class="meta">Suba a planilha que o sistema exporta e a Central monta o relatório pronto para enviar ao cliente. O arquivo é lido aqui no seu navegador e não sai dele. O mesmo arquivo atualiza a aba Produção.</span>
+    </div>
+    <div id="rel-corpo"></div>
   </section>
 
   <section class="pane" id="pane-fiscal" hidden>
@@ -1753,13 +1769,360 @@ const lFis=(function(){
   window.addEventListener("central-obj",pinta);
 })();
 
+/* ---------- RELATÓRIOS (17/11/2026): a Carla sobe a planilha e a Central monta o relatório ----------
+   Tudo acontece no navegador: o .xlsx é lido com a SheetJS que mora em vendor/, agrupado pela mesma
+   régua dos relatórios que já saem à mão, e impresso em A4 (Imprimir > Salvar como PDF).
+   O mesmo arquivo alimenta a aba Produção dos sócios, pelo app de Edição (apelido + PIN).
+   Prazo não entra em lugar nenhum: é indicador do conjunto, não critério entre sócios. */
+const lRel = (function(){
+  const corpo = $("#rel-corpo");
+  const KB = "trx-rel-base", KR = "trx-rel-repasse", CK = "central-mural-cred";
+  const NOMEADAS = ["Pelve feminina","Crânio e encéfalo","Abdome superior","Pelve masculina","Abdome total",
+                    "Coluna lombar","Joelho direito","Coluna cervical","Joelho esquerdo","Colangiorressonância"];
+  const SOCIOS = ["marcos mendes sales","bruno yoshimitsu","henrique silveira","vinicius alves bezerra","diogo de carvalho"];
+  const REP_PADRAO = "padrao=60\nRafael Bringe Freitas=70\nLetícia Gonçalves da Costa=70\nJoyce Freire Gonçalves de Melo=70\nFlavia Sprenger=55";
+  let D = null, carregando = false;
+
+  const money = v => "R$ " + (Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const ls = (k,v) => { try{ return v===undefined ? localStorage.getItem(k) : (localStorage.setItem(k,v), v); }catch(e){ return null; } };
+  function sem(s){ return String(s==null?"":s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+
+  /* Mesma régua dos relatórios: dez categorias fixas, todo o resto cai em Outros. */
+  function grupo(desc){
+    const s = sem(desc);
+    if(s.indexOf("colangio")>=0) return "Colangiorressonância";
+    if(s.indexOf("abd")>=0){
+      if(s.indexOf("total")>=0) return "Abdome total";
+      if(s.indexOf("inferior")>=0) return "abdome inferior";
+      if(s.indexOf("superior")>=0) return "Abdome superior";
+    }
+    if(s.indexOf("prostata")>=0) return "próstata";
+    if(s.indexOf("pelve")>=0){
+      if(s.indexOf("fem")>=0) return "Pelve feminina";
+      if(s.indexOf("masc")>=0) return "Pelve masculina";
+      if(s.indexOf("reto")>=0) return "reto";
+      return "bacia";
+    }
+    if(s.indexOf("bacia")>=0) return "bacia";
+    if(s.indexOf("cranio")>=0||s.indexOf("encefalo")>=0) return "Crânio e encéfalo";
+    if(s.indexOf("sacro")>=0 && s.indexOf("lombo")<0) return "sacro";
+    if(s.indexOf("lombo")>=0||s.indexOf("lombar")>=0) return "Coluna lombar";
+    if(s.indexOf("cervical")>=0) return "Coluna cervical";
+    if(s.indexOf("toracica")>=0||s.indexOf("dorsal")>=0) return "coluna torácica";
+    if(s.indexOf("plexo")>=0) return "plexo braquial";
+    if(s.indexOf("joelho")>=0) return s.indexOf("dire")>=0 ? "Joelho direito" : "Joelho esquerdo";
+    if(s.indexOf("ombro")>=0) return "ombro";
+    if(s.indexOf("pescoco")>=0) return "pescoço";
+    if(s.indexOf("torax")>=0) return "tórax";
+    if(s.indexOf("cotovelo")>=0) return "cotovelo";
+    if(s.indexOf("punho")>=0) return "punho";
+    if(s.indexOf("mao")>=0) return "mão";
+    if(s.indexOf("antebraco")>=0) return "antebraço";
+    if(s.indexOf("braco")>=0) return "braço";
+    if(s.indexOf("coxa")>=0) return "coxa";
+    if(s.indexOf("perna")>=0) return "perna";
+    if(s.indexOf("tornozelo")>=0) return "tornozelo";
+    if(s.indexOf("quadril")>=0) return "quadril";
+    if(s==="pe"||s.indexOf("pe ")===0) return "pé";
+    return String(desc||"").trim() || "sem descrição";
+  }
+  const ordem = d => d.slice(6,10)+d.slice(3,5)+d.slice(0,2);
+
+  function analisar(linhas){
+    const col = n => { const k = Object.keys(linhas[0]||{}).find(x=>sem(x)===sem(n)); return k||n; };
+    const cDesc = col("Descrição do exame"), cFim = col("Finalizados em"), cResp = col("Responsável");
+    const cMod = col("Modalidade"), cInst = col("Instituição"), cSit = col("Situação");
+    const cnt = {}, dias = {}, med = {}; let total = 0, mods = {}, inst = {};
+    linhas.forEach(r=>{
+      const fim = String(r[cFim]||"").trim(); if(!fim) return;
+      total++;
+      const g = grupo(r[cDesc]); cnt[g] = (cnt[g]||0)+1;
+      const d = fim.slice(0,10); dias[d] = (dias[d]||0)+1;
+      const m = String(r[cResp]||"").trim(); if(m) med[m] = (med[m]||0)+1;
+      const mo = String(r[cMod]||"").trim(); if(mo) mods[mo]=(mods[mo]||0)+1;
+      const it = String(r[cInst]||"").trim(); if(it) inst[it]=(inst[it]||0)+1;
+    });
+    if(!total) throw new Error("Não achei a coluna \"Finalizados em\" com datas. Confira se é a planilha de apuração que o sistema exporta.");
+    const principais = NOMEADAS.filter(n=>cnt[n]).map(n=>[n,cnt[n]]).sort((a,b)=>b[1]-a[1]);
+    const outros = Object.keys(cnt).filter(k=>NOMEADAS.indexOf(k)<0).map(k=>[k,cnt[k]]).sort((a,b)=>b[1]-a[1]);
+    const qtOutros = outros.reduce((a,x)=>a+x[1],0);
+    const datas = Object.keys(dias).sort((a,b)=>ordem(a)<ordem(b)?-1:1);
+    const maior = o => Object.keys(o).sort((a,b)=>o[b]-o[a])[0] || "";
+    return { total, principais, outros, qtOutros, dias, datas, med,
+             radiologistas: Object.keys(med).length,
+             primeiro: datas[0]||"", ultimo: datas[datas.length-1]||"",
+             modalidade: maior(mods)||"RM", instituicao: maior(inst)||"" };
+  }
+
+  function repasseMapa(){
+    const txt = ls(KR) || REP_PADRAO;
+    const m = { padrao: 60 };
+    txt.split("\n").forEach(l=>{ const i=l.indexOf("="); if(i<1) return;
+      const k=l.slice(0,i).trim(), v=parseFloat(l.slice(i+1).replace(",","."));
+      if(k && !isNaN(v)) m[sem(k)==="padrao"?"padrao":sem(k)] = v; });
+    return m;
+  }
+  const repasseDe = (nome,m) => m[sem(nome)] !== undefined ? m[sem(nome)] : m.padrao;
+  const ehSocio = nome => SOCIOS.some(x=>sem(nome).indexOf(x)>=0);
+
+  /* ---------- o documento A4, no padrão dos relatórios que já saem ---------- */
+  const NAVY="#0e3a5a", CIANO="#4cbecf", CIANO2="#0095bd", CINZA="#f4f2f2", LINHA="#dfe0e2", TXT="#28313e", TXT2="#334861";
+  // aspas simples: o valor entra dentro de style="..." e aspas duplas fechariam o atributo
+  const CS = "'Open Sans SemiCondensed','Open Sans','Arial Narrow',Arial,sans-serif";
+  const kick = (t,c,sz,lsp) => '<div style="font-family:'+CS+';font-size:'+(sz||"9px")+';font-weight:600;letter-spacing:'+(lsp||"0.12em")+';text-transform:uppercase;color:'+(c||TXT2)+'">'+esc(t)+'</div>';
+  const sec = t => '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px"><span style="width:9px;height:9px;background:'+CIANO2+';display:block;flex-shrink:0"></span>'
+    + '<h2 style="margin:0;font-family:'+CS+';font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:'+NAVY+';white-space:nowrap">'+esc(t)+'</h2>'
+    + '<span style="height:1px;background:'+LINHA+';flex-grow:1"></span></div>';
+  const faixa = sub => '<div style="background:'+NAVY+';padding:22px 48px;display:flex;justify-content:space-between;align-items:center;gap:28px">'
+    + '<img src="marca/trx-simplificado-negativo.svg" alt="TRX Diagnóstico Digital" style="width:158px;height:auto;display:block">'
+    + '<div style="text-align:right">'+kick("Telerradiologia · "+sub,CIANO,"10px","0.18em")
+    + '<h1 style="margin:6px 0 0;font-family:'+CS+';font-size:25px;font-weight:700;line-height:1.1;letter-spacing:0.01em;text-transform:uppercase;color:#fff">'
+    + (sub==="Fechamento de medição" ? "Relatório de faturamento" : "Relatório de exames laudados") + '</h1></div></div>';
+  const tiras = pares => '<div style="background:'+CINZA+';border-bottom:1px solid '+LINHA+';padding:12px 48px;display:grid;grid-template-columns:repeat('+pares.length+',minmax(0,1fr));gap:16px">'
+    + pares.map(p=>'<div>'+kick(p[0])+'<div style="margin-top:3px;font-size:12px;font-weight:600;line-height:1.35">'+esc(p[1])+'</div></div>').join("")+'</div>';
+  const cartoes = cs => '<div style="display:grid;grid-template-columns:repeat('+cs.length+',minmax(0,1fr));gap:10px">'
+    + cs.map(c=>'<div style="border:1px solid '+LINHA+';padding:8px 12px"><div style="font-size:15px;font-weight:700;line-height:1.2;color:'+NAVY+'">'+esc(c[0])+'</div>'
+    + '<div style="margin-top:1px;font-size:10px;color:'+TXT2+'">'+esc(c[1])+'</div></div>').join("")+'</div>';
+  const rodape = nota => '<div style="background:'+CINZA+';border-top:1px solid '+LINHA+';padding:10px 48px;display:flex;justify-content:space-between;align-items:center;gap:24px;font-size:10px;color:'+TXT2+'">'
+    + '<span>TRX Diagnóstico Digital · <strong style="color:'+NAVY+'">trx.med.br</strong> · CNPJ 39.686.707/0001-39</span><span>'+esc(nota)+'</span></div>';
+  const assina = emissao => '<div style="margin-top:auto;padding-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px"><div>'
+    + kick("Responsável técnico")+'<div style="margin-top:4px;font-size:14px;font-weight:700;color:'+NAVY+'">Dr. Marcos Mendes Sales</div>'
+    + '<div style="font-size:11px;color:'+TXT2+';font-variant-numeric:tabular-nums">CRM-DF 26.054 · RQE 17.170</div></div>'
+    + '<div style="text-align:right;font-size:11px;line-height:1.5;color:'+TXT2+'"><strong style="color:'+NAVY+'">TRX DIGNOSTICO DIGITAL LTDA</strong><br>Emitido em '+esc(emissao)+'</div></div>';
+  const pagina = dentro => '<div style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:'+TXT+';position:relative;overflow:hidden;display:flex;flex-direction:column;font-family:\'Open Sans\',Arial,sans-serif">'
+    + '<img src="marca/trx-simplificado.svg" alt="" aria-hidden="true" style="position:absolute;right:10px;bottom:60px;width:200px;height:200px;opacity:0.04">' + dentro + '</div>';
+
+  function listaOutros(){
+    const ns = D.outros.map(x=>x[0]);
+    return ns.length>1 ? ns.slice(0,-1).join(", ")+" e "+ns[ns.length-1] : (ns[0]||"");
+  }
+  function tabela(comValor, preco){
+    const itens = D.principais.concat(D.qtOutros?[["Outros ("+listaOutros()+")", D.qtOutros]]:[]);
+    const th = (t,w,dir) => '<th scope="col" style="text-align:'+(dir||"left")+';padding:6px 12px;'+(w?"width:"+w+";":"")+'font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff">'+t+'</th>';
+    return '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:'+NAVY+'">'
+      + th("Tipo de exame") + th("Qtd.","56px","right") + (comValor?th("Valor","120px","right"):"")
+      + '</tr></thead><tbody>'
+      + itens.map((x,i)=>'<tr style="'+(i%2?"background:"+CINZA:"")+'">'
+        + '<td style="padding:4px 12px;border-bottom:1px solid '+LINHA+'">'+esc(x[0])+'</td>'
+        + '<td style="padding:4px 12px;border-bottom:1px solid '+LINHA+';text-align:right;font-weight:600;color:'+NAVY+';font-variant-numeric:tabular-nums">'+x[1]+'</td>'
+        + (comValor?'<td style="padding:4px 12px;border-bottom:1px solid '+LINHA+';text-align:right;font-weight:600;color:'+NAVY+';font-variant-numeric:tabular-nums">'+money(x[1]*preco)+'</td>':'')
+        + '</tr>').join("")
+      + '<tr style="background:'+NAVY+'"><td style="padding:7px 12px;font-weight:700;color:#fff">'+(comValor?"Total da medição":"Total laudado no período")+'</td>'
+      + '<td style="padding:7px 12px;text-align:right;font-weight:700;color:#fff;font-variant-numeric:tabular-nums">'+D.total+'</td>'
+      + (comValor?'<td style="padding:7px 12px;text-align:right;font-weight:700;color:#fff;font-variant-numeric:tabular-nums">'+money(D.total*preco)+'</td>':'')
+      + '</tr></tbody></table>';
+  }
+
+  function docDiario(f){
+    const novos = Math.max(0, D.total - f.base);
+    return pagina(faixa("Produção finalizada")
+      + tiras([["Cliente",f.cliente],["Período de apuração",D.primeiro+" a "+f.emissao],["Emissão",f.emissao],["Modalidade",f.modNome]])
+      + '<div style="flex-grow:1;padding:16px 48px 0;display:flex;flex-direction:column;gap:11px">'
+      + '<div>'+sec("Resumo executivo")+'<p style="margin:0;font-size:11.5px;line-height:1.55;text-align:justify">Produção de exames de '+esc(f.modNome)+' do hospital laudados pela TRX Diagnóstico Digital. O destaque abaixo traz o que foi liberado desde a última atualização; o total do período acumula os exames já finalizados e devolvidos ao sistema de laudos da unidade.</p></div>'
+      + '<div style="background:'+NAVY+';padding:14px 22px;display:flex;align-items:center;gap:20px"><div style="flex-shrink:0">'
+      + kick("Atualização de "+f.emissao,CIANO,"9px","0.14em")
+      + '<div style="margin-top:2px;font-size:42px;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums">'+novos+'</div></div>'
+      + '<div style="font-size:12px;line-height:1.4;color:#fff;max-width:230px">exames liberados desde a última atualização'+(f.dataBase?", enviada em "+esc(f.dataBase):"")+'</div>'
+      + '<div style="margin-left:auto;text-align:right;border-left:1px solid '+CIANO+';padding-left:20px">'+kick("Total no período","#cfe1ee","9px","0.14em")
+      + '<div style="margin-top:2px;font-size:22px;font-weight:700;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums">'+D.total+'</div></div></div>'
+      + cartoes([[f.mod,"Modalidade"],["Finalizado","Status da apuração"],["ICP-Brasil","Assinatura dos laudos"],[String(D.radiologistas),"Radiologistas na escala"]])
+      + '<div>'+sec("Distribuição por tipo de exame")+tabela(false)+'</div>'
+      + '<div>'+sec("Corpo clínico e condições de entrega")
+      + '<div style="background:'+CINZA+';border-left:3px solid '+CIANO2+';padding:9px 14px;font-size:11.5px;line-height:1.5"><strong>Equipe responsável pelos laudos.</strong> '+D.radiologistas+' médicos radiologistas com título de especialista e RQE ativo, habilitados em telerradiologia.</div>'
+      + '<ul style="margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.5"><li>Período apurado de '+esc(D.primeiro.slice(0,5))+' a '+esc(f.emissao)+'. Exames recebidos após essa data entram no próximo relatório.</li>'
+      + '<li>Todos os laudos assinados com certificado digital ICP-Brasil e inseridos no sistema de laudos da unidade.</li></ul></div>'
+      + assina(f.emissao) + '</div>' + rodape("Documento gerado para auditoria e controle interno"));
+  }
+
+  function docFechamento(f){
+    const saldo = f.pacote ? Math.max(0, f.pacote - D.total) : null;
+    const par = (k,v) => '<div style="display:flex;gap:8px;margin-bottom:3px"><div style="font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:'+TXT2+';width:88px;flex-shrink:0;padding-top:2px">'+esc(k)+'</div><div style="font-size:11px;line-height:1.4">'+esc(v)+'</div></div>';
+    return pagina(faixa("Fechamento de medição")
+      + tiras([["Cliente",f.cliente],["Medição",f.medicao],["Período apurado",D.primeiro+" a "+D.ultimo],["Emissão",f.emissao]])
+      + '<div style="flex-grow:1;padding:14px 48px 0;display:flex;flex-direction:column;gap:9px">'
+      + '<div>'+sec("Resumo da medição")+'<p style="margin:0;font-size:11px;line-height:1.5;text-align:justify">Fechamento do período de execução dos laudos de '+esc(f.modNome)+' do hospital. Todos os exames abaixo foram finalizados, assinados com certificado digital ICP-Brasil e devolvidos ao sistema de laudos da unidade dentro do período apurado.</p></div>'
+      + '<div style="background:'+NAVY+';padding:13px 22px;display:flex;align-items:center;gap:22px"><div style="flex-shrink:0">'
+      + kick("Valor total a faturar",CIANO,"9px","0.14em")
+      + '<div style="margin-top:2px;font-size:36px;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums">'+money(D.total*f.preco)+'</div></div>'
+      + '<div style="margin-left:auto;display:flex;gap:22px;text-align:right">'
+      + '<div style="border-left:1px solid '+CIANO+';padding-left:20px">'+kick("Laudos no período","#cfe1ee","9px","0.14em")+'<div style="margin-top:2px;font-size:22px;font-weight:700;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums">'+D.total+'</div></div>'
+      + '<div style="border-left:1px solid '+CIANO+';padding-left:20px">'+kick("Valor unitário","#cfe1ee","9px","0.14em")+'<div style="margin-top:2px;font-size:22px;font-weight:700;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums">'+money(f.preco)+'</div></div>'
+      + '</div></div>'
+      + cartoes([[f.mod,"Modalidade"],[f.contratoRot,"Contrato"],["ICP-Brasil","Assinatura dos laudos"],[f.prazoPg,"Prazo de pagamento"]])
+      + '<div>'+sec("Composição do faturamento por tipo de exame")+tabela(true,f.preco)+'</div>'
+      + '<div>'+sec("Condições de faturamento")
+      + '<ul style="margin:0;padding-left:18px;font-size:10.5px;line-height:1.5">'
+      + '<li>Valores brutos, conforme proposta aceita. As retenções tributárias correm por conta da TRX, sem acréscimo na nota fiscal: a NF sai pelo valor unitário multiplicado pelo quantitativo.</li>'
+      + '<li>Medição quinzenal. Pagamento em até '+esc(f.prazoPg)+' contados da apresentação da nota fiscal.</li>'
+      + (saldo!==null?'<li>Saldo do pacote de '+f.pacote+' laudos após esta medição: '+saldo+' laudos.</li>':'')
+      + '<li>Equipe de '+D.radiologistas+' médicos radiologistas com título de especialista e RQE ativo, habilitados em telerradiologia.</li></ul></div>'
+      + '<div style="display:grid;grid-template-columns:1.55fr 1fr;gap:22px">'
+      + '<div>'+sec("Dados do prestador")
+      + par("Razão social","TRX DIGNOSTICO DIGITAL LTDA")+par("CNPJ","39.686.707/0001-39")
+      + par("Endereço","ST SHN Quadra 2, Bloco F, Ed. Executive Office Tower, Sala 1325 Parte 28, Asa Norte, Brasília/DF, CEP 70.702-060")
+      + par("Contato","(61) 99892-7044 · tanqueradiologia@gmail.com")+'</div>'
+      + '<div>'+sec("Dados bancários")+par("Banco","136 Unicred")+par("Agência","1722")+par("Conta corrente","15025-8")+par("Favorecido","TRX DIGNOSTICO DIGITAL LTDA")+'</div></div>'
+      + assina(f.emissao) + '</div>' + rodape("Documento de fechamento para emissão de nota fiscal"));
+  }
+
+  function imprimir(html){
+    let box = document.getElementById("rel-doc");
+    if(!box){ box = document.createElement("div"); box.id="rel-doc"; document.body.appendChild(box); }
+    box.innerHTML = html;
+    document.body.classList.add("imprimindo");
+    const limpa = ()=>{ document.body.classList.remove("imprimindo"); window.removeEventListener("afterprint",limpa); };
+    window.addEventListener("afterprint", limpa);
+    setTimeout(()=>{ window.print(); setTimeout(limpa, 1500); }, 120);
+  }
+
+  /* ---------- tela ---------- */
+  function campos(){
+    const f = {};
+    const g = id => (document.getElementById(id)||{}).value || "";
+    f.cliente = g("rl-cliente").trim();
+    f.contratoRot = g("rl-contrato").trim();
+    f.medicao = g("rl-medicao").trim();
+    f.emissao = g("rl-emissao").trim();
+    f.preco = parseFloat(g("rl-preco").replace(",",".")) || 0;
+    f.base = parseInt(g("rl-base"),10) || 0;
+    f.dataBase = ls(KB+"-data") || "";
+    f.pacote = parseInt(g("rl-pacote"),10) || 0;
+    f.prazoPg = g("rl-prazo").trim() || "10 dias";
+    f.mod = D.modalidade;
+    f.modNome = D.modalidade==="MR"||D.modalidade==="RM" ? "Ressonância Magnética (RM)" : D.modalidade;
+    if(f.mod==="MR") f.mod="RM";
+    return f;
+  }
+  function hoje(){ const d=new Date(); const z=n=>String(n).padStart(2,"0"); return z(d.getDate())+"/"+z(d.getMonth()+1)+"/"+d.getFullYear(); }
+
+  function tela(){
+    const dropo = '<div class="band" id="rl-drop" style="text-align:center;padding:26px;border:2px dashed var(--line);cursor:pointer">'
+      + '<div style="font-size:15px;font-weight:700;color:var(--navy,#0e3a5a)">Solte aqui a planilha do sistema</div>'
+      + '<div class="meta" style="margin-top:6px">ou clique para escolher o arquivo. Vale a apuração do dia e o Relatório Nota fiscal, em .xlsx ou .csv.</div>'
+      + '<input type="file" id="rl-file" accept=".xlsx,.xls,.csv" hidden></div>';
+    if(!D){ corpo.innerHTML = dropo + '<p class="meta" id="rl-st"></p>'; ligaDrop(); return; }
+    const base = parseInt(ls(KB)||"0",10) || 0;
+    const rep = ls(KR) || REP_PADRAO;
+    const novos = Math.max(0, D.total - base);
+    corpo.innerHTML = dropo
+      + '<div class="kpis">'
+      + ['Exames no arquivo|'+D.total, 'Desde a última entrega|'+novos, 'Período|'+D.primeiro+" a "+D.ultimo,
+         'Radiologistas|'+D.radiologistas, 'Modalidade|'+D.modalidade, 'Instituição|'+(D.instituicao||"—")]
+        .map(x=>{const p=x.split("|");return '<div class="kpi" style="cursor:default"><span class="v">'+esc(p[1])+'</span><span class="k">'+esc(p[0])+'</span></div>';}).join("")
+      + '</div>'
+      + '<div class="pr-sec">Dados do relatório</div><div class="band"><div class="pr-regua">'
+      + '<div><label>Cliente<br><input id="rl-cliente" style="width:100%" value="Hospital Regional do Vale do Jaguaribe (HRVJ) · ISGH"></label></div>'
+      + '<div><label>Contrato<br><input id="rl-contrato" style="width:100%" value="Pacote 500 RM"></label>'
+      + '<label>Medição<br><input id="rl-medicao" style="width:100%" value="'+esc(ls("trx-rel-medicao")||"1ª quinzena · A-1")+'"></label></div>'
+      + '<div><label>Emissão<br><input id="rl-emissao" style="width:100%" value="'+hoje()+'"></label>'
+      + '<label>Valor por laudo<br><input id="rl-preco" style="width:100%" value="'+esc(ls("trx-rel-preco")||"99")+'"></label></div>'
+      + '<div><label>Total da entrega anterior<br><input id="rl-base" type="number" style="width:100%" value="'+base+'"></label>'
+      + '<label>Pacote contratado<br><input id="rl-pacote" type="number" style="width:100%" value="'+esc(ls("trx-rel-pacote")||"500")+'"></label>'
+      + '<label>Prazo de pagamento<br><input id="rl-prazo" style="width:100%" value="'+esc(ls("trx-rel-prazo")||"10 dias")+'"></label></div>'
+      + '</div></div>'
+      + '<div class="pr-sec">Gerar</div><div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">'
+      + '<button type="button" id="rl-diario">Relatório diário</button>'
+      + '<button type="button" id="rl-fech">Fechamento para nota fiscal</button>'
+      + '<button type="button" id="rl-prod">Atualizar a produção na Central</button>'
+      + '<span class="meta" id="rl-msg"></span></div>'
+      + '<p class="meta">O botão abre a janela de impressão do navegador: escolha <b>Salvar como PDF</b>. Depois de enviar o relatório diário, clique em <b>Guardar como última entrega</b> para que o número de amanhã saia certo.</p>'
+      + '<div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button type="button" id="rl-guardar">Guardar como última entrega</button><span class="meta" id="rl-guardado"></span></div>'
+      + '<details class="band"><summary>Repasse por médico (usado só na produção interna)</summary>'
+      + '<p class="meta">Uma linha por regra, no formato <b>Nome=valor</b>. A linha <b>padrao</b> vale para quem não estiver na lista.</p>'
+      + '<textarea id="rl-rep" rows="6" style="width:100%;font-family:var(--f-mono)">'+esc(rep)+'</textarea>'
+      + '<button type="button" id="rl-repsalvar">Salvar</button></details>'
+      + '<div class="pr-sec">Como ficou a distribuição</div>'
+      + '<div class="tbl"><table><thead><tr><th>Tipo de exame</th><th>Qtd.</th></tr></thead><tbody>'
+      + D.principais.map(x=>'<tr><td>'+esc(x[0])+'</td><td class="mono">'+x[1]+'</td></tr>').join("")
+      + (D.qtOutros?'<tr><td class="d-mut">Outros ('+esc(listaOutros())+')</td><td class="mono">'+D.qtOutros+'</td></tr>':'')
+      + '<tr><td><b>Total</b></td><td class="mono"><b>'+D.total+'</b></td></tr></tbody></table></div>';
+    ligaDrop(); ligaBotoes();
+  }
+
+  function ligaDrop(){
+    const z = $("#rl-drop"), inp = $("#rl-file");
+    if(!z) return;
+    z.addEventListener("click", ()=>inp.click());
+    z.addEventListener("dragover", e=>{ e.preventDefault(); z.style.borderColor="var(--ciano,#0095bd)"; });
+    z.addEventListener("dragleave", ()=>{ z.style.borderColor=""; });
+    z.addEventListener("drop", e=>{ e.preventDefault(); z.style.borderColor=""; if(e.dataTransfer.files[0]) ler(e.dataTransfer.files[0]); });
+    inp.addEventListener("change", ()=>{ if(inp.files[0]) ler(inp.files[0]); });
+  }
+
+  function carregaXLSX(){
+    if(window.XLSX) return Promise.resolve();
+    if(carregando) return carregando;
+    carregando = new Promise((ok,err)=>{ const s=document.createElement("script");
+      s.src="vendor/xlsx.mini.min.js"; s.onload=()=>ok(); s.onerror=()=>err(new Error("Não consegui carregar o leitor de planilha.")); document.head.appendChild(s); });
+    return carregando;
+  }
+
+  async function ler(file){
+    const st = $("#rl-st") || $("#rl-msg");
+    if(st) st.textContent = "Lendo a planilha…";
+    try{
+      await carregaXLSX();
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(new Uint8Array(buf), {type:"array"});
+      const sh = wb.Sheets[wb.SheetNames[0]];
+      const linhas = XLSX.utils.sheet_to_json(sh, {defval:"", raw:false});
+      if(!linhas.length) throw new Error("A planilha veio vazia.");
+      D = analisar(linhas);
+      tela();
+    }catch(e){
+      if(st) st.textContent = String((e&&e.message)||e);
+      else alert(String((e&&e.message)||e));
+    }
+  }
+
+  function ligaBotoes(){
+    const msg = t => { const m=$("#rl-msg"); if(m) m.textContent=t; };
+    $("#rl-diario").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docDiario(f)); });
+    $("#rl-fech").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docFechamento(f)); });
+    $("#rl-guardar").addEventListener("click", ()=>{ ls(KB, String(D.total)); ls(KB+"-data", $("#rl-emissao").value||hoje());
+      $("#rl-guardado").textContent = "Guardado: a próxima entrega compara com "+D.total+" laudos."; });
+    $("#rl-repsalvar").addEventListener("click", ()=>{ ls(KR, $("#rl-rep").value); msg("Repasse salvo neste navegador."); });
+    $("#rl-prod").addEventListener("click", ()=>mandarProducao(msg));
+  }
+  function guardaPrefs(f){ ls("trx-rel-preco",String(f.preco)); ls("trx-rel-pacote",String(f.pacote)); ls("trx-rel-prazo",f.prazoPg); ls("trx-rel-medicao",f.medicao); }
+
+  async function mandarProducao(msg){
+    const f = campos();
+    const mapa = repasseMapa();
+    const per = (D.ultimo||hoje()).slice(6,10)+"-"+(D.ultimo||hoje()).slice(3,5);
+    const linhas = Object.keys(D.med).sort((a,b)=>D.med[b]-D.med[a]).map(n=>({
+      medico:n, socio:ehSocio(n), exames:D.med[n],
+      receita:+(D.med[n]*f.preco).toFixed(2), repasse:+(D.med[n]*repasseDe(n,mapa)).toFixed(2),
+      obs:"Lançado pela aba Relatórios em "+f.emissao+" ("+D.primeiro+" a "+D.ultimo+")"
+    }));
+    let c = null; try{ c = JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){}
+    if(!c){
+      const ap = prompt("Apelido do app de Edição:"); if(!ap) return;
+      const pin = prompt("PIN:"); if(!pin) return;
+      c = { apelido: ap.trim().toLowerCase(), pin: pin.trim() };
+    }
+    msg("Atualizando a produção…");
+    try{
+      const r = await fetch(EDIT_URL, {method:"POST", body: JSON.stringify({action:"producaoLancar", cred:c,
+        dados:{periodo:per, contrato:"HRVJ", modalidade:(f.mod==="RM"?"RM":f.mod), linhas:linhas}})});
+      const j = await r.json();
+      if(!j.ok) throw new Error(j.erro||"Não deu para atualizar.");
+      try{ localStorage.setItem(CK, JSON.stringify(c)); }catch(e){}
+      msg("Produção atualizada: "+j.gravou+" médicos no período "+j.periodo+". A aba Produção dos sócios mostra na próxima rodada da Central.");
+    }catch(e){ msg("Não deu para atualizar a produção: "+String((e&&e.message)||e)); }
+  }
+
+  function render(){ if(!corpo.innerHTML.trim()) tela(); }
+  return {render};
+})();
+
 /* ---------- abas ---------- */
-const TABS=["inicio","prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao","fiscal"];
+const TABS=["inicio","prioridades","clinicas","licitacoes","isgh","quadro","roteiro","resultados","producao","relatorios","fiscal"];
 const rendered={};
 function show(tab){
   if(!TABS.includes(tab)) tab="inicio";
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(!rendered[tab]){ ({inicio:{render(){}},prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,fiscal:lFis})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({inicio:{render(){}},prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,relatorios:lRel,fiscal:lFis})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));

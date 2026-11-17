@@ -173,6 +173,7 @@ function doPost(e) {
     else if (p.action === 'objetivoNovo') out = objetivoNovo(p.cred, p.o);
     else if (p.action === 'objetivoMarcar') out = objetivoMarcar(p.cred, p.o);
     else if (p.action === 'emailEnviar') out = emailEnviar(p.cred, p.m);
+    else if (p.action === 'producaoLancar') out = producaoLancar(p.cred, p.dados);
     else throw new Error('Ação desconhecida.');
     out.ok = true;
   } catch (err) {
@@ -651,4 +652,71 @@ function emailEnviar(cred, m) {
     sh.appendRow([Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm'), nome, dest.join(', '), assunto]);
   } catch (e) {}
   return { enviados: dest.length };
+}
+
+/* ---------------- Producao dos socios: lancamento pela aba Relatorios da Central (17/11/2026) ----------------
+ * A Carla sobe a planilha de apuracao na Central, a pagina agrupa os laudos no navegador e manda para ca
+ * a producao do periodo. Aqui as linhas daquele periodo/contrato/modalidade sao substituidas na aba
+ * Producao_Socios da Pipeline Licitacoes; as linhas de credito ADM e de outros contratos ficam como estao.
+ * As colunas No_prazo e Horas_medianas ficam SEMPRE vazias: prazo nao e criterio entre socios. */
+
+const ABA_PROD = 'Producao_Socios';
+const PROD_COLS = ['Periodo', 'Medico', 'Socio', 'Contrato', 'Modalidade', 'Exames', 'No_prazo',
+                   'Horas_medianas', 'Receita', 'Repasse', 'Fator', 'Obs'];
+
+function producaoLancar(cred, d) {
+  exigir_(cred);
+  d = d || {};
+  const periodo = String(d.periodo || '').trim();
+  const contrato = String(d.contrato || '').trim();
+  const modalidade = String(d.modalidade || '').trim();
+  const linhas = Array.isArray(d.linhas) ? d.linhas : [];
+  if (!/^\d{4}-\d{2}$/.test(periodo)) throw new Error('Periodo invalido (use AAAA-MM).');
+  if (!contrato || !modalidade) throw new Error('Diga o contrato e a modalidade.');
+  if (!linhas.length) throw new Error('Nada para lancar.');
+  if (linhas.length > 100) throw new Error('Lancamento grande demais.');
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) throw new Error('A planilha esta ocupada. Tente de novo em alguns segundos.');
+  try {
+    const sh = SpreadsheetApp.openById(LICIT_ID).getSheetByName(ABA_PROD);
+    if (!sh) throw new Error('A aba ' + ABA_PROD + ' nao existe na Pipeline Licitacoes.');
+    const idx = cabecalho_(sh);
+    PROD_COLS.forEach(function (c) { if (idx[c] === undefined) throw new Error('Falta a coluna ' + c + ' na aba ' + ABA_PROD + '.'); });
+
+    // tira as linhas do mesmo periodo + contrato + modalidade, de baixo para cima
+    const ult = sh.getLastRow();
+    let tirou = 0;
+    if (ult > 1) {
+      const vals = sh.getRange(2, 1, ult - 1, sh.getLastColumn()).getDisplayValues();
+      for (let i = vals.length - 1; i >= 0; i--) {
+        const r = vals[i];
+        if (String(r[idx['Periodo']]).trim() === periodo &&
+            String(r[idx['Contrato']]).trim() === contrato &&
+            String(r[idx['Modalidade']]).trim() === modalidade) { sh.deleteRow(i + 2); tirou++; }
+      }
+    }
+
+    // escreve as novas na ordem das colunas da aba
+    const larg = sh.getLastColumn();
+    const novas = linhas.map(function (l) {
+      const linha = new Array(larg).fill('');
+      linha[idx['Periodo']] = periodo;
+      linha[idx['Medico']] = String(l.medico || '').slice(0, 60);
+      linha[idx['Socio']] = l.socio ? 'sim' : 'nao';
+      linha[idx['Contrato']] = contrato;
+      linha[idx['Modalidade']] = modalidade;
+      linha[idx['Exames']] = Number(l.exames) || 0;
+      linha[idx['No_prazo']] = '';
+      linha[idx['Horas_medianas']] = '';
+      linha[idx['Receita']] = Number(l.receita) || 0;
+      linha[idx['Repasse']] = Number(l.repasse) || 0;
+      linha[idx['Fator']] = 1;
+      linha[idx['Obs']] = String(l.obs || '').slice(0, 220);
+      return linha;
+    });
+    const inicio = sh.getLastRow() + 1;
+    sh.getRange(inicio, 1, novas.length, larg).setValues(novas);
+    return { tirou: tirou, gravou: novas.length, periodo: periodo, contrato: contrato };
+  } finally { lock.releaseLock(); }
 }
