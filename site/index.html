@@ -809,7 +809,7 @@ if(!D){
 (function(){
   const it = D.destaque_isgh || [];
   if(!it.length) return;
-  const SECS = [["contrato","Contrato HRVJ em execução"],["funil","Funil das 8 unidades"],["pendencias","Pendências com prazo"],["riscos","Riscos"]];
+  const SECS = [["contrato","Contratos em execução"],["funil","Funil das 8 unidades"],["pendencias","Pendências com prazo"],["riscos","Riscos"]];
   const by = {};
   it.forEach(i => { const k = norm(i.sec); (by[k] = by[k] || []).push(i); });
   let h = '<div class="ig-top"><h2>ISGH · prioridade máxima</h2><a href="#isgh">Abrir o dossiê</a></div><div class="ig-grid">';
@@ -1896,12 +1896,28 @@ const lFis=(function(){
    planilha (pelo build), o repasse e a lista de quem lança ficam na Producao_Params e são
    aplicados pelo app de Edição. O navegador guarda só um cache de 3 horas da última gravação. */
 const REL_ENTREGAS = (D && D.entregas_hrvj) || [];
+/* 20/11/2026: banco de entregas dos outros hospitais e modalidades, {"HRI|TC": [[data,total],...]} */
+const REL_ENT_GERAL = (D && D.entregas_geral) || {};
 const lRel = (function(){
   const corpo = $("#rel-corpo");
   const KB = "trx-rel-base", CK = "central-mural-cred", KH = "trx-rel-entregas-cache";
   const NOMEADAS = ["Pelve feminina","Crânio e encéfalo","Abdome superior","Pelve masculina","Abdome total",
                     "Coluna lombar","Joelho direito","Coluna cervical","Joelho esquerdo","Colangiorressonância"];
   let D = null, carregando = false;
+  /* POR HOSPITAL (20/11/2026). A planilha de apuração traz as colunas Instituição e Modalidade.
+     Cada par hospital + modalidade tem relatório, banco de entregas e produção próprios. A RM do
+     HRVJ segue como sempre (chave "HRVJ|RM"); o resto exige o app de Edição v18. Instituição que
+     não casar com nenhum termo abaixo entra com a sigla que veio no próprio arquivo. */
+  let LINHAS = null, GRUPOS = [], SEL = null;
+  const LEGADO = "HRVJ|RM";
+  const CONTRATOS = [
+    {sigla:"HRVJ", termos:["hrvj","jaguaribe","limoeiro"], cliente:"Hospital Regional do Vale do Jaguaribe (HRVJ) · ISGH", rot:{RM:"Pacote 500 RM"}, pacote:{RM:"500"}},
+    {sigla:"HRI",  termos:["hri","itapipoca"], cliente:"Hospital Regional de Itapipoca (HRI) · ISGH", rot:{}, pacote:{}},
+    {sigla:"HUC",  termos:["huc","universitario do ceara"], cliente:"Hospital Universitário do Ceará (HUC) · ISGH", rot:{}, pacote:{}}
+  ];
+  const PRECO_MOD = {RM:"99", TC:"53", RX:"5"};
+  const MOD_NOME = {RM:"Ressonância Magnética (RM)", TC:"Tomografia Computadorizada (TC)", RX:"Radiografia (RX)", MMG:"Mamografia (MMG)", US:"Ultrassonografia (US)", DO:"Densitometria Óssea (DO)"};
+  const suf = () => (SEL && SEL.chave!==LEGADO) ? "-"+SEL.chave : "";
 
   const money = v => "R$ " + (Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
   const ls = (k,v) => { try{ return v===undefined ? localStorage.getItem(k) : (localStorage.setItem(k,v), v); }catch(e){ return null; } };
@@ -1948,39 +1964,82 @@ const lRel = (function(){
   }
   const ordem = d => d.slice(6,10)+d.slice(3,5)+d.slice(0,2);
 
-  function analisar(linhas){
-    const col = n => { const k = Object.keys(linhas[0]||{}).find(x=>sem(x)===sem(n)); return k||n; };
+  function contratoDe(inst){
+    const s = " "+sem(inst)+" ";
+    const c = CONTRATOS.find(c=>c.termos.some(t=>s.indexOf(" "+t+" ")>=0));
+    if(c) return c;
+    const bruto = String(inst||"").trim();
+    const sigla = sem(bruto).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,12) || "SEMNOME";
+    return {sigla:sigla, termos:[], cliente: bruto || "Instituição não informada", rot:{}, pacote:{}};
+  }
+  function modSigla(m){
+    const s = sem(m);
+    if(!s) return "RM";
+    if(s==="mr"||s==="rm"||s.indexOf("resson")>=0) return "RM";
+    if(s==="ct"||s==="tc"||s.indexOf("tomogr")>=0) return "TC";
+    if(s==="cr"||s==="dx"||s==="dr"||s==="rx"||s.indexOf("radiogr")>=0||s.indexOf("raio")>=0) return "RX";
+    if(s==="mg"||s==="mmg"||s.indexOf("mamogr")>=0) return "MMG";
+    if(s==="us"||s.indexOf("ultra")>=0) return "US";
+    if(s==="bmd"||s==="do"||s.indexOf("densit")>=0) return "DO";
+    return s.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4) || "RM";
+  }
+  const colDe = (linhas,n) => { const k = Object.keys(linhas[0]||{}).find(x=>sem(x)===sem(n)); return k||n; };
+  /* Quantos exames finalizados o arquivo tem de cada hospital e modalidade, do maior para o menor. */
+  function inventario(linhas){
+    const cFim = colDe(linhas,"Finalizados em"), cMod = colDe(linhas,"Modalidade"), cInst = colDe(linhas,"Instituição");
+    const m = {};
+    linhas.forEach(r=>{
+      if(!String(r[cFim]||"").trim()) return;
+      const c = contratoDe(r[cInst]), md = modSigla(r[cMod]), k = c.sigla+"|"+md;
+      if(!m[k]) m[k] = {chave:k, sigla:c.sigla, cliente:c.cliente, mod:md, rot:c.rot[md]||"", pacote:c.pacote[md]||"", n:0};
+      m[k].n++;
+    });
+    const g = Object.keys(m).map(k=>m[k]).sort((a,b)=>b.n-a.n);
+    if(!g.length) throw new Error("Não achei a coluna \"Finalizados em\" com datas. Confira se é a planilha de apuração que o sistema exporta.");
+    return g;
+  }
+
+  function analisar(linhas, sel){
+    const col = n => colDe(linhas,n);
     const cDesc = col("Descrição do exame"), cFim = col("Finalizados em"), cResp = col("Responsável");
     const cMod = col("Modalidade"), cInst = col("Instituição"), cSit = col("Situação");
-    const cnt = {}, dias = {}, med = {}; let total = 0, mods = {}, inst = {};
+    const cnt = {}, dias = {}, med = {}; let total = 0, mods = {}, inst = {}, coron = 0;
     linhas.forEach(r=>{
       const fim = String(r[cFim]||"").trim(); if(!fim) return;
+      if(sel && (contratoDe(r[cInst]).sigla!==sel.sigla || modSigla(r[cMod])!==sel.mod)) return;
       total++;
       const g = grupo(r[cDesc]); cnt[g] = (cnt[g]||0)+1;
+      if(sem(r[cDesc]).indexOf("coronar")>=0) coron++;
       const d = fim.slice(0,10); dias[d] = (dias[d]||0)+1;
       const m = String(r[cResp]||"").trim(); if(m) med[m] = (med[m]||0)+1;
       const mo = String(r[cMod]||"").trim(); if(mo) mods[mo]=(mods[mo]||0)+1;
       const it = String(r[cInst]||"").trim(); if(it) inst[it]=(inst[it]||0)+1;
     });
     if(!total) throw new Error("Não achei a coluna \"Finalizados em\" com datas. Confira se é a planilha de apuração que o sistema exporta.");
-    const principais = NOMEADAS.filter(n=>cnt[n]).map(n=>[n,cnt[n]]).sort((a,b)=>b[1]-a[1]);
-    const outros = Object.keys(cnt).filter(k=>NOMEADAS.indexOf(k)<0).map(k=>[k,cnt[k]]).sort((a,b)=>b[1]-a[1]);
+    // RM segue a régua fixa de dez categorias; nas outras modalidades entram os dez tipos mais frequentes
+    const ehRM = !sel || sel.mod==="RM";
+    const nomeadas = ehRM ? NOMEADAS : Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,10);
+    const cap = t => ehRM ? t : t.charAt(0).toUpperCase()+t.slice(1);
+    const principais = nomeadas.filter(n=>cnt[n]).map(n=>[cap(n),cnt[n]]).sort((a,b)=>b[1]-a[1]);
+    const outros = Object.keys(cnt).filter(k=>nomeadas.indexOf(k)<0).map(k=>[k,cnt[k]]).sort((a,b)=>b[1]-a[1]);
     const qtOutros = outros.reduce((a,x)=>a+x[1],0);
     const datas = Object.keys(dias).sort((a,b)=>ordem(a)<ordem(b)?-1:1);
     const maior = o => Object.keys(o).sort((a,b)=>o[b]-o[a])[0] || "";
     return { total, principais, outros, qtOutros, dias, datas, med,
              radiologistas: Object.keys(med).length,
              primeiro: datas[0]||"", ultimo: datas[datas.length-1]||"",
-             modalidade: maior(mods)||"RM", instituicao: maior(inst)||"" };
+             modalidade: sel ? sel.mod : modSigla(maior(mods)), instituicao: maior(inst)||"",
+             sigla: sel ? sel.sigla : "", cliente: sel ? sel.cliente : "", coron: coron };
   }
 
   /* ---------- banco de entregas ---------- */
   const dIso = d => { const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(d||"").trim()); return m ? m[3]+m[2]+m[1] : ""; };
   function entregas(){
     // a planilha é a fonte; o cache local só cobre a hora entre gravar e a rodada seguinte do build
-    let extra=[]; try{ const c=JSON.parse(ls(KH)||"null"); if(c && c.em && Date.now()-c.em < 3*3600*1000) extra=c.lista||[]; }catch(e){ extra=[]; }
+    let extra=[]; try{ const c=JSON.parse(ls(KH+suf())||"null"); if(c && c.em && Date.now()-c.em < 3*3600*1000) extra=c.lista||[]; }catch(e){ extra=[]; }
     const m={};
-    REL_ENTREGAS.concat(extra).forEach(e=>{ if(e && e[0] && e[1]) m[e[0]]=parseInt(e[1],10)||0; });
+    const fonte = (!SEL || SEL.chave===LEGADO) ? REL_ENTREGAS : (REL_ENT_GERAL[SEL.chave]||[]);
+    fonte.concat(extra).forEach(e=>{ if(e && e[0] && e[1]) m[e[0]]=parseInt(e[1],10)||0; });
     return Object.keys(m).map(d=>[d,m[d]]).sort((a,b)=>dIso(a[0])<dIso(b[0])?-1:1);
   }
   function entregaAnterior(ate){
@@ -1998,12 +2057,15 @@ const lRel = (function(){
     return { apelido: ap.trim().toLowerCase(), pin: pin.trim() };
   }
   // A tela nova só grava com o app de Edição v17 ou mais novo: no v16 o repasse sairia zerado.
-  let appOk = false;
+  // Hospital ou modalidade que não seja a RM do HRVJ só grava com a v18: na v17 a entrega cairia no
+  // banco do HRVJ e a TC sairia com o repasse da RM.
+  let appVer = 0;
   async function confereApp(){
-    if(appOk) return;
+    const precisa = (SEL && SEL.chave!==LEGADO) ? 18 : 17;
+    if(appVer >= precisa) return;
     let j = {}; try{ const r = await fetch(EDIT_URL, {method:"POST", body: JSON.stringify({action:"versao"})}); j = await r.json(); }catch(e){ throw new Error("Não consegui falar com o app de Edição. Tente de novo."); }
-    if(!j.ok || !(j.versao >= 17)) throw new Error("O app de Edição ainda está na versão antiga. Falta o Marcos implantar a v17; nada foi gravado.");
-    appOk = true;
+    if(!j.ok || !(j.versao >= precisa)) throw new Error("O app de Edição ainda está na versão antiga. Falta o Marcos implantar a v"+precisa+"; nada foi gravado.");
+    appVer = j.versao;
   }
   async function posta(corpo){
     await confereApp();
@@ -2016,9 +2078,10 @@ const lRel = (function(){
     return j;
   }
   async function registra(data,total,pacote){
-    const j = await posta({action:"entregaGuardar", e:{emissao:data, total:parseInt(total,10)||0, pacote:pacote||0}});
-    ls(KH, JSON.stringify({em:Date.now(), lista:j.entregas||[]}));
-    ls(KB, String(total)); ls(KB+"-data", data);
+    const j = await posta({action:"entregaGuardar", e:{emissao:data, total:parseInt(total,10)||0, pacote:pacote||0,
+      contrato:(SEL?SEL.sigla:"HRVJ"), modalidade:(SEL?SEL.mod:"RM")}});
+    ls(KH+suf(), JSON.stringify({em:Date.now(), lista:j.entregas||[]}));
+    ls(KB+suf(), String(total)); ls(KB+suf()+"-data", data);
     return j;
   }
 
@@ -2144,12 +2207,11 @@ const lRel = (function(){
     f.emissao = g("rl-emissao").trim();
     f.preco = parseFloat(g("rl-preco").replace(",",".")) || 0;
     f.base = parseInt(g("rl-base"),10) || 0;
-    f.dataBase = ls(KB+"-data") || "";
+    f.dataBase = ls(KB+suf()+"-data") || "";
     f.pacote = parseInt(g("rl-pacote"),10) || 0;
     f.prazoPg = g("rl-prazo").trim() || "10 dias";
-    f.mod = D.modalidade;
-    f.modNome = D.modalidade==="MR"||D.modalidade==="RM" ? "Ressonância Magnética (RM)" : D.modalidade;
-    if(f.mod==="MR") f.mod="RM";
+    f.mod = D.modalidade==="MR" ? "RM" : D.modalidade;
+    f.modNome = MOD_NOME[f.mod] || f.mod;
     return f;
   }
   function hoje(){ const d=new Date(); const z=n=>String(n).padStart(2,"0"); return z(d.getDate())+"/"+z(d.getMonth()+1)+"/"+d.getFullYear(); }
@@ -2161,28 +2223,38 @@ const lRel = (function(){
       + '<input type="file" id="rl-file" accept=".xlsx,.xls,.csv" hidden></div>';
     if(!D){ corpo.innerHTML = dropo + '<p class="meta" id="rl-st"></p>'; ligaDrop(); return; }
     const ant = entregaAnterior(hoje());
-    const base = ant ? ant[1] : (parseInt(ls(KB)||"0",10) || 0);
-    const baseQuando = ant ? ant[0] : (ls(KB+"-data") || "");
+    const base = ant ? ant[1] : (parseInt(ls(KB+suf())||"0",10) || 0);
+    const baseQuando = ant ? ant[0] : (ls(KB+suf()+"-data") || "");
+    const leg = !SEL || SEL.chave===LEGADO;
+    const sig = (SEL && SEL.sigla) || "HRVJ", md = (SEL && SEL.mod) || "RM";
+    const abaEnt = leg ? "Entregas_HRVJ" : "Entregas_Geral";
+    // um arquivo com mais de um hospital ou modalidade: a pessoa escolhe qual relatório montar
+    const seletor = GRUPOS.length > 1
+      ? '<div class="pr-sec">Hospital e modalidade</div><div class="band"><p class="meta" style="margin:0 0 8px">Este arquivo traz <b>'+GRUPOS.length+'</b> conjuntos. Cada hospital e cada modalidade tem relatório, entregas e produção separados. Escolha um por vez.</p><div style="display:flex;flex-wrap:wrap;gap:8px">'
+        + GRUPOS.map((g,i)=>'<button type="button" class="rl-sel" data-i="'+i+'" style="'+(SEL&&g.chave===SEL.chave?"outline:3px solid var(--ciano,#0095bd);outline-offset:1px;font-weight:700":"opacity:.8")+'">'+esc(g.sigla)+' · '+esc(g.mod)+' ('+g.n+')</button>').join("")
+        + '</div></div>'
+      : '';
     const es = entregas(), ultE = es.length ? es[es.length-1] : null;
     const parcial = ultE && D.total < ultE[1];
     const perProd = (D.ultimo||hoje()).slice(3,5)+"/"+(D.ultimo||hoje()).slice(6,10);
     const novos = Math.max(0, D.total - base);
-    corpo.innerHTML = dropo
+    corpo.innerHTML = dropo + seletor
       + '<div class="kpis">'
       + ['Exames no arquivo|'+D.total, 'Desde a entrega de '+(baseQuando||'antes')+'|'+novos, 'Período|'+D.primeiro+" a "+D.ultimo,
-         'Radiologistas|'+D.radiologistas, 'Modalidade|'+D.modalidade, 'Instituição|'+(D.instituicao||"—")]
+         'Radiologistas|'+D.radiologistas, 'Modalidade|'+md, 'Hospital|'+sig]
         .map(x=>{const p=x.split("|");return '<div class="kpi" style="cursor:default"><span class="v">'+esc(p[1])+'</span><span class="k">'+esc(p[0])+'</span></div>';}).join("")
       + '</div>'
       + (parcial ? '<div class="band" style="border-left:4px solid var(--bad);"><b class="d-bad">Este arquivo parece parcial.</b> Ele tem '+D.total+' exames e a última entrega guardada, de '+esc(ultE[0])+', já tinha '+ultE[1]+'. Exporte no sistema o período inteiro, do início do contrato até hoje: o relatório e a produção trabalham com o acumulado.</div>' : '')
+      + (D.coron ? '<div class="band" style="border-left:4px solid var(--warn,#c98a00);"><b>Este conjunto tem '+D.coron+' angiotomografia'+(D.coron>1?'s':'')+' de coronárias.</b> Esse exame tem preço próprio, diferente do valor por laudo da modalidade. O fechamento e a produção desta tela aplicam um valor único por laudo: confira com o Marcos antes de faturar.</div>' : '')
       + '<div class="pr-sec">Dados do relatório</div><div class="band"><div class="pr-regua">'
-      + '<div><label>Cliente<br><input id="rl-cliente" style="width:100%" value="Hospital Regional do Vale do Jaguaribe (HRVJ) · ISGH"></label></div>'
-      + '<div><label>Contrato<br><input id="rl-contrato" style="width:100%" value="Pacote 500 RM"></label>'
-      + '<label>Medição<br><input id="rl-medicao" style="width:100%" value="'+esc(ls("trx-rel-medicao")||"1ª quinzena · A-1")+'"></label></div>'
+      + '<div><label>Cliente<br><input id="rl-cliente" style="width:100%" value="'+esc(ls("trx-rel-cliente"+suf())||D.cliente||"Hospital Regional do Vale do Jaguaribe (HRVJ) · ISGH")+'"></label></div>'
+      + '<div><label>Contrato<br><input id="rl-contrato" style="width:100%" value="'+esc(ls("trx-rel-contrato"+suf())||(SEL&&SEL.rot)||(leg?"Pacote 500 RM":"Contrato por produção"))+'"></label>'
+      + '<label>Medição<br><input id="rl-medicao" style="width:100%" value="'+esc(ls("trx-rel-medicao"+suf())||(leg?"1ª quinzena · A-1":"1ª medição"))+'"></label></div>'
       + '<div><label>Emissão<br><input id="rl-emissao" style="width:100%" value="'+hoje()+'"></label>'
-      + '<label>Valor por laudo<br><input id="rl-preco" style="width:100%" value="'+esc(ls("trx-rel-preco")||"99")+'"></label></div>'
+      + '<label>Valor por laudo<br><input id="rl-preco" style="width:100%" value="'+esc(ls("trx-rel-preco"+suf())||PRECO_MOD[md]||"")+'"></label></div>'
       + '<div><label>Total da entrega anterior'+(baseQuando?' <span class="meta">('+esc(baseQuando)+')</span>':'')+'<br><input id="rl-base" type="number" style="width:100%" value="'+base+'"></label>'
-      + '<label>Pacote contratado<br><input id="rl-pacote" type="number" style="width:100%" value="'+esc(ls("trx-rel-pacote")||"500")+'"></label>'
-      + '<label>Prazo de pagamento<br><input id="rl-prazo" style="width:100%" value="'+esc(ls("trx-rel-prazo")||"10 dias")+'"></label></div>'
+      + '<label>Pacote contratado<br><input id="rl-pacote" type="number" style="width:100%" value="'+esc(ls("trx-rel-pacote"+suf())||(SEL?SEL.pacote:"500"))+'"></label>'
+      + '<label>Prazo de pagamento<br><input id="rl-prazo" style="width:100%" value="'+esc(ls("trx-rel-prazo"+suf())||"10 dias")+'"></label></div>'
       + '</div></div>'
       + '<div class="pr-sec">Gerar</div><div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">'
       + '<button type="button" id="rl-diario">Relatório diário</button>'
@@ -2192,13 +2264,16 @@ const lRel = (function(){
       + '<p class="meta">O botão abre a janela de impressão do navegador: escolha <b>Salvar como PDF</b>. A conta do intervalo sai sozinha contra a última entrega da lista aqui embaixo. Depois de enviar o relatório, clique em <b>Guardar como última entrega</b> para que o de amanhã compare com este.</p>'
       + '<div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button type="button" id="rl-guardar">Guardar como última entrega</button><span class="meta" id="rl-guardado"></span></div>'
       + '<div class="pr-sec">Produção e cobrança</div>'
-      + '<div class="band"><p class="meta" style="margin:0 0 8px"><b>Atualizar a produção</b> grava na planilha a produção de <b>'+esc(perProd)+'</b> do HRVJ com tudo que está neste arquivo ('+esc(D.primeiro)+' a '+esc(D.ultimo)+') e substitui o que já estava lançado para esse mês. Por isso o arquivo tem de ser o acumulado. O repasse de cada médico é aplicado pela planilha (aba Producao_Params), não por esta tela.</p>'
+      + '<div class="band"><p class="meta" style="margin:0 0 8px"><b>Atualizar a produção</b> grava na planilha a produção de <b>'+esc(md)+'</b> do <b>'+esc(sig)+'</b> em <b>'+esc(perProd)+'</b> com tudo que está neste conjunto ('+esc(D.primeiro)+' a '+esc(D.ultimo)+') e substitui o que já estava lançado para esse mês. Por isso o arquivo tem de ser o acumulado. O repasse de cada médico é aplicado pela planilha (aba Producao_Params), não por esta tela.</p>'
+      + (leg ? ''
       + '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end"><label>Medição<br><select id="rl-mednum">'+["A-1","A-2","B-1","B-2","B-3","B-4","B-5","B-6"].map(n=>'<option'+(n===(ls("trx-rel-mednum")||"A-2")?' selected':'')+'>'+n+'</option>').join("")+'</select></label>'
       + '<label>Laudos de RM da medição<br><input id="rl-medqt" type="number" style="width:110px" value="'+D.total+'"></label>'
       + '<button type="button" id="rl-medgravar">Registrar a medição na planilha de cobrança</button><span class="meta" id="rl-medmsg"></span></div>'
-      + '<p class="meta" style="margin:8px 0 0">Use depois de enviar o fechamento ao hospital: grava os laudos e a data do relatório na linha da medição, e a cobrança passa a acompanhar a nota e o pagamento. O campo vem com o total do arquivo: da segunda medição em diante, desconte o que já foi faturado nas anteriores.</p></div>'
+      + '<p class="meta" style="margin:8px 0 0">Use depois de enviar o fechamento ao hospital: grava os laudos e a data do relatório na linha da medição, e a cobrança passa a acompanhar a nota e o pagamento. O campo vem com o total do arquivo: da segunda medição em diante, desconte o que já foi faturado nas anteriores.</p>'
+        : '<p class="meta" style="margin:8px 0 0">A planilha de cobrança hoje só existe para a RM do HRVJ. A medição de '+esc(md)+' do '+esc(sig)+' ainda não tem onde ser registrada: o fechamento sai em PDF e o controle fica com o financeiro.</p>')
+      + '</div>'
       + '<div class="pr-sec">Entregas já emitidas</div>'
-      + '<div class="band"><p class="meta" style="margin:0 0 8px">O número em destaque de cada relatório é a diferença contra o total da entrega anterior. A lista mora na planilha (aba Entregas_HRVJ) e vale para qualquer computador.</p>'
+      + '<div class="band"><p class="meta" style="margin:0 0 8px">O número em destaque de cada relatório é a diferença contra o total da entrega anterior. A lista é a de <b>'+esc(md)+'</b> do <b>'+esc(sig)+'</b>, mora na planilha (aba '+abaEnt+') e vale para qualquer computador.</p>'
       + '<div class="tbl"><table><thead><tr><th>Emissão</th><th>Total acumulado</th><th>Liberados no intervalo</th></tr></thead><tbody>'
       + es.map((e,i,a)=>'<tr><td class="mono">'+esc(e[0])+'</td><td class="mono">'+e[1]+'</td><td class="mono">'+(i?(e[1]-a[i-1][1]):"—")+'</td></tr>').join("")
       + '</tbody></table></div></div>'
@@ -2238,7 +2313,8 @@ const lRel = (function(){
       const sh = wb.Sheets[wb.SheetNames[0]];
       const linhas = XLSX.utils.sheet_to_json(sh, {defval:"", raw:false});
       if(!linhas.length) throw new Error("A planilha veio vazia.");
-      D = analisar(linhas);
+      LINHAS = linhas; GRUPOS = inventario(linhas); SEL = GRUPOS[0];
+      D = analisar(LINHAS, SEL);
       tela();
     }catch(e){
       if(st) st.textContent = String((e&&e.message)||e);
@@ -2248,15 +2324,18 @@ const lRel = (function(){
 
   function ligaBotoes(){
     const msg = t => { const m=$("#rl-msg"); if(m) m.textContent=t; };
+    document.querySelectorAll("#rel-corpo .rl-sel").forEach(b=>b.addEventListener("click", ()=>{
+      const g = GRUPOS[parseInt(b.getAttribute("data-i"),10)]; if(!g || !LINHAS) return;
+      SEL = g; D = analisar(LINHAS, SEL); tela(); }));
     $("#rl-diario").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docDiario(f)); });
     $("#rl-fech").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docFechamento(f)); });
     $("#rl-guardar").addEventListener("click", async ()=>{ const em = $("#rl-emissao").value||hoje();
       const g = $("#rl-guardado"), f = campos();
       g.textContent = "Guardando na planilha…";
       try{ await registra(em, D.total, f.pacote);
-        tela(); const g2=$("#rl-guardado"); if(g2) g2.textContent = "Guardado na planilha: a entrega de "+em+" com "+D.total+" laudos. A próxima compara com ela, em qualquer computador.";
+        tela(); const g2=$("#rl-guardado"); if(g2) g2.textContent = "Guardado na planilha: a entrega de "+em+" com "+D.total+" laudos de "+D.modalidade+" do "+D.sigla+". A próxima compara com ela, em qualquer computador.";
       }catch(e){ g.textContent = String((e&&e.message)||e); } });
-    $("#rl-medgravar").addEventListener("click", async ()=>{ const m=$("#rl-medmsg");
+    if($("#rl-medgravar")) $("#rl-medgravar").addEventListener("click", async ()=>{ const m=$("#rl-medmsg");
       const numero=$("#rl-mednum").value, qt=parseInt($("#rl-medqt").value,10)||0, em=$("#rl-emissao").value||hoje();
       if(!confirm("Gravar "+qt+" laudos de RM na medição "+numero+", com relatório enviado em "+em+"?")) return;
       ls("trx-rel-mednum",numero); m.textContent="Gravando…";
@@ -2265,20 +2344,23 @@ const lRel = (function(){
       }catch(e){ m.textContent = String((e&&e.message)||e); } });
     $("#rl-prod").addEventListener("click", ()=>mandarProducao(msg));
   }
-  function guardaPrefs(f){ ls("trx-rel-preco",String(f.preco)); ls("trx-rel-pacote",String(f.pacote)); ls("trx-rel-prazo",f.prazoPg); ls("trx-rel-medicao",f.medicao); }
+  function guardaPrefs(f){ const x=suf(); ls("trx-rel-preco"+x,String(f.preco)); ls("trx-rel-pacote"+x,String(f.pacote||"")); ls("trx-rel-prazo"+x,f.prazoPg); ls("trx-rel-medicao"+x,f.medicao);
+    if(x){ ls("trx-rel-cliente"+x,f.cliente); ls("trx-rel-contrato"+x,f.contratoRot); } }
 
   async function mandarProducao(msg){
     const f = campos();
     const per = (D.ultimo||hoje()).slice(6,10)+"-"+(D.ultimo||hoje()).slice(3,5);
-    if(!confirm("Gravar a produção de "+per+" do HRVJ com os "+D.total+" exames deste arquivo ("+D.primeiro+" a "+D.ultimo+")? O que já estava lançado para esse mês será substituído.")) return;
+    const sig = (SEL && SEL.sigla) || "HRVJ";
+    if(!(f.preco > 0)){ msg("Preencha o valor por laudo antes de atualizar a produção."); return; }
+    if(!confirm("Gravar a produção de "+f.mod+" do "+sig+" em "+per+" com os "+D.total+" exames deste conjunto ("+D.primeiro+" a "+D.ultimo+")? O que já estava lançado para esse hospital, modalidade e mês será substituído.")) return;
     const linhas = Object.keys(D.med).sort((a,b)=>D.med[b]-D.med[a]).map(n=>({
       medico:n, exames:D.med[n], receita:+(D.med[n]*f.preco).toFixed(2),
       obs:"Lançado pela aba Relatórios em "+f.emissao+" ("+D.primeiro+" a "+D.ultimo+")"
     }));
     msg("Atualizando a produção…");
     try{
-      const j = await posta({action:"producaoLancar", dados:{periodo:per, contrato:"HRVJ", modalidade:(f.mod==="RM"?"RM":f.mod), linhas:linhas}});
-      msg("Produção de "+per+" atualizada: "+j.gravou+" linhas gravadas"+(j.tirou?", "+j.tirou+" substituídas":"")+". Aparece na aba Produção dos sócios na próxima rodada.");
+      const j = await posta({action:"producaoLancar", dados:{periodo:per, contrato:sig, modalidade:f.mod, linhas:linhas}});
+      msg("Produção de "+f.mod+" do "+sig+" em "+per+" atualizada: "+j.gravou+" linhas gravadas"+(j.tirou?", "+j.tirou+" substituídas":"")+". Aparece na aba Produção dos sócios na próxima rodada.");
     }catch(e){ msg(String((e&&e.message)||e)); }
   }
 

@@ -52,6 +52,8 @@ A pasta `apps-script/` tem o app de edição. É um projeto Apps Script próprio
 | Objetivos da semana e e-mail para a equipe | abas Objetivos e Emails | v15 |
 | `producaoLancar` | aba Producao_Socios (substitui o mês, o contrato e a modalidade; preserva ADM e outros contratos) | v16 |
 | `entregaGuardar` | aba Entregas_HRVJ e a linha automática "Produção do HRVJ" do Destaque_ISGH | v17 |
+| `entregaGuardar` com `contrato` e `modalidade` | a RM do HRVJ segue na Entregas_HRVJ; os outros hospitais e modalidades vão para a aba Entregas_Geral (criada na primeira gravação), com a linha automática "Produção <SIGLA> <MOD>" no Destaque_ISGH | v18 |
+| `producaoLancar` por modalidade | o repasse da TC, do RX e de outras modalidades vem de `repasse_padrao_<MOD>` e `repasse_<MOD>: Nome` da Producao_Params; sem a linha, nada é lançado | v18 |
 | `medicaoGravar` | colunas F (laudos de RM) e K (relatório enviado em) da aba Medicoes da planilha Faturamento e Cobranca HRVJ ISGH | v17 |
 
 As três últimas só aceitam os apelidos listados em `producao_lancadores` da Producao_Params (área financeira). Depois de mudar o `Codigo.gs`, é preciso implantar uma versão nova na mesma URL (Implantar → Gerenciar implantações → editar → Nova versão).
@@ -62,6 +64,7 @@ A Carla solta na aba **Relatórios** a planilha de apuração que o sistema do h
 - **Banco de entregas:** a aba `Entregas_HRVJ` da Pipeline Licitações (Emissao, Total, Autor, Quando, Obs). O número em destaque do relatório diário é a diferença contra a última entrega anterior à data de emissão. O botão Guardar como última entrega grava na planilha; o navegador guarda só um cache de 3 horas, até a rodada seguinte trazer a planilha.
 - **Produção:** o botão Atualizar a produção manda médico, exames e receita ao app de Edição. O repasse (`repasse_padrao` e linhas `repasse: Nome`) e a marca de sócio (`socio_nomes`) são aplicados pelo app a partir da Producao_Params. **Nenhum valor de repasse nem nome de médico mora no código.** O arquivo tem de ser o acumulado: cada envio substitui o mês inteiro, e a tela avisa quando o arquivo é menor que a última entrega.
 - **Cobrança:** o botão Registrar a medição grava F e K na planilha de cobrança, que é o que a tarefa "TRX — Cobrança HRVJ/ISGH" lê.
+- **Por hospital (20/11/2026):** a planilha de apuração traz as colunas Instituição e Modalidade. A tela lista os conjuntos hospital + modalidade do arquivo e monta um relatório por vez, cada um com cliente, banco de entregas e produção próprios. Os hospitais conhecidos ficam em `CONTRATOS` no `index.html` (HRVJ, HRI, HUC); instituição desconhecida entra com a sigla do arquivo. A RM do HRVJ continua como antes e aceita o app v17; qualquer outro conjunto só grava com o app v18. A planilha de cobrança só existe para a RM do HRVJ. Angiotomografia de coronárias tem preço próprio: a tela avisa quando o conjunto traz esse exame, porque o fechamento aplica um valor único por laudo.
 
 ## Kit (aba nova, 17/11/2026)
 Modelos da marca para a equipe: ofício, comunicado, ata, proposta e e-mail, imagem de grupo do WhatsApp e bloco de marca. A fonte do padrão é o artefato Kit de Modelos Corporativos TRX e o design system TRX; os tokens estão copiados no `index.html`, então mudança na marca precisa ser trazida para cá (a tarefa semanal "Design system TRX" confere).

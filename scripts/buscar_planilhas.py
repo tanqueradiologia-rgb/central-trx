@@ -95,6 +95,16 @@ if "--so-licitacoes" in sys.argv:
     except Exception as e:
         json.dump({"values": []}, open("entregas_hrvj.json", "w", encoding="utf-8"))
         print(f"::warning::Nao consegui ler a aba Entregas_HRVJ: {e}")
+    # Banco de entregas por hospital e modalidade (20/11/2026): aba Entregas_Geral, criada pelo app de
+    # Edicao v18 na primeira entrega de um hospital ou modalidade que nao seja a RM do HRVJ.
+    # Colunas: Contrato | Modalidade | Emissao | Total. Enquanto a aba nao existe, segue sem aviso.
+    try:
+        eg = sheets.spreadsheets().values().get(spreadsheetId=LICIT_SHEET, range="Entregas_Geral!A1:D3000").execute()
+        json.dump(eg, open("entregas_geral.json", "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"OK: entregas_geral {len(eg.get('values', []))} linhas")
+    except Exception as e:
+        json.dump({"values": []}, open("entregas_geral.json", "w", encoding="utf-8"))
+        print(f"Aba Entregas_Geral ainda nao existe ou nao foi lida: {e}")
     sys.exit(0)
 
 vals = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Pipeline!A1:AP").execute()

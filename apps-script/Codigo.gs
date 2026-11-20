@@ -1,5 +1,9 @@
 /**
- * Central TRX · Edição — v17 (17/11/2026): banco de entregas do HRVJ (aba Entregas_HRVJ),
+ * Central TRX · Edição — v18 (20/11/2026): relatório, banco de entregas e produção POR HOSPITAL e
+ *   por modalidade. entregaGuardar aceita contrato e modalidade (a RM do HRVJ segue na aba
+ *   Entregas_HRVJ; o resto vai para a aba Entregas_Geral, criada na primeira gravação) e
+ *   producaoLancar aplica o repasse da modalidade (repasse_padrao_TC, "repasse_TC: Nome").
+ *   v17 (17/11/2026): banco de entregas do HRVJ (aba Entregas_HRVJ),
  *   medição na planilha de cobrança e produção restrita a producao_lancadores, com o repasse
  *   lido da Producao_Params. v16: producaoLancar. v15 (17/11/2026): Objetivos da semana (aba Objetivos) e e-mail para a
  *   equipe enviado pela Central (conta da TRX, resposta para quem escreveu; registro na aba Emails).
@@ -176,7 +180,7 @@ function doPost(e) {
     else if (p.action === 'objetivoMarcar') out = objetivoMarcar(p.cred, p.o);
     else if (p.action === 'emailEnviar') out = emailEnviar(p.cred, p.m);
     else if (p.action === 'producaoLancar') out = producaoLancar(p.cred, p.dados);
-    else if (p.action === 'versao') out = { versao: 17 };
+    else if (p.action === 'versao') out = { versao: 18 };
     else if (p.action === 'entregaGuardar') out = entregaGuardar(p.cred, p.e);
     else if (p.action === 'medicaoGravar') out = medicaoGravar(p.cred, p.m);
     else throw new Error('Ação desconhecida.');
@@ -684,6 +688,8 @@ function producaoLancar(cred, d) {
   if (!contrato || !modalidade) throw new Error('Diga o contrato e a modalidade.');
   if (!linhas.length) throw new Error('Nada para lancar.');
   if (linhas.length > 100) throw new Error('Lancamento grande demais.');
+  // v18: modalidade que nao e RM so entra com a linha de repasse dela na Producao_Params
+  repasseDe_('', regua, modalidade);
 
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) throw new Error('A planilha esta ocupada. Tente de novo em alguns segundos.');
@@ -719,7 +725,7 @@ function producaoLancar(cred, d) {
       linha[idx['No_prazo']] = '';
       linha[idx['Horas_medianas']] = '';
       linha[idx['Receita']] = Number(l.receita) || 0;
-      linha[idx['Repasse']] = Math.round((Number(l.exames) || 0) * repasseDe_(l.medico, regua) * 100) / 100;
+      linha[idx['Repasse']] = Math.round((Number(l.exames) || 0) * repasseDe_(l.medico, regua, modalidade) * 100) / 100;
       linha[idx['Fator']] = 1;
       linha[idx['Obs']] = String(l.obs || '').slice(0, 220);
       return linha;
@@ -742,11 +748,15 @@ function reguaProd_() {
   const sh = SpreadsheetApp.openById(LICIT_ID).getSheetByName('Producao_Params');
   if (!sh) throw new Error('A aba Producao_Params nao existe na Pipeline Licitacoes.');
   const vals = sh.getRange(1, 1, sh.getLastRow(), 2).getDisplayValues();
-  const r = { padrao: null, porMedico: {}, socios: [], lancadores: [] };
+  const r = { padrao: null, porMedico: {}, padraoMod: {}, porMedicoMod: {}, socios: [], lancadores: [] };
   const num = function (v) { const n = parseFloat(String(v).replace(/\./g, '').replace(',', '.')); return isNaN(n) ? null : n; };
   vals.forEach(function (l) {
     const k = String(l[0]).trim(), v = String(l[1]).trim(), kl = k.toLowerCase();
+    const mMod = /^repasse_([a-z]{2,4}):(.*)$/.exec(kl);
     if (kl === 'repasse_padrao') r.padrao = num(v);
+    // v18: repasse por modalidade. "repasse_padrao_TC" e o padrao da TC; "repasse_TC: Nome" e a excecao por medico
+    else if (kl.indexOf('repasse_padrao_') === 0) { const n = num(v); if (n !== null) r.padraoMod[kl.slice(15).toUpperCase()] = n; }
+    else if (mMod) { const n = num(v), md = mMod[1].toUpperCase(); if (n !== null) { r.porMedicoMod[md] = r.porMedicoMod[md] || {}; r.porMedicoMod[md][semAcento_(k.slice(k.indexOf(':') + 1))] = n; } }
     else if (kl.indexOf('repasse:') === 0) { const n = num(v); if (n !== null) r.porMedico[semAcento_(k.slice(8))] = n; }
     else if (kl === 'socio_nomes') r.socios = v.split(';').map(semAcento_).filter(String);
     else if (kl === 'producao_lancadores') r.lancadores = v.split(';').map(function (x) { return x.trim().toLowerCase(); }).filter(String);
@@ -754,7 +764,17 @@ function reguaProd_() {
   if (r.padrao === null) throw new Error('Falta a linha repasse_padrao na Producao_Params.');
   return r;
 }
-function repasseDe_(nome, r) { const k = semAcento_(nome); return r.porMedico[k] !== undefined ? r.porMedico[k] : r.padrao; }
+/** Repasse por laudo. RM (ou modalidade vazia) usa repasse_padrao e "repasse: Nome", como sempre.
+ *  Outra modalidade exige a linha repasse_padrao_<MOD> na Producao_Params: sem ela nada e lancado,
+ *  para o repasse da RM nunca ser aplicado por engano a uma TC ou a um RX. */
+function repasseDe_(nome, r, modalidade) {
+  const k = semAcento_(nome);
+  const md = String(modalidade || 'RM').trim().toUpperCase();
+  if (md === 'RM' || md === 'MR') return r.porMedico[k] !== undefined ? r.porMedico[k] : r.padrao;
+  if (r.padraoMod[md] === undefined) throw new Error('Falta a linha repasse_padrao_' + md + ' na Producao_Params. Sem ela a producao de ' + md + ' nao e lancada. Fale com o Marcos.');
+  const pm = r.porMedicoMod[md] || {};
+  return pm[k] !== undefined ? pm[k] : r.padraoMod[md];
+}
 function ehSocio_(nome, r) { const k = semAcento_(nome); return r.socios.some(function (x) { return k.indexOf(x) >= 0; }); }
 
 /** Producao, entregas e medicao sao da area financeira: so entra quem esta em producao_lancadores. */
@@ -778,52 +798,86 @@ const DESTAQUE_AUTO = 'Produção do HRVJ';
 
 function dataBr_(t) { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(t || '').trim()); return m ? m[3] + m[2] + m[1] : ''; }
 
+/* v18 (20/11/2026): cada hospital e cada modalidade tem o seu banco de entregas. A RM do HRVJ
+ * continua na aba Entregas_HRVJ, como estava. O resto mora na aba Entregas_Geral
+ * (Contrato | Modalidade | Emissao | Total | Autor | Quando | Obs), criada na primeira gravacao.
+ * A linha automatica do Destaque_ISGH da RM do HRVJ comeca por "Producao do HRVJ"; as outras
+ * comecam por "Producao <SIGLA> <MOD>:", para uma nunca casar com a outra. */
+const ABA_ENT_GERAL = 'Entregas_Geral';
+const ENT_GERAL_COLS = ['Contrato', 'Modalidade', 'Emissao', 'Total', 'Autor', 'Quando', 'Obs'];
+
 function entregaGuardar(cred, e) {
   const eu = lancador_(cred);
   e = e || {};
   const emissao = String(e.emissao || '').trim();
   const total = parseInt(e.total, 10);
   const pacote = parseInt(e.pacote, 10) || 0;
+  const contrato = String(e.contrato || 'HRVJ').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+  let modalidade = String(e.modalidade || 'RM').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  if (modalidade === 'MR') modalidade = 'RM';
   if (!dataBr_(emissao)) throw new Error('Data de emissao invalida (use DD/MM/AAAA).');
   if (!(total > 0) || total > 100000) throw new Error('Total invalido.');
+  if (!contrato || !modalidade) throw new Error('Diga o hospital e a modalidade da entrega.');
+  const legado = contrato === 'HRVJ' && modalidade === 'RM';
   const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
+  const autor = eu.nome || eu.email;
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) throw new Error('A planilha esta ocupada. Tente de novo em alguns segundos.');
   try {
     const ss = SpreadsheetApp.openById(LICIT_ID);
-    const sh = ss.getSheetByName(ABA_ENT);
-    if (!sh) throw new Error('A aba ' + ABA_ENT + ' nao existe na Pipeline Licitacoes.');
-    const ult = sh.getLastRow();
-    const vals = ult > 1 ? sh.getRange(2, 1, ult - 1, 2).getDisplayValues() : [];
-    let linha = 0;
-    vals.forEach(function (r, i) { if (String(r[0]).trim() === emissao) linha = i + 2; });
-    const nova = [emissao, total, eu.nome || eu.email, agora, String(e.obs || '').slice(0, 200)];
-    if (linha) sh.getRange(linha, 1, 1, 5).setValues([nova]); else sh.appendRow(nova);
-    SpreadsheetApp.flush();
-    const todas = sh.getRange(2, 1, sh.getLastRow() - 1, 2).getDisplayValues()
-      .map(function (r) { return [String(r[0]).trim(), parseInt(r[1], 10) || 0]; })
-      .filter(function (r) { return dataBr_(r[0]) && r[1] > 0; })
+    let todas = [];
+    if (legado) {
+      const sh = ss.getSheetByName(ABA_ENT);
+      if (!sh) throw new Error('A aba ' + ABA_ENT + ' nao existe na Pipeline Licitacoes.');
+      const ult = sh.getLastRow();
+      const vals = ult > 1 ? sh.getRange(2, 1, ult - 1, 2).getDisplayValues() : [];
+      let linha = 0;
+      vals.forEach(function (r, i) { if (String(r[0]).trim() === emissao) linha = i + 2; });
+      const nova = [emissao, total, autor, agora, String(e.obs || '').slice(0, 200)];
+      if (linha) sh.getRange(linha, 1, 1, 5).setValues([nova]); else sh.appendRow(nova);
+      SpreadsheetApp.flush();
+      todas = sh.getRange(2, 1, sh.getLastRow() - 1, 2).getDisplayValues()
+        .map(function (r) { return [String(r[0]).trim(), parseInt(r[1], 10) || 0]; });
+    } else {
+      let sh = ss.getSheetByName(ABA_ENT_GERAL);
+      if (!sh) { sh = ss.insertSheet(ABA_ENT_GERAL); sh.getRange(1, 1, 1, ENT_GERAL_COLS.length).setValues([ENT_GERAL_COLS]); sh.setFrozenRows(1); }
+      const ult = sh.getLastRow();
+      const vals = ult > 1 ? sh.getRange(2, 1, ult - 1, 3).getDisplayValues() : [];
+      let linha = 0;
+      vals.forEach(function (r, i) {
+        if (String(r[0]).trim().toUpperCase() === contrato && String(r[1]).trim().toUpperCase() === modalidade && String(r[2]).trim() === emissao) linha = i + 2;
+      });
+      const nova = [contrato, modalidade, emissao, total, autor, agora, String(e.obs || '').slice(0, 200)];
+      if (linha) sh.getRange(linha, 1, 1, 7).setValues([nova]); else sh.appendRow(nova);
+      SpreadsheetApp.flush();
+      todas = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getDisplayValues()
+        .filter(function (r) { return String(r[0]).trim().toUpperCase() === contrato && String(r[1]).trim().toUpperCase() === modalidade; })
+        .map(function (r) { return [String(r[2]).trim(), parseInt(r[3], 10) || 0]; });
+    }
+    todas = todas.filter(function (r) { return dataBr_(r[0]) && r[1] > 0; })
       .sort(function (a, b) { return dataBr_(a[0]) < dataBr_(b[0]) ? -1 : 1; });
     // linha automatica do Destaque_ISGH: so quando a entrega guardada e a mais recente
     try {
       const ultima = todas[todas.length - 1];
       if (ultima && ultima[0] === emissao) {
         const ant = todas.length > 1 ? todas[todas.length - 2] : null;
-        const titulo = DESTAQUE_AUTO + ': ' + total + ' laudos até ' + emissao.slice(0, 5);
+        const prefixo = legado ? DESTAQUE_AUTO : ('Produção ' + contrato + ' ' + modalidade);
+        const titulo = prefixo + ': ' + total + ' laudos até ' + emissao.slice(0, 5);
         const texto = 'Atualizado sozinho pela aba Relatórios em ' + agora + '. Entrega de ' + emissao + ' com ' + total + ' laudos acumulados'
+          + (legado ? '' : ' de ' + modalidade + ' do ' + contrato)
           + (ant ? ', ' + (total - ant[1]) + ' liberados desde a entrega de ' + ant[0] : '') + '.'
           + (pacote ? ' Saldo do pacote de ' + pacote + ': ' + Math.max(0, pacote - total) + ' laudos.' : '');
         const sd = ss.getSheetByName(ABA_DESTAQUE);
         if (sd) {
           const dv = sd.getRange(1, 1, sd.getLastRow(), 2).getDisplayValues();
           let ld = 0;
-          dv.forEach(function (r, i) { if (i && String(r[1]).indexOf(DESTAQUE_AUTO) === 0) ld = i + 1; });
+          dv.forEach(function (r, i) { if (i && String(r[1]).indexOf(legado ? DESTAQUE_AUTO : prefixo + ':') === 0) ld = i + 1; });
           if (ld) sd.getRange(ld, 2, 1, 2).setValues([[titulo, texto]]);
           else sd.appendRow(['contrato', titulo, texto, '', 'Carla', 0, '']);
         }
       }
     } catch (err) {}
-    return { entregas: todas, quando: agora };
+    return { entregas: todas, quando: agora, contrato: contrato, modalidade: modalidade };
   } finally { lock.releaseLock(); }
 }
 

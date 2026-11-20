@@ -522,6 +522,33 @@ def entregas_hrvj(path):
     return sorted(([d, n] for d, n in out.items()), key=lambda x: x[0][6:] + x[0][3:5] + x[0][:2])
 
 
+def entregas_geral(path):
+    """Aba Entregas_Geral da Pipeline Licitacoes (20/11/2026): banco de entregas dos hospitais e
+    modalidades que nao sao a RM do HRVJ. Devolve {"HRI|TC": [[DD/MM/AAAA, total], ...], ...},
+    cada lista em ordem de data. Sem aba ou sem arquivo, devolve {}."""
+    try:
+        pv = json.load(open(path, encoding="utf-8"))
+        rows = pv["values"] if isinstance(pv, dict) else pv
+    except Exception:
+        return {}
+    out = {}
+    for r in (rows or [])[1:]:
+        if len(r) < 4:
+            continue
+        ct = re.sub(r"[^A-Z0-9]", "", str(r[0]).upper())[:12]
+        md = re.sub(r"[^A-Z]", "", str(r[1]).upper())[:4]
+        d = str(r[2]).strip()
+        m = re.match(r"^(\d{2})/(\d{2})/(\d{4})$", d)
+        try:
+            n = int(float(str(r[3]).replace(".", "").replace(",", ".")))
+        except (TypeError, ValueError):
+            continue
+        if ct and md and m and n > 0:
+            out.setdefault(ct + "|" + md, {})[d] = n
+    return {k: sorted(([d, n] for d, n in v.items()), key=lambda x: x[0][6:] + x[0][3:5] + x[0][:2])
+            for k, v in out.items()}
+
+
 def producao_socios(path):
     """Abas Producao_Params, Producao_Socios e Escala_Socios da Pipeline Licitacoes (11/11/2026).
 
@@ -834,6 +861,7 @@ def main():
     ap.add_argument("--mural", default="", help="mural.json (aba Mural da Pipeline TRX)")
     ap.add_argument("--tarefas", default="", help="tarefas.json (aba Tarefas_Status da Pipeline TRX)")
     ap.add_argument("--entregas", default="", help="entregas_hrvj.json (aba Entregas_HRVJ da Pipeline Licitacoes)")
+    ap.add_argument("--entregas-geral", default="entregas_geral.json", help="entregas_geral.json (aba Entregas_Geral da Pipeline Licitacoes)")
     ap.add_argument("--equipe", default="", help="equipe.json (aba Equipe da Pipeline TRX, sem PIN)")
     ap.add_argument("--objetivos", default="", help="objetivos.json (aba Objetivos da Pipeline TRX)")
     ap.add_argument("--contratos", default="", help="contratos.json (aba Contratos da Documentos TRX)")
@@ -898,6 +926,7 @@ def main():
         "mural": mural(a.mural) if a.mural else [],
         "tarefas_status": tarefas_status(a.tarefas) if a.tarefas else [],
         "entregas_hrvj": entregas_hrvj(a.entregas) if a.entregas else [],
+        "entregas_geral": entregas_geral(a.entregas_geral) if a.entregas_geral else {},
         "equipe": equipe(a.equipe) if a.equipe else [],
         "objetivos": objetivos(a.objetivos) if a.objetivos else [],
         "fiscal": {"contratos": contratos(a.contratos) if a.contratos else [],
