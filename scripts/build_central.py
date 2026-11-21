@@ -664,6 +664,7 @@ def producao_socios(path):
         # ADM e gestao, nao exame: conta unidade e esforco, nunca entra em exames laudados
         if mod == "ADM":
             g["adm_un"] += int(ex)
+            g["ue_adm"] = g.get("ue_adm", 0.0) + ex * coef.get(mod, 1.0) * fator
         else:
             g["ex"] += int(ex)
         g["ue"] += ex * coef.get(mod, 1.0) * fator
@@ -686,6 +687,24 @@ def producao_socios(path):
             g["obs"] = txt(d.get("Obs"), 220)
         if g["l"] is None:
             g["l"] = d["_l"]
+
+    # Unidade ADM proporcional ao tamanho da empresa (Marcos, 20/11/2026): o trabalho de gestao
+    # cresce com a producao, entao a unidade deixa de valer um numero fixo de UE (coef_ADM) e
+    # passa a valer adm_unidade_pct_producao por cento de TODA a UE laudada no periodo, por
+    # socios e colaboradores. Sem a chave, vale o coef_ADM fixo de antes.
+    adm_pct = num(par.get("adm_unidade_pct_producao"))
+    if adm_pct and adm_pct > 0:
+        laudo_per = {}
+        for (per_k, _), g in gente.items():
+            laudo_per[per_k] = laudo_per.get(per_k, 0.0) + g["ue"] - g.get("ue_adm", 0.0)
+        for (per_k, _), g in gente.items():
+            if not g["adm_un"]:
+                continue
+            novo = g["adm_un"] * (adm_pct / 100.0) * laudo_per.get(per_k, 0.0)
+            g["ue"] += novo - g.get("ue_adm", 0.0)
+            g["ue_adm"] = novo
+            if "ADM" in g["mods"]:
+                g["mods"]["ADM"]["ue"] = novo
 
     for d in _tab(escala_rows):
         per = txt(d.get("Periodo"))[:7]
