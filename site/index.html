@@ -1584,7 +1584,8 @@ const lProd = (function(){
       + '<span class="v'+(m.liq<0?' d-bad':'')+'">'+money(m.liq)+'</span>'
       + '<span class="d">'+m.ex+' laudos '+money(m.rep)+'<br>'
       + (m.adm?'gestão, '+m.admun+(m.admun>1?' unidades ':' unidade ')+money(m.adm)+'<br>':'')
-      + (A.sobra<0?'prejuízo do mês ':'lucro do mês ')+sinal(m.quota)+'</span></div>').join("")
+      + (A.sobra<0?'prejuízo do mês ':'lucro do mês ')+sinal(m.quota)
+      + (m.cred?'<br>crédito administrativo '+sinal(m.cred):'')+'</span></div>').join("")
       + '</div>';
     h += '<p class="meta">Laudos produzidos mais a gestão, mais a parte do resultado da empresa no mês, já sem nenhuma despesa fixa. '
       + (A.sobra<0
@@ -1594,16 +1595,18 @@ const lProd = (function(){
       +'</p>';
     h += '<div class="band"><div class="pr-casc">'
       + '<span>Receita bruta dos laudos</span><span>'+money(A.rec)+'</span>'
-      + '<span>Receita líquida, fator '+n1((R.fator_liq||0)*100)+'% (imposto 9%, gestão 5%, jurídico 5%, desenvolvimento 1%)</span><span>'+money(A.liq)+'</span>'
+      + '<span>Receita líquida, fator '+n1((R.fator_liq||0)*100)+'% (imposto e percentuais da régua)</span><span>'+money(A.liq)+'</span>'
       + '<span>Despesa fixa da TRX no mês</span><span>'+sinal(-A.fixa)+'</span>'
       + '<span>Repasse de todos os laudadores</span><span>'+sinal(-A.rep)+'</span>'
       + (A.adm?'<span>Remuneração administrativa, '+A.adm_un+' unidades a '+money(A.valor_adm)+'</span><span>'+sinal(-A.adm)+'</span>':'')
       + (A.rt?'<span>Retenção do RT, '+n1(A.rt_pct)+'% da receita líquida de impostos, fica em conta da Tanque</span><span>'+sinal(-A.rt)+'</span>':'')
+      + (A.cred?'<span>Crédito administrativo acumulado, parcela do mês (até '+money(A.cred_max)+')</span><span>'+sinal(-A.cred)+'</span>':'')
       + '<span class="tot">Resultado da empresa</span><span class="tot'+(A.sobra<0?' d-bad':'')+'">'+money(A.sobra)+'</span>'
       + '<span class="tot">Total a faturar pelos sócios</span><span class="tot">'+money(A.liq_socios)+'</span>'
       + '</div>'
       + (A.itens&&A.itens.length?'<p class="meta" style="margin:8px 0 0">Despesa fixa: '+A.itens.map(i=>esc(i.n)+" "+money(i.v)).join(" · ")+'.</p>':'')
       + (A.rt?'<p class="meta" style="margin:8px 0 0">A retenção do RT não é pagamento a ninguém: fica em conta da Tanque para custo jurídico excepcional, com o risco assumido por todos os sócios.</p>':'')
+      + (A.cred_saldo!=null?'<p class="meta" style="margin:8px 0 0">Crédito administrativo acumulado: saldo a retirar de '+money(A.cred_saldo)+'. Sai do lucro em parcelas mensais, só em mês com lucro.</p>':'')
       + '<p class="meta" style="margin:4px 0 0">A despesa fixa do mês inteiro cai no período, sem rateio por contrato. Os valores ficam na aba Producao_Params, em chaves <b>despesa_</b>'
       + (aba(F.params_gid)?' · <a href="'+aba(F.params_gid)+'" target="_blank" rel="noopener">abrir a aba ↗</a>':'')+'</p></div>';
     return h;

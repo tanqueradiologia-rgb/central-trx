@@ -728,8 +728,22 @@ def producao_socios(path):
             return None
         return min(teto, 50.0 * valor / ref)
 
+    # Credito administrativo acumulado (Marcos, 20/11/2026): um socio tem um credito em RM pelo
+    # trabalho de gestao feito ate aqui. Sai do lucro em parcelas de ate credito_adm_parcela_max
+    # por mes, so em mes com lucro (socios recebendo o valor cheio dos laudos). A celula
+    # credito_adm_rm guarda o credito INICIAL; o saldo e calculado aqui, mes a mes, a partir de
+    # credito_adm_inicio. Nome do socio e valores moram na planilha, nunca neste codigo.
+    def _nrm(t):
+        t = "".join(c for c in unicodedata.normalize("NFD", txt(t)) if unicodedata.category(c) != "Mn")
+        return " ".join(t.lower().split())
+    cred_quem = _nrm(par.get("credito_adm_socio"))
+    cred_ini = (num(par.get("credito_adm_rm")) or 0.0) * (num(par.get("credito_adm_valor_rm")) or 0.0)
+    cred_max = num(par.get("credito_adm_parcela_max")) or 0.0
+    cred_de = txt(par.get("credito_adm_inicio"))[:7]
+    cred_saldo = cred_ini if cred_quem else 0.0
+
     periodos = []
-    for per in sorted({k[0] for k in gente}, reverse=True):
+    for per in sorted({k[0] for k in gente}):
         linhas = [g for k, g in gente.items() if k[0] == per]
         socios = [g for g in linhas if g["socio"]]
         base = socios or linhas
@@ -786,6 +800,13 @@ def producao_socios(path):
         n_soc = int(socios_sobra) if socios_sobra and socios_sobra > 0 else len(socios)
         ue_soc = sum(g["ue"] for g in socios)
         soc_saida = [x for x in saida if x["socio"]]
+        cred_parc, cred_dono = 0.0, None
+        if cred_saldo > 0.005 and cred_max > 0 and sobra > 0.005 and (not cred_de or per >= cred_de):
+            cred_dono = next((x for x in soc_saida if cred_quem in _nrm(x["n"])), None)
+            if cred_dono is not None:
+                cred_parc = min(cred_max, sobra, cred_saldo)
+                sobra -= cred_parc
+                cred_saldo -= cred_parc
 
         def ratear_prejuizo(lista, total):
             """Divide o prejuizo entre os socios com TETO no que cada um tem a receber.
@@ -830,12 +851,15 @@ def producao_socios(path):
             else:
                 q = (sobra / n_soc) if n_soc else 0.0
             x["quota"] = round(q, 2)
-            x["liq"] = round(x["rep"] + x["adm"] + q, 2)
+            x["cred"] = round(cred_parc, 2) if (cred_dono is x and cred_parc) else 0.0
+            x["liq"] = round(x["rep"] + x["adm"] + q + x["cred"], 2)
         acerto = {"rec": round(rec_tot, 2), "liq": round(liq_tot, 2), "fixa": round(fixa_mes, 2),
                   "rep": round(rep_tot, 2), "adm": round(adm_tot, 2),
                   "adm_un": sum(x["admun"] or 0 for x in saida),
                   "valor_adm": valor_adm, "rt": round(rt_ret, 2), "rt_pct": rt_pct,
                   "sobra": round(sobra, 2), "socios": n_soc,
+                  "cred": round(cred_parc, 2), "cred_max": cred_max,
+                  "cred_saldo": round(cred_saldo, 2) if cred_ini else None,
                   "nao_coberto": round(nao_coberto, 2),
                   "quota": (round(sobra / n_soc, 2)
                             if (sobra >= 0 and rateio != "ue" and n_soc) else None),
@@ -862,6 +886,7 @@ def producao_socios(path):
             "falta": falta,
         })
 
+    periodos.reverse()
     return {"periodos": periodos,
             "regua": {"coef": {k: round(v, 4) for k, v in sorted(coef.items(), key=lambda x: -x[1])},
                       "pesos": pesos, "meta_margem": meta_margem, "fator_liq": fator_liq,
