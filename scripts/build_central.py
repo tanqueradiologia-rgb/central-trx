@@ -620,6 +620,32 @@ def producao_socios(path):
             desp_base[k] = n
     fixa_param = num(par.get("despesa_fixa_mes"))
 
+    # Tetos (Marcos, 20/11/2026): o juridico leva pct_juridico da receita liquida de impostos ate
+    # teto_juridico_mes; o desenvolvimento leva pct_desenvolvimento ate teto_desenvolvimento_mes,
+    # teto que JA inclui o fixo da chave despesa_desenvolvimento. Com as chaves preenchidas, o
+    # fator do mes e calculado pela receita do mes e sobe quando um teto bate; sem elas, vale o
+    # fator_liquido fixo.
+    pct_jur, teto_jur = num(par.get("pct_juridico")), num(par.get("teto_juridico_mes"))
+    pct_dev, teto_dev = num(par.get("pct_desenvolvimento")), num(par.get("teto_desenvolvimento_mes"))
+
+    def fator_do(per, rec):
+        """Devolve (fator, juridico, desenvolvimento variavel, teto_bateu) do periodo."""
+        if pct_jur is None or pct_dev is None or not rec or rec <= 0:
+            return fator_liq, None, None, False
+        base = rec * (1 - imposto_pct / 100.0)
+        jur = base * pct_jur / 100.0
+        dev = base * pct_dev / 100.0
+        bateu = False
+        if teto_jur and jur > teto_jur:
+            jur, bateu = teto_jur, True
+        if teto_dev:
+            itens, _ = despesas_do(per)
+            fixo_dev = sum(d["v"] for d in itens if d["n"] == "desenvolvimento")
+            folga = max(0.0, teto_dev - fixo_dev)
+            if dev > folga:
+                dev, bateu = folga, True
+        return (base - jur - dev) / rec, jur, dev, bateu
+
     def despesas_do(per):
         itens = []
         for k in sorted(set(desp_base) | set(desp_desde)):
@@ -770,8 +796,9 @@ def producao_socios(path):
         pl_med = (sum((g["pl"] or 0) + (g["sob"] or 0) for g in pl_base) / len(pl_base)) if pl_base else 0.0
         ue_socios = sum(g["ue"] for g in socios) or sum(g["ue"] for g in linhas)
         saida = []
+        fator_per, jur_per, dev_per, teto_bateu = fator_do(per, sum(g["rec"] for g in linhas))
         for g in sorted(linhas, key=lambda x: -x["ue"]):
-            liq = g["rec"] * fator_liq
+            liq = g["rec"] * fator_per
             margem_pct = ((liq - g["rep"]) / g["rec"]) if g["rec"] else None
             notas = {
                 "esforco": nota(g["ue"], ue_med, meta_ue),
@@ -812,7 +839,7 @@ def producao_socios(path):
         rec_tot = sum(x["rec"] for x in saida)
         rep_tot = sum(x["rep"] for x in saida)
         adm_tot = sum(x["adm"] for x in saida)
-        liq_tot = rec_tot * fator_liq
+        liq_tot = rec_tot * fator_per
         rt_ret = rec_tot * (1 - imposto_pct / 100.0) * rt_pct / 100.0
         desp, fixa_mes = despesas_do(per)
         sobra = liq_tot - fixa_mes - rep_tot - adm_tot - rt_ret
@@ -877,6 +904,9 @@ def producao_socios(path):
                   "adm_un": sum(x["admun"] or 0 for x in saida),
                   "valor_adm": valor_adm, "rt": round(rt_ret, 2), "rt_pct": rt_pct,
                   "sobra": round(sobra, 2), "socios": n_soc,
+                  "fator": round(fator_per, 4), "teto_bateu": teto_bateu,
+                  "juridico": round(jur_per, 2) if jur_per is not None else None,
+                  "dev_var": round(dev_per, 2) if dev_per is not None else None,
                   "cred": round(cred_parc, 2), "cred_max": cred_max,
                   "cred_saldo": round(cred_saldo, 2) if cred_ini else None,
                   "nao_coberto": round(nao_coberto, 2),
