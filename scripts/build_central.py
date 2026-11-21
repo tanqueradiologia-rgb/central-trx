@@ -604,16 +604,34 @@ def producao_socios(path):
     # despesa_fixa_mes, se preenchida, substitui a soma. O 1% do desenvolvimento e a gestao de
     # 10% ja estao no fator_liquido, entao aqui entram so os fixos (Carla, 3.000 do sistema,
     # contador, aluguel e o resto). Sem as chaves, o acerto nao aparece e nada muda.
-    desp = []
+    # Despesa com data (Marcos, 20/11/2026): a chave "despesa_x desde AAAA-MM" troca o valor da
+    # despesa_x a partir daquele mes, sem mexer nos meses anteriores. Assim um aumento marcado
+    # para o futuro entra sozinho na virada do mes e o historico nao muda.
+    desp_base, desp_desde = {}, {}
     for k, v in par.items():
-        if k.startswith("despesa_") and k != "despesa_fixa_mes":
-            n = num(v)
-            if n:
-                desp.append({"n": txt(k[8:].replace("_", " ")), "v": round(n, 2)})
-    desp.sort(key=lambda x: -x["v"])
-    fixa_mes = num(par.get("despesa_fixa_mes"))
-    if fixa_mes is None or fixa_mes <= 0:
-        fixa_mes = sum(d["v"] for d in desp)
+        if not k.startswith("despesa_") or k == "despesa_fixa_mes":
+            continue
+        n = num(v)
+        m = re.match(r"^(despesa_.+?)\s+desde\s+(\d{4}-\d{2})$", k)
+        if m:
+            if n is not None:
+                desp_desde.setdefault(m.group(1), []).append((m.group(2), n))
+        elif n:
+            desp_base[k] = n
+    fixa_param = num(par.get("despesa_fixa_mes"))
+
+    def despesas_do(per):
+        itens = []
+        for k in sorted(set(desp_base) | set(desp_desde)):
+            v = desp_base.get(k, 0.0)
+            for de, n in sorted(desp_desde.get(k, [])):
+                if per >= de:
+                    v = n
+            if v:
+                itens.append({"n": txt(k[8:].replace("_", " ")), "v": round(v, 2)})
+        itens.sort(key=lambda x: -x["v"])
+        total = fixa_param if (fixa_param and fixa_param > 0) else sum(d["v"] for d in itens)
+        return itens, total
     rateio = (txt(par.get("rateio_sobra")) or "igual").lower()
     socios_sobra = num(par.get("socios_sobra"))
     # Remuneracao administrativa (Marcos, 16/11/2026): o trabalho de gestao e real e se paga em
@@ -796,6 +814,7 @@ def producao_socios(path):
         adm_tot = sum(x["adm"] for x in saida)
         liq_tot = rec_tot * fator_liq
         rt_ret = rec_tot * (1 - imposto_pct / 100.0) * rt_pct / 100.0
+        desp, fixa_mes = despesas_do(per)
         sobra = liq_tot - fixa_mes - rep_tot - adm_tot - rt_ret
         n_soc = int(socios_sobra) if socios_sobra and socios_sobra > 0 else len(socios)
         ue_soc = sum(g["ue"] for g in socios)
