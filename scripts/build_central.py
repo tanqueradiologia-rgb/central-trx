@@ -635,7 +635,12 @@ def producao_socios(path):
     gente = {}
 
     def pega(per, nome):
-        k = (per, nome)
+        # Mesmo medico com e sem acento (Vinicius x Vinícius) e uma pessoa so: a chave ignora
+        # acento, caixa e espaco sobrando; o nome exibido e o que tiver acento.
+        kn = "".join(c for c in unicodedata.normalize("NFD", nome) if unicodedata.category(c) != "Mn")
+        k = (per, " ".join(kn.lower().split()))
+        if k in gente and gente[k]["n"] != nome and nome.encode("ascii", "ignore").decode() != nome:
+            gente[k]["n"] = nome
         if k not in gente:
             gente[k] = {"per": per, "n": nome, "socio": False, "ex": 0, "ue": 0.0, "pz": 0,
                         "pz_base": 0, "rec": 0.0, "rep": 0.0, "mods": {}, "ctr": set(),
