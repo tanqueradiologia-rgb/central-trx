@@ -195,6 +195,12 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .dossie .dc p{margin:0;font-size:13px;line-height:1.55;color:var(--ink)}
 .dossie .dc a{display:inline-block;margin-top:7px;font-size:12px;color:var(--accent)}
 .dossie .vazio{color:var(--muted);font-size:13px}
+.dossie .ig-fotos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:4px 0 6px}
+.dossie .ig-fotos figure{margin:0}
+.dossie .ig-fotos img{display:block;width:100%;aspect-ratio:16/7;object-fit:cover;border-radius:var(--r);border:1px solid var(--line)}
+.dossie .ig-fotos figcaption{font-size:12px;color:var(--muted);margin-top:4px}
+.dossie .ig-fotos figcaption b{color:var(--ink)}
+@media (max-width:640px){.dossie .ig-fotos{grid-template-columns:1fr}}
 .hoje-band{margin:14px 0 4px;border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:var(--r);background:var(--surface);overflow:hidden}
 .hoje-band .hj-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--surface2)}
 .hoje-band h2{margin:0;font-family:var(--f-display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
@@ -1445,12 +1451,14 @@ const lIsgh = (function(){
              ["crescimento","Como crescer"],["rede","A rede ISGH"],["arquivos","Onde ficam os arquivos"]];
   const DS = D.isgh_dossie||[];
   $("#n-isgh").textContent = DS.length || "";
+  const FOTOS=[["hrvj","HRVJ","Limoeiro do Norte"],["hri","HRI","Itapipoca"],["huc","HUC","Fortaleza"]];
+  const fotos='<div class="ig-fotos">'+FOTOS.map(f=>'<figure><img src="marca/isgh/'+f[0]+'.jpg" alt="'+f[1]+', '+f[2]+'" loading="lazy"><figcaption><b>'+f[1]+'</b> · '+f[2]+'</figcaption></figure>').join('')+'</div>';
   return { render(){
-    if(!DS.length){ el.innerHTML='<p class="vazio">O dossiê do ISGH ainda não tem conteúdo. Ele é escrito na aba ISGH_Dossie da Pipeline Licitações.</p>'; return; }
+    if(!DS.length){ el.innerHTML=fotos+'<p class="vazio">O dossiê do ISGH ainda não tem conteúdo. Ele é escrito na aba ISGH_Dossie da Pipeline Licitações.</p>'; return; }
     const by={}; DS.forEach(i=>{ const k=norm(i.sec); (by[k]=by[k]||[]).push(i); });
     const vistas=new Set(SEC.map(x=>x[0]));
     const ordem=SEC.concat(Object.keys(by).filter(k=>!vistas.has(k)).map(k=>[k,k]));
-    let h='';
+    let h=fotos;
     ordem.forEach(([k,titulo])=>{ const l=by[k]; if(!l||!l.length) return;
       h+='<h2>'+esc(titulo)+'</h2><div class="dg">'+l.map(i=>
         '<div class="dc"><h3>'+esc(i.t)+'</h3>'+(i.x?'<p>'+esc(i.x)+'</p>':'')
