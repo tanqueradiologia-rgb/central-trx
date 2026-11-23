@@ -6,6 +6,10 @@ Regra: a medição do arquivo só entra quando a linha não tem "Medido em" ou t
 mais antiga que a do arquivo. Assim uma medição feita depois, direto na planilha (pela
 tarefa na nuvem ou à mão), nunca é atropelada por um arquivo velho.
 O Score e a Faixa são calculados depois pelo sincronizar_licitacoes.py.
+
+Desde 23/11/2026 a pasta medicoes/ não fica mais no repositório, que é público: o arquivo de
+30/09/2026 já foi aplicado e está guardado no Drive da TRX, pasta "Central TRX - dados privados".
+Para aplicar uma medição nova, ponha o arquivo em medicoes/ só na rodada e não comite.
 """
 import datetime as dt, glob, json, os, re, sys
 
