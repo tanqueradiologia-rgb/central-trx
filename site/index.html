@@ -2210,7 +2210,7 @@ const lRel = (function(){
                  : (m.ref.quando ? "entrega de "+m.ref.quando+" ("+m.ref.n+")" : "primeiro relatório, desde "+m.ref.desde);
     const CURTO = {RM:"Ressonância",TC:"Tomografia",RX:"Radiografia",MMG:"Mamografia",US:"Ultrassonografia",DO:"Densitometria",ACOR:"Angio de coronárias"};
     // descrição que veio crua do sistema (TC SEIOS DA FACE) sai sem a sigla e sem caixa alta
-    const limpo = t => { t=String(t||""); if(t!==t.toUpperCase()) return t;
+    const limpo = t => { t=String(t||""); if(t!==t.toUpperCase()) return t.charAt(0).toUpperCase()+t.slice(1);
       t=t.replace(/^(TC|RM|RX|US|USG|MMG|DO)\s+/,"").toLowerCase(); return t.charAt(0).toUpperCase()+t.slice(1); };
     const th = (t,dir,w) => '<th scope="col" style="text-align:'+(dir||"left")+';padding:6px 12px;white-space:nowrap;'+(w?"width:"+w+";":"")+'font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff">'+t+'</th>';
     const td = (t,dir,forte) => '<td style="padding:4px 12px;white-space:nowrap;border-bottom:1px solid '+LINHA+';text-align:'+(dir||"left")+';'+(forte?"font-weight:700;color:"+NAVY+";":"")+'font-variant-numeric:tabular-nums">'+t+'</td>';
@@ -2222,8 +2222,12 @@ const lRel = (function(){
           + '<td style="padding:6px 12px;text-align:right;font-weight:700;color:#fff;font-variant-numeric:tabular-nums">'+H.total+'</td></tr>' : '')
       + '</tbody></table>';
     const tipos = m => {
-      const pr = m.principais.slice(0, linhasMax), resto = m.principais.slice(linhasMax).reduce((a,x)=>a+x[1],0) + m.qtOutros;
-      const nomes = m.principais.slice(linhasMax).concat(m.outros).map(x=>x[0]);
+      // com mais de uma modalidade na folha, as linhas vão para os tipos mais frequentes do hospital,
+      // estejam ou não na régua fixa da RM; com uma só, segue a régua de sempre
+      const todos = n===1 ? m.principais.concat(m.outros) : m.principais.concat(m.outros).sort((a,b)=>b[1]-a[1]);
+      const corte = n===1 ? Math.min(linhasMax, m.principais.length) : linhasMax;
+      const pr = todos.slice(0, corte), resto = todos.slice(corte).reduce((a,x)=>a+x[1],0);
+      const nomes = todos.slice(corte).map(x=>x[0]);
       const rot = n===1 && nomes.length && nomes.length<=14 ? "Outros ("+(nomes.length>1 ? nomes.slice(0,-1).join(", ")+" e "+nomes[nomes.length-1] : nomes[0])+")" : "Outros tipos";
       const itens = pr.concat(resto ? [[rot, resto]] : []);
       const cel = 'padding:3px 10px;border-bottom:1px solid '+LINHA+';';
