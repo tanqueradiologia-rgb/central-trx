@@ -2019,7 +2019,8 @@ const lRel = (function(){
       const fim = String(r[cFim]||"").trim(); if(!fim) return;
       if(sel && (contratoDe(r[cInst]).sigla!==sel.sigla || modSigla(r[cMod])!==sel.mod)) return;
       total++;
-      const g = grupo(r[cDesc]); cnt[g] = (cnt[g]||0)+1;
+      // fora da RM, angiotomografia é linha própria (25/11/2026): antes caía em crânio, tórax etc.
+      const g = (sel && sel.mod!=="RM" && sem(r[cDesc]).indexOf("angio")>=0) ? "Angiotomografia" : grupo(r[cDesc]); cnt[g] = (cnt[g]||0)+1;
       if(sem(r[cDesc]).indexOf("coronar")>=0) coron++;
       const d = fim.slice(0,10); dias[d] = (dias[d]||0)+1;
       const m = String(r[cResp]||"").trim(); if(m) med[m] = (med[m]||0)+1;
@@ -2057,7 +2058,24 @@ const lRel = (function(){
     const lim = dIso(ate||hoje()), es = entregas();
     let r = null;
     es.forEach(e=>{ if(dIso(e[0]) < lim) r = e; });
-    return r || (es.length ? null : null);
+    return r;
+  }
+  /* 25/11/2026: de onde sai o "total da entrega anterior". Sempre a entrega guardada na planilha
+     ANTES da data de emissão. O navegador não serve de base: ele guardava o total de hoje logo
+     depois de "Guardar" e o primeiro relatório de um hospital saía com a diferença zerada e com a
+     data de hoje como "última atualização". Sem entrega anterior na planilha, a base sai do próprio
+     arquivo: tudo que foi finalizado até a antevéspera da emissão, e o destaque fica com o que foi
+     finalizado de ontem para hoje. */
+  let REF = {n:0, quando:"", desde:""};
+  function vespera(d){ const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(d||"").trim()); if(!m) return "";
+    const t=new Date(+m[3], +m[2]-1, +m[1]-1), z=n=>String(n).padStart(2,"0"); return z(t.getDate())+"/"+z(t.getMonth()+1)+"/"+t.getFullYear(); }
+  function baseDe(em){
+    em = dIso(em) ? em : hoje();
+    const ant = entregaAnterior(em);
+    if(ant) return {n:ant[1], quando:ant[0], desde:""};
+    const ontem = vespera(em), lim = dIso(ontem); let n = 0;
+    Object.keys(D.dias||{}).forEach(d=>{ const k=dIso(d); if(k && k<lim) n += D.dias[d]; });
+    return {n:n, quando:"", desde:ontem};
   }
   // credencial do app de Edição: a mesma do Mural; pede uma vez e guarda
   function credRel(){
@@ -2146,23 +2164,87 @@ const lRel = (function(){
       + '</tr></tbody></table>';
   }
 
+  /* 25/11/2026 (regra do Marcos): o relatório diário é UM POR HOSPITAL, com tudo que a TRX laudou
+     nele (RM, TC, RX ou qualquer outro método), em uma folha só. Cada modalidade continua com o seu
+     banco de entregas: a diferença de cada uma sai contra a entrega anterior dela e o destaque do
+     documento é a soma. O fechamento para nota fiscal segue por modalidade, porque o preço muda. */
+  function comSel(g, fn){
+    const s0 = SEL, d0 = D;
+    try{ SEL = g; D = analisar(LINHAS, g); return fn(D); } finally { SEL = s0; D = d0; }
+  }
+  const ORD_MOD = ["RM","TC","RX","MMG","US","DO"];
+  function gruposDoHospital(){
+    if(!LINHAS || !SEL) return [];
+    const p = m => { const i = ORD_MOD.indexOf(m); return i<0 ? 99 : i; };
+    return GRUPOS.filter(g=>g.sigla===SEL.sigla).sort((a,b)=>p(a.mod)-p(b.mod) || b.n-a.n);
+  }
+  function hospitalDiario(f){
+    const rads = {}; let primeiro = "";
+    const mods = gruposDoHospital().map(g=>comSel(g, d=>{
+      let ref = baseDe(f.emissao);
+      // base digitada à mão na tela vale só para a modalidade que está selecionada
+      if(g.chave===f.chaveSel && f.base!==f.refN) ref = {n:f.base, quando:"", desde:"", manual:true};
+      Object.keys(d.med).forEach(n=>{ rads[n]=1; });
+      if(d.primeiro && (!primeiro || ordem(d.primeiro)<ordem(primeiro))) primeiro = d.primeiro;
+      const es = entregas(), ult = es.length ? es[es.length-1] : null;
+      return { g:g, mod:g.mod, nome:MOD_NOME[g.mod]||g.mod, total:d.total, ref:ref, novos:Math.max(0, d.total-ref.n),
+               principais:d.principais, outros:d.outros, qtOutros:d.qtOutros, coron:d.coron,
+               parcial: !!(ult && d.total < ult[1]) };
+    }));
+    return { mods:mods, primeiro:primeiro, radiologistas:Object.keys(rads).length,
+             total:mods.reduce((a,m)=>a+m.total,0), novos:mods.reduce((a,m)=>a+m.novos,0) };
+  }
   function docDiario(f){
-    const novos = Math.max(0, D.total - f.base);
+    const H = hospitalDiario(f), M = H.mods, n = M.length;
+    const cols = n<=3 ? n : (n===4 ? 2 : 3), linhasMax = n<=3 ? 10 : (n<=6 ? 5 : 3);
+    const refs = M.map(m=>m.ref.quando).filter((v,i,a)=>a.indexOf(v)===i);
+    const desdes = M.map(m=>m.ref.desde).filter((v,i,a)=>a.indexOf(v)===i);
+    const quando = refs.length===1 && refs[0] ? "desde a última atualização, enviada em "+refs[0]
+                 : (refs.length===1 && desdes.length===1 && desdes[0] ? "desde "+desdes[0] : "desde a última atualização de cada modalidade");
+    const refTxt = m => m.ref.manual ? "base informada: "+m.ref.n
+                 : (m.ref.quando ? "entrega de "+m.ref.quando+" ("+m.ref.n+")" : "primeiro relatório, desde "+m.ref.desde);
+    const CURTO = {RM:"Ressonância",TC:"Tomografia",RX:"Radiografia",MMG:"Mamografia",US:"Ultrassonografia",DO:"Densitometria"};
+    // descrição que veio crua do sistema (TC SEIOS DA FACE) sai sem a sigla e sem caixa alta
+    const limpo = t => { t=String(t||""); if(t!==t.toUpperCase()) return t;
+      t=t.replace(/^(TC|RM|RX|US|USG|MMG|DO)\s+/,"").toLowerCase(); return t.charAt(0).toUpperCase()+t.slice(1); };
+    const th = (t,dir,w) => '<th scope="col" style="text-align:'+(dir||"left")+';padding:6px 12px;white-space:nowrap;'+(w?"width:"+w+";":"")+'font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff">'+t+'</th>';
+    const td = (t,dir,forte) => '<td style="padding:4px 12px;white-space:nowrap;border-bottom:1px solid '+LINHA+';text-align:'+(dir||"left")+';'+(forte?"font-weight:700;color:"+NAVY+";":"")+'font-variant-numeric:tabular-nums">'+t+'</td>';
+    const porMod = '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:'+NAVY+';background-image:'+GRADH+'">'
+      + th("Modalidade")+th("Comparado com")+th("Novos","right","70px")+th("Total no período","right","110px")+'</tr></thead><tbody>'
+      + M.map((m,i)=>'<tr style="'+(i%2?"background:"+TINTA:"")+'">'+td(esc(m.nome),"",true)+td(esc(refTxt(m)))+td(String(m.novos),"right",true)+td(String(m.total),"right",true)+'</tr>').join("")
+      + (n>1 ? '<tr style="background:'+NAVY+'"><td colspan="2" style="padding:6px 12px;font-weight:700;color:#fff">Total do hospital</td>'
+          + '<td style="padding:6px 12px;text-align:right;font-weight:700;color:#fff;font-variant-numeric:tabular-nums">'+H.novos+'</td>'
+          + '<td style="padding:6px 12px;text-align:right;font-weight:700;color:#fff;font-variant-numeric:tabular-nums">'+H.total+'</td></tr>' : '')
+      + '</tbody></table>';
+    const tipos = m => {
+      const pr = m.principais.slice(0, linhasMax), resto = m.principais.slice(linhasMax).reduce((a,x)=>a+x[1],0) + m.qtOutros;
+      const nomes = m.principais.slice(linhasMax).concat(m.outros).map(x=>x[0]);
+      const rot = n===1 && nomes.length && nomes.length<=14 ? "Outros ("+(nomes.length>1 ? nomes.slice(0,-1).join(", ")+" e "+nomes[nomes.length-1] : nomes[0])+")" : "Outros tipos";
+      const itens = pr.concat(resto ? [[rot, resto]] : []);
+      const cel = 'padding:3px 10px;border-bottom:1px solid '+LINHA+';';
+      return '<table style="width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed"><thead><tr style="background:'+NAVY+';background-image:'+GRADH+'">'
+        + '<th scope="col" style="text-align:left;padding:5px 10px;font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff">'+esc(n===1?"Tipo de exame":(n>3?(CURTO[m.mod]||m.mod):m.nome))+'</th>'
+        + '<th scope="col" style="width:46px;text-align:right;padding:5px 10px;font-family:'+CS+';font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff">Qtd.</th></tr></thead><tbody>'
+        + itens.map((x,i)=>'<tr style="'+(i%2?"background:"+TINTA:"")+'"><td style="'+cel+(n===1?"":"white-space:nowrap;overflow:hidden;text-overflow:ellipsis")+'">'+esc(limpo(x[0]))+'</td>'
+          + '<td style="'+cel+'text-align:right;font-weight:600;color:'+NAVY+';font-variant-numeric:tabular-nums">'+x[1]+'</td></tr>').join("")
+        + '<tr style="background:'+NAVY+'"><td style="padding:5px 10px;font-weight:700;color:#fff">Total</td><td style="padding:5px 10px;text-align:right;font-weight:700;color:#fff;font-variant-numeric:tabular-nums">'+m.total+'</td></tr></tbody></table>';
+    };
+    const siglas = M.map(m=>m.mod).join(", ");
     return pagina(faixa("Produção finalizada")
-      + tiras([["Cliente",f.cliente],["Período de apuração",D.primeiro+" a "+f.emissao],["Emissão",f.emissao],["Modalidade",f.modNome]])
-      + '<div style="flex-grow:1;padding:16px 48px 0;display:flex;flex-direction:column;gap:11px">'
-      + '<div>'+sec("Resumo executivo")+'<p style="margin:0;font-size:11.5px;line-height:1.55;text-align:left;hyphens:auto">Produção de exames de '+esc(f.modNome)+' do hospital laudados pela TRX Diagnóstico Digital. O destaque abaixo traz o que foi liberado desde a última atualização; o total do período acumula os exames já finalizados e devolvidos ao sistema de laudos da unidade.</p></div>'
-      + '<div style="background:'+NAVY+';background-image:'+GRAD+';border-radius:6px;padding:14px 22px;display:flex;align-items:center;gap:20px"><div style="flex-shrink:0">'
+      + tiras([["Cliente",f.clienteHosp],["Período de apuração",H.primeiro+" a "+f.emissao],["Emissão",f.emissao],[n>1?"Modalidades":"Modalidade", n>1?siglas:M[0].nome]])
+      + '<div style="flex-grow:1;padding:14px 48px 0;display:flex;flex-direction:column;gap:10px">'
+      + '<div>'+sec("Resumo executivo")+'<p style="margin:0;font-size:11.5px;line-height:1.5;text-align:left;hyphens:auto">Produção de todos os exames do hospital laudados pela TRX Diagnóstico Digital'+(n>1?", reunindo as "+n+" modalidades atendidas":"")+'. O destaque abaixo traz o que foi liberado desde a última atualização; o total do período acumula os exames já finalizados e devolvidos ao sistema de laudos da unidade.</p></div>'
+      + '<div style="background:'+NAVY+';background-image:'+GRAD+';border-radius:6px;padding:13px 22px;display:flex;align-items:center;gap:20px"><div style="flex-shrink:0">'
       + kick("Atualização de "+f.emissao,CIANO,"9px","0.14em")
-      + '<div style="margin-top:2px;font-size:42px;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums">'+novos+'</div></div>'
-      + '<div style="font-size:12px;line-height:1.4;color:#fff;max-width:230px">exames liberados desde a última atualização'+(f.dataBase?", enviada em "+esc(f.dataBase):"")+'</div>'
+      + '<div style="margin-top:2px;font-size:42px;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums">'+H.novos+'</div></div>'
+      + '<div style="font-size:12px;line-height:1.4;color:#fff;max-width:240px">exames liberados '+esc(quando)+'</div>'
       + '<div style="margin-left:auto;text-align:right;border-left:1px solid '+CIANO+';padding-left:20px">'+kick("Total no período","#cfe1ee","9px","0.14em")
-      + '<div style="margin-top:2px;font-size:22px;font-weight:700;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums">'+D.total+'</div></div></div>'
-      + cartoes([[f.mod,"Modalidade"],["Finalizado","Status da apuração"],["ICP-Brasil","Assinatura dos laudos"],[String(D.radiologistas),"Radiologistas na escala"]])
-      + '<div>'+sec("Distribuição por tipo de exame")+tabela(false)+'</div>'
+      + '<div style="margin-top:2px;font-size:22px;font-weight:700;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums">'+H.total+'</div></div></div>'
+      + '<div>'+sec("Produção por modalidade")+porMod+'</div>'
+      + '<div>'+sec("Distribuição por tipo de exame")+'<div style="display:grid;grid-template-columns:repeat('+cols+',minmax(0,1fr));gap:10px 14px;align-items:start">'+M.map(tipos).join("")+'</div></div>'
       + '<div>'+sec("Corpo clínico e condições de entrega")
-      + '<div style="background:'+TINTA+';border-left:3px solid '+CIANO2+';padding:9px 14px;font-size:11.5px;line-height:1.5"><strong>Equipe responsável pelos laudos.</strong> '+D.radiologistas+' médicos radiologistas com título de especialista e RQE ativo, habilitados em telerradiologia.</div>'
-      + '<ul style="margin:8px 0 0;padding-left:16px;font-size:11.5px;line-height:1.5"><li>Período apurado de '+esc(D.primeiro.slice(0,5))+' a '+esc(f.emissao)+'. Exames recebidos após essa data entram no próximo relatório.</li>'
+      + '<ul style="margin:0;padding-left:16px;font-size:11px;line-height:1.5"><li>Equipe de '+H.radiologistas+' médicos radiologistas com título de especialista e RQE ativo, habilitados em telerradiologia.</li>'
+      + '<li>Período apurado de '+esc(H.primeiro.slice(0,5))+' a '+esc(f.emissao)+'. Exames recebidos após essa data entram no próximo relatório.</li>'
       + '<li>Todos os laudos assinados com certificado digital ICP-Brasil e inseridos no sistema de laudos da unidade.</li></ul></div>'
       + assina(f.emissao) + '</div>' + rodape("Documento gerado para auditoria e controle interno"));
   }
@@ -2218,7 +2300,12 @@ const lRel = (function(){
     f.emissao = g("rl-emissao").trim();
     f.preco = parseFloat(g("rl-preco").replace(",",".")) || 0;
     f.base = parseInt(g("rl-base"),10) || 0;
-    f.dataBase = ls(KB+suf()+"-data") || "";
+    // a data só acompanha o número se a base for a que a Central calculou; base digitada à mão sai sem data
+    const mesma = f.base === REF.n;
+    f.dataBase = mesma ? REF.quando : "";
+    f.desde = mesma ? REF.desde : "";
+    f.refN = REF.n; f.chaveSel = SEL ? SEL.chave : LEGADO;
+    f.clienteHosp = f.cliente || (SEL && SEL.cliente) || "";
     f.pacote = parseInt(g("rl-pacote"),10) || 0;
     f.prazoPg = g("rl-prazo").trim() || "10 dias";
     f.mod = D.modalidade==="MR" ? "RM" : D.modalidade;
@@ -2233,15 +2320,14 @@ const lRel = (function(){
       + '<div class="meta" style="margin-top:6px">ou clique para escolher o arquivo. Vale a apuração do dia e o Relatório Nota fiscal, em .xlsx ou .csv.</div>'
       + '<input type="file" id="rl-file" accept=".xlsx,.xls,.csv" hidden></div>';
     if(!D){ corpo.innerHTML = dropo + '<p class="meta" id="rl-st"></p>'; ligaDrop(); return; }
-    const ant = entregaAnterior(hoje());
-    const base = ant ? ant[1] : (parseInt(ls(KB+suf())||"0",10) || 0);
-    const baseQuando = ant ? ant[0] : (ls(KB+suf()+"-data") || "");
+    REF = baseDe(hoje());
+    const base = REF.n, baseQuando = REF.quando;
     const leg = !SEL || SEL.chave===LEGADO;
     const sig = (SEL && SEL.sigla) || "HRVJ", md = (SEL && SEL.mod) || "RM";
     const abaEnt = leg ? "Entregas_HRVJ" : "Entregas_Geral";
     // um arquivo com mais de um hospital ou modalidade: a pessoa escolhe qual relatório montar
     const seletor = GRUPOS.length > 1
-      ? '<div class="pr-sec">Hospital e modalidade</div><div class="band"><p class="meta" style="margin:0 0 8px">Este arquivo traz <b>'+GRUPOS.length+'</b> conjuntos. Cada hospital e cada modalidade tem relatório, entregas e produção separados. Escolha um por vez.</p><div style="display:flex;flex-wrap:wrap;gap:8px">'
+      ? '<div class="pr-sec">Hospital e modalidade</div><div class="band"><p class="meta" style="margin:0 0 8px">Este arquivo traz <b>'+GRUPOS.length+'</b> conjuntos. O relatório diário sai um por hospital, com todas as modalidades dele em uma folha. O fechamento para nota fiscal, as entregas e a produção seguem por modalidade: escolha uma por vez.</p><div style="display:flex;flex-wrap:wrap;gap:8px">'
         + GRUPOS.map((g,i)=>'<button type="button" class="rl-sel" data-i="'+i+'" style="'+(SEL&&g.chave===SEL.chave?"outline:3px solid var(--ciano,#0095bd);outline-offset:1px;font-weight:700":"opacity:.8")+'">'+esc(g.sigla)+' · '+esc(g.mod)+' ('+g.n+')</button>').join("")
         + '</div></div>'
       : '';
@@ -2251,7 +2337,7 @@ const lRel = (function(){
     const novos = Math.max(0, D.total - base);
     corpo.innerHTML = dropo + seletor
       + '<div class="kpis">'
-      + ['Exames no arquivo|'+D.total, 'Desde a entrega de '+(baseQuando||'antes')+'|'+novos, 'Período|'+D.primeiro+" a "+D.ultimo,
+      + ['Exames no arquivo|'+D.total, (baseQuando?'Desde a entrega de '+baseQuando:'Desde '+REF.desde+' (sem entrega anterior)')+'|'+novos, 'Período|'+D.primeiro+" a "+D.ultimo,
          'Radiologistas|'+D.radiologistas, 'Modalidade|'+md, 'Hospital|'+sig]
         .map(x=>{const p=x.split("|");return '<div class="kpi" style="cursor:default"><span class="v">'+esc(p[1])+'</span><span class="k">'+esc(p[0])+'</span></div>';}).join("")
       + '</div>'
@@ -2263,17 +2349,17 @@ const lRel = (function(){
       + '<label>Medição<br><input id="rl-medicao" style="width:100%" value="'+esc(ls("trx-rel-medicao"+suf())||(leg?"1ª quinzena · A-1":"1ª medição"))+'"></label></div>'
       + '<div><label>Emissão<br><input id="rl-emissao" style="width:100%" value="'+hoje()+'"></label>'
       + '<label>Valor por laudo<br><input id="rl-preco" style="width:100%" value="'+esc(ls("trx-rel-preco"+suf())||PRECO_MOD[md]||"")+'"></label></div>'
-      + '<div><label>Total da entrega anterior'+(baseQuando?' <span class="meta">('+esc(baseQuando)+')</span>':'')+'<br><input id="rl-base" type="number" style="width:100%" value="'+base+'"></label>'
+      + '<div><label>Total da entrega anterior <span class="meta" id="rl-basequando">'+esc(baseQuando?'('+baseQuando+')':'(sem entrega guardada: até a antevéspera, pelo arquivo)')+'</span><br><input id="rl-base" type="number" style="width:100%" value="'+base+'"></label>'
       + '<label>Pacote contratado<br><input id="rl-pacote" type="number" style="width:100%" value="'+esc(ls("trx-rel-pacote"+suf())||(SEL?SEL.pacote:"500"))+'"></label>'
       + '<label>Prazo de pagamento<br><input id="rl-prazo" style="width:100%" value="'+esc(ls("trx-rel-prazo"+suf())||"10 dias")+'"></label></div>'
       + '</div></div>'
       + '<div class="pr-sec">Gerar</div><div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">'
-      + '<button type="button" id="rl-diario">Relatório diário</button>'
+      + '<button type="button" id="rl-diario">Relatório diário do '+esc(sig)+(gruposDoHospital().length>1?' (todas as modalidades)':'')+'</button>'
       + '<button type="button" id="rl-fech">Fechamento para nota fiscal</button>'
       + '<button type="button" id="rl-prod">Atualizar a produção na Central</button>'
       + '<span class="meta" id="rl-msg"></span></div>'
       + '<p class="meta">O botão abre a janela de impressão do navegador: escolha <b>Salvar como PDF</b>. A conta do intervalo sai sozinha contra a última entrega da lista aqui embaixo. Depois de enviar o relatório, clique em <b>Guardar como última entrega</b> para que o de amanhã compare com este.</p>'
-      + '<div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button type="button" id="rl-guardar">Guardar como última entrega</button><span class="meta" id="rl-guardado"></span></div>'
+      + '<div class="band" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button type="button" id="rl-guardar">Guardar como última entrega</button><span class="meta">O relatório diário já guarda sozinho. Este botão serve para corrigir ou guardar sem gerar o documento.</span><span class="meta" id="rl-guardado"></span></div>'
       + '<div class="pr-sec">Produção e cobrança</div>'
       + '<div class="band"><p class="meta" style="margin:0 0 8px"><b>Atualizar a produção</b> grava na planilha a produção de <b>'+esc(md)+'</b> do <b>'+esc(sig)+'</b> em <b>'+esc(perProd)+'</b> com tudo que está neste conjunto ('+esc(D.primeiro)+' a '+esc(D.ultimo)+') e substitui o que já estava lançado para esse mês. Por isso o arquivo tem de ser o acumulado. O repasse de cada médico é aplicado pela planilha (aba Producao_Params), não por esta tela.</p>'
       + (leg ? ''
@@ -2338,7 +2424,30 @@ const lRel = (function(){
     document.querySelectorAll("#rel-corpo .rl-sel").forEach(b=>b.addEventListener("click", ()=>{
       const g = GRUPOS[parseInt(b.getAttribute("data-i"),10)]; if(!g || !LINHAS) return;
       SEL = g; D = analisar(LINHAS, SEL); tela(); }));
-    $("#rl-diario").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docDiario(f)); });
+    // mudou a data de emissão: a base passa a ser a entrega guardada antes dessa data
+    $("#rl-emissao").addEventListener("change", ()=>{ REF = baseDe($("#rl-emissao").value); $("#rl-base").value = REF.n;
+      const q=$("#rl-basequando"); if(q) q.textContent = REF.quando ? "("+REF.quando+")" : "(sem entrega guardada: até a antevéspera, pelo arquivo)"; });
+    /* 25/11/2026: gerar o relatório diário já guarda a entrega de cada modalidade do hospital na
+       planilha, para o relatório de amanhã ter contra o que comparar. Conjunto que parece parcial
+       (total menor que o da última entrega) não é guardado. Se a gravação falhar, o relatório sai
+       do mesmo jeito e a tela avisa. O documento é montado ANTES de gravar. */
+    $("#rl-diario").addEventListener("click", async ()=>{ const bt=$("#rl-diario"); if(bt.disabled) return;
+      const f=campos(); guardaPrefs(f);
+      if(!dIso(f.emissao)){ msg("A data de emissão precisa estar no formato DD/MM/AAAA."); return; }
+      const H = hospitalDiario(f), html = docDiario(f);
+      bt.disabled = true; msg("Guardando as entregas na planilha…");
+      const ok=[], pulou=[], falhou=[]; const s0 = SEL, d0 = D;
+      for(const m of H.mods){
+        if(m.parcial){ pulou.push(m.mod); continue; }
+        try{ SEL = m.g; await registra(f.emissao, m.total, (m.g.chave===f.chaveSel ? f.pacote : parseInt(m.g.pacote,10)||0)); ok.push(m.mod+" "+m.total); }
+        catch(e){ falhou.push(m.mod+": "+String((e&&e.message)||e)); if(/PIN|LOGIN|apelido/i.test(String((e&&e.message)||e))) break; }
+        finally{ SEL = s0; D = d0; }
+      }
+      const aviso = (ok.length ? "Entrega de "+f.emissao+" guardada ("+ok.join(", ")+"). " : "")
+        + (pulou.length ? "Não guardei "+pulou.join(", ")+": o arquivo parece parcial. " : "")
+        + (falhou.length ? "Não consegui guardar ("+falhou.join("; ")+"). Use o botão Guardar antes do relatório de amanhã." : "");
+      tela(); msg(aviso);
+      imprimir(html); });
     $("#rl-fech").addEventListener("click", ()=>{ const f=campos(); guardaPrefs(f); imprimir(docFechamento(f)); });
     $("#rl-guardar").addEventListener("click", async ()=>{ const em = $("#rl-emissao").value||hoje();
       const g = $("#rl-guardado"), f = campos();
