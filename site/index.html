@@ -1927,7 +1927,8 @@ const lRel = (function(){
     {sigla:"HUC",  termos:["huc","universitario do ceara"], cliente:"Hospital Universitário do Ceará (HUC) · ISGH", rot:{}, pacote:{}}
   ];
   const PRECO_MOD = {RM:"99", TC:"53", RX:"5"};
-  const MOD_NOME = {RM:"Ressonância Magnética (RM)", TC:"Tomografia Computadorizada (TC)", RX:"Radiografia (RX)", MMG:"Mamografia (MMG)", US:"Ultrassonografia (US)", DO:"Densitometria Óssea (DO)"};
+  const MOD_NOME = {RM:"Ressonância Magnética (RM)", TC:"Tomografia Computadorizada (TC)", RX:"Radiografia (RX)", MMG:"Mamografia (MMG)", US:"Ultrassonografia (US)", DO:"Densitometria Óssea (DO)", ACOR:"Angiotomografia de Coronárias"};
+  const MOD_ROT = m => m==="ACOR" ? "Angio de coronárias" : m;
   const suf = () => (SEL && SEL.chave!==LEGADO) ? "-"+SEL.chave : "";
 
   const money = v => "R$ " + (Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1994,14 +1995,18 @@ const lRel = (function(){
     if(s==="bmd"||s==="do"||s.indexOf("densit")>=0) return "DO";
     return s.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4) || "RM";
   }
+  /* 25/11/2026 (regra do Marcos): angiotomografia comum fica dentro da TC. Só a angiotomografia de
+     coronárias é um conjunto à parte (sigla ACOR): linha própria no relatório do hospital, banco
+     de entregas, preço e fechamento próprios. */
+  const modDe = (m, desc) => { const md = modSigla(m); return (md==="TC" && sem(desc).indexOf("coronar")>=0) ? "ACOR" : md; };
   const colDe = (linhas,n) => { const k = Object.keys(linhas[0]||{}).find(x=>sem(x)===sem(n)); return k||n; };
   /* Quantos exames finalizados o arquivo tem de cada hospital e modalidade, do maior para o menor. */
   function inventario(linhas){
-    const cFim = colDe(linhas,"Finalizados em"), cMod = colDe(linhas,"Modalidade"), cInst = colDe(linhas,"Instituição");
+    const cFim = colDe(linhas,"Finalizados em"), cMod = colDe(linhas,"Modalidade"), cInst = colDe(linhas,"Instituição"), cDesc = colDe(linhas,"Descrição do exame");
     const m = {};
     linhas.forEach(r=>{
       if(!String(r[cFim]||"").trim()) return;
-      const c = contratoDe(r[cInst]), md = modSigla(r[cMod]), k = c.sigla+"|"+md;
+      const c = contratoDe(r[cInst]), md = modDe(r[cMod], r[cDesc]), k = c.sigla+"|"+md;
       if(!m[k]) m[k] = {chave:k, sigla:c.sigla, cliente:c.cliente, mod:md, rot:c.rot[md]||"", pacote:c.pacote[md]||"", n:0};
       m[k].n++;
     });
@@ -2017,10 +2022,10 @@ const lRel = (function(){
     const cnt = {}, dias = {}, med = {}; let total = 0, mods = {}, inst = {}, coron = 0;
     linhas.forEach(r=>{
       const fim = String(r[cFim]||"").trim(); if(!fim) return;
-      if(sel && (contratoDe(r[cInst]).sigla!==sel.sigla || modSigla(r[cMod])!==sel.mod)) return;
+      if(sel && (contratoDe(r[cInst]).sigla!==sel.sigla || modDe(r[cMod], r[cDesc])!==sel.mod)) return;
       total++;
       // fora da RM, angiotomografia é linha própria (25/11/2026): antes caía em crânio, tórax etc.
-      const g = (sel && sel.mod!=="RM" && sem(r[cDesc]).indexOf("angio")>=0) ? "Angiotomografia" : grupo(r[cDesc]); cnt[g] = (cnt[g]||0)+1;
+      const g = (sel && sel.mod!=="RM" && sem(r[cDesc]).indexOf("angio")>=0) ? (sel.mod==="ACOR" ? "Angiotomografia de coronárias" : "Angiotomografia") : grupo(r[cDesc]); cnt[g] = (cnt[g]||0)+1;
       if(sem(r[cDesc]).indexOf("coronar")>=0) coron++;
       const d = fim.slice(0,10); dias[d] = (dias[d]||0)+1;
       const m = String(r[cResp]||"").trim(); if(m) med[m] = (med[m]||0)+1;
@@ -2172,7 +2177,7 @@ const lRel = (function(){
     const s0 = SEL, d0 = D;
     try{ SEL = g; D = analisar(LINHAS, g); return fn(D); } finally { SEL = s0; D = d0; }
   }
-  const ORD_MOD = ["RM","TC","RX","MMG","US","DO"];
+  const ORD_MOD = ["RM","TC","ACOR","RX","MMG","US","DO"];
   function gruposDoHospital(){
     if(!LINHAS || !SEL) return [];
     const p = m => { const i = ORD_MOD.indexOf(m); return i<0 ? 99 : i; };
@@ -2203,7 +2208,7 @@ const lRel = (function(){
                  : (refs.length===1 && desdes.length===1 && desdes[0] ? "desde "+desdes[0] : "desde a última atualização de cada modalidade");
     const refTxt = m => m.ref.manual ? "base informada: "+m.ref.n
                  : (m.ref.quando ? "entrega de "+m.ref.quando+" ("+m.ref.n+")" : "primeiro relatório, desde "+m.ref.desde);
-    const CURTO = {RM:"Ressonância",TC:"Tomografia",RX:"Radiografia",MMG:"Mamografia",US:"Ultrassonografia",DO:"Densitometria"};
+    const CURTO = {RM:"Ressonância",TC:"Tomografia",RX:"Radiografia",MMG:"Mamografia",US:"Ultrassonografia",DO:"Densitometria",ACOR:"Angio de coronárias"};
     // descrição que veio crua do sistema (TC SEIOS DA FACE) sai sem a sigla e sem caixa alta
     const limpo = t => { t=String(t||""); if(t!==t.toUpperCase()) return t;
       t=t.replace(/^(TC|RM|RX|US|USG|MMG|DO)\s+/,"").toLowerCase(); return t.charAt(0).toUpperCase()+t.slice(1); };
@@ -2229,7 +2234,7 @@ const lRel = (function(){
           + '<td style="'+cel+'text-align:right;font-weight:600;color:'+NAVY+';font-variant-numeric:tabular-nums">'+x[1]+'</td></tr>').join("")
         + '<tr style="background:'+NAVY+'"><td style="padding:5px 10px;font-weight:700;color:#fff">Total</td><td style="padding:5px 10px;text-align:right;font-weight:700;color:#fff;font-variant-numeric:tabular-nums">'+m.total+'</td></tr></tbody></table>';
     };
-    const siglas = M.map(m=>m.mod).join(", ");
+    const siglas = M.map(m=>MOD_ROT(m.mod)).join(", ");
     return pagina(faixa("Produção finalizada")
       + tiras([["Cliente",f.clienteHosp],["Período de apuração",H.primeiro+" a "+f.emissao],["Emissão",f.emissao],[n>1?"Modalidades":"Modalidade", n>1?siglas:M[0].nome]])
       + '<div style="flex-grow:1;padding:14px 48px 0;display:flex;flex-direction:column;gap:10px">'
@@ -2263,7 +2268,7 @@ const lRel = (function(){
       + '<div style="border-left:1px solid '+CIANO+';padding-left:20px">'+kick("Laudos no período","#cfe1ee","9px","0.14em")+'<div style="margin-top:2px;font-size:22px;font-weight:700;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums">'+D.total+'</div></div>'
       + '<div style="border-left:1px solid '+CIANO+';padding-left:20px">'+kick("Valor unitário","#cfe1ee","9px","0.14em")+'<div style="margin-top:2px;font-size:22px;font-weight:700;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums">'+money(f.preco)+'</div></div>'
       + '</div></div>'
-      + cartoes([[f.mod,"Modalidade"],[f.contratoRot,"Contrato"],["ICP-Brasil","Assinatura dos laudos"],[f.prazoPg,"Prazo de pagamento"]])
+      + cartoes([[MOD_ROT(f.mod),"Modalidade"],[f.contratoRot,"Contrato"],["ICP-Brasil","Assinatura dos laudos"],[f.prazoPg,"Prazo de pagamento"]])
       + '<div>'+sec("Composição do faturamento por tipo de exame")+tabela(true,f.preco)+'</div>'
       + '<div>'+sec("Condições de faturamento")
       + '<ul style="margin:0;padding-left:16px;font-size:10.5px;line-height:1.5">'
@@ -2328,7 +2333,7 @@ const lRel = (function(){
     // um arquivo com mais de um hospital ou modalidade: a pessoa escolhe qual relatório montar
     const seletor = GRUPOS.length > 1
       ? '<div class="pr-sec">Hospital e modalidade</div><div class="band"><p class="meta" style="margin:0 0 8px">Este arquivo traz <b>'+GRUPOS.length+'</b> conjuntos. O relatório diário sai um por hospital, com todas as modalidades dele em uma folha. O fechamento para nota fiscal, as entregas e a produção seguem por modalidade: escolha uma por vez.</p><div style="display:flex;flex-wrap:wrap;gap:8px">'
-        + GRUPOS.map((g,i)=>'<button type="button" class="rl-sel" data-i="'+i+'" style="'+(SEL&&g.chave===SEL.chave?"outline:3px solid var(--ciano,#0095bd);outline-offset:1px;font-weight:700":"opacity:.8")+'">'+esc(g.sigla)+' · '+esc(g.mod)+' ('+g.n+')</button>').join("")
+        + GRUPOS.map((g,i)=>'<button type="button" class="rl-sel" data-i="'+i+'" style="'+(SEL&&g.chave===SEL.chave?"outline:3px solid var(--ciano,#0095bd);outline-offset:1px;font-weight:700":"opacity:.8")+'">'+esc(g.sigla)+' · '+esc(MOD_ROT(g.mod))+' ('+g.n+')</button>').join("")
         + '</div></div>'
       : '';
     const es = entregas(), ultE = es.length ? es[es.length-1] : null;
@@ -2338,11 +2343,11 @@ const lRel = (function(){
     corpo.innerHTML = dropo + seletor
       + '<div class="kpis">'
       + ['Exames no arquivo|'+D.total, (baseQuando?'Desde a entrega de '+baseQuando:'Desde '+REF.desde+' (sem entrega anterior)')+'|'+novos, 'Período|'+D.primeiro+" a "+D.ultimo,
-         'Radiologistas|'+D.radiologistas, 'Modalidade|'+md, 'Hospital|'+sig]
+         'Radiologistas|'+D.radiologistas, 'Modalidade|'+MOD_ROT(md), 'Hospital|'+sig]
         .map(x=>{const p=x.split("|");return '<div class="kpi" style="cursor:default"><span class="v">'+esc(p[1])+'</span><span class="k">'+esc(p[0])+'</span></div>';}).join("")
       + '</div>'
       + (parcial ? '<div class="band" style="border-left:4px solid var(--bad);"><b class="d-bad">Este arquivo parece parcial.</b> Ele tem '+D.total+' exames e a última entrega guardada, de '+esc(ultE[0])+', já tinha '+ultE[1]+'. Exporte no sistema o período inteiro, do início do contrato até hoje: o relatório e a produção trabalham com o acumulado.</div>' : '')
-      + (D.coron ? '<div class="band" style="border-left:4px solid var(--warn,#c98a00);"><b>Este conjunto tem '+D.coron+' angiotomografia'+(D.coron>1?'s':'')+' de coronárias.</b> Esse exame tem preço próprio, diferente do valor por laudo da modalidade. O fechamento e a produção desta tela aplicam um valor único por laudo: confira com o Marcos antes de faturar.</div>' : '')
+      + (md==="ACOR" ? '<div class="band" style="border-left:4px solid var(--warn,#c98a00);"><b>Angiotomografia de coronárias é um conjunto à parte da TC.</b> Tem preço próprio: confira o valor por laudo antes do fechamento. A produção só grava depois que a linha de repasse dela existir na aba Producao_Params.</div>' : '')
       + '<div class="pr-sec">Dados do relatório</div><div class="band"><div class="pr-regua">'
       + '<div><label>Cliente<br><input id="rl-cliente" style="width:100%" value="'+esc(ls("trx-rel-cliente"+suf())||D.cliente||"Hospital Regional do Vale do Jaguaribe (HRVJ) · ISGH")+'"></label></div>'
       + '<div><label>Contrato<br><input id="rl-contrato" style="width:100%" value="'+esc(ls("trx-rel-contrato"+suf())||(SEL&&SEL.rot)||(leg?"Pacote 500 RM":"Contrato por produção"))+'"></label>'
