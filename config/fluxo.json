@@ -1,0 +1,85 @@
+{
+  "_sobre": "Regras do fluxo (Kanban) da Central TRX, criadas em 27/11/2026. A rodada lê este arquivo em scripts/fluxo.py e a página recebe a cópia dentro dos dados cifrados. Mudança de limite ou de prazo passa pelo Marcos, como a régua da Dor.",
+  "fila": {
+    "clinicas": [
+      "Mapeando",
+      "Pesquisando decisor"
+    ],
+    "licitacoes": [
+      "Mapeado"
+    ],
+    "quadro": [
+      "Em aberto"
+    ],
+    "documentos": [
+      "Em dia"
+    ]
+  },
+  "_fila": "Fases de fila: o item ainda não foi puxado. Não contam como trabalho em andamento nem ganham selo de dias parado.",
+  "limites": {
+    "clinicas": null,
+    "licitacoes": null,
+    "quadro": null,
+    "documentos": null,
+    "fazendo_por_pessoa": 3
+  },
+  "_limites": "Limite único por frente (teto de itens em andamento). Enquanto estiver null vale o teto provisório: o que estava em andamento na primeira foto da medição. O limite avisa, não trava.",
+  "alerta_dias": {
+    "padrao": {
+      "atencao": 14,
+      "parado": 30
+    },
+    "clinicas": {
+      "1": {
+        "atencao": 21,
+        "parado": 35
+      }
+    },
+    "documentos": {
+      "1": {
+        "atencao": 31,
+        "parado": 31
+      },
+      "2": {
+        "atencao": 7,
+        "parado": 15
+      }
+    }
+  },
+  "_alerta_dias": "Faixa provisória de dias na etapa, usada só enquanto a etapa não tem histórico. A etapa 1 das clínicas usa os 21 dias da cadência de 6 toques. Com 8 passagens medidas ou mais, a faixa passa a ser o percentil 70 (atenção) e o percentil 85 (parado) do tempo real da etapa. Nos documentos, A vencer não alarma por dias na coluna (quem manda é a validade); Vencido entra em atenção com 7 dias em regularização e em parado com 15.",
+  "amostra_minima": 8,
+  "previsao": {
+    "semanas_minimas": 8,
+    "horizonte_semanas": 4,
+    "simulacoes": 10000
+  },
+  "coordenacao": {
+    "colunas": [
+      "Prospecção",
+      "Proposta e contrato",
+      "Implantação",
+      "Produção estável"
+    ],
+    "clinicas": {
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 1,
+      "6": 2,
+      "7": 3
+    },
+    "licitacoes": {
+      "3": 0,
+      "4": 1,
+      "5": 2,
+      "6": 3
+    }
+  },
+  "_coordenacao": "Quadro de coordenação por cliente: em qual coluna cai cada etapa do roteiro. Contrato com Status Ativo na aba Contratos entra em Produção estável e Em análise em Proposta e contrato; aluguel fica de fora.",
+  "revisao": [
+    "Todo cartão que passou pelo Claude volta para a coluna Para revisar com três linhas: Feito, Falta e Precisa de você.",
+    "Uma pessoa confere e marca Feito. O Claude não fecha o próprio cartão.",
+    "O que envia mensagem para fora da empresa, mexe em valor, contrato ou dado de paciente, ou apaga alguma coisa só é executado depois do Feito de uma pessoa: até lá o Claude entrega o rascunho.",
+    "Tudo o que o Claude faz fica registrado na aba Tarefas_Status, com data e hora."
+  ]
+}
