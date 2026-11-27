@@ -70,6 +70,16 @@ jobs:
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
         run: python scripts/buscar_planilhas.py --so-licitacoes
+      # Medição do fluxo (Kanban, 27/11/2026): compara a Fase de cada linha com a da rodada anterior,
+      # registra as passagens e a foto do dia nas abas Fluxo_Estado, Fluxo_Transicoes e Fluxo_Fotos da
+      # Pipeline Licitações e deixa os números em fluxo.json. Se falhar, a página sai sem o bloco de fluxo.
+      - name: Medir o fluxo (passagens de fase, foto do dia e tempo por etapa)
+        id: fluxo
+        continue-on-error: true
+        timeout-minutes: 6
+        env:
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+        run: python scripts/fluxo.py
       - name: Gerar os dados da página
         run: |
           set -a; . ./mods.env; set +a
@@ -77,7 +87,7 @@ jobs:
           python scripts/build_central.py --pipeline pipeline.json --licitacoes licitacoes.json \
             --saida site/dados_central.js --mod-pipeline "$MOD_PIPELINE" --mod-licitacoes "$MOD_LICIT_SHEET" \
             --documentos documentos.json --destaque destaque_isgh.json --dossie isgh_dossie.json \
-            --producao producao.json --contratos contratos.json --mural mural.json --tarefas tarefas.json --equipe equipe.json --objetivos objetivos.json --entregas entregas_hrvj.json
+            --producao producao.json --contratos contratos.json --mural mural.json --tarefas tarefas.json --equipe equipe.json --objetivos objetivos.json --entregas entregas_hrvj.json --fluxo fluxo.json
       - name: Verificação automática (motores e regras)
         run: |
           set -a; . ./mods.env; set +a
@@ -110,6 +120,9 @@ jobs:
       - name: Avisar se a sincronização falhou
         if: steps.sync.outcome == 'failure'
         run: echo "::warning::A sincronização com a planilha de licitações falhou nesta rodada; a página saiu com os dados da planilha como estavam."
+      - name: Avisar se a medição do fluxo falhou
+        if: steps.fluxo.outcome == 'failure'
+        run: echo "::warning::A medição do fluxo falhou nesta rodada; a página saiu sem os números de fluxo."
       - name: Avisar se o radar PNCP falhou
         if: steps.radar.outcome == 'failure'
         run: echo "::warning::O radar PNCP falhou nesta rodada."

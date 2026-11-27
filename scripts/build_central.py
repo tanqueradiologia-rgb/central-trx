@@ -945,6 +945,46 @@ def producao_socios(path):
                       "escala_gid": ESCALA_GID}}
 
 
+def fluxo(path, dados, tarefas_path):
+    """Medição do fluxo (27/11/2026). scripts/fluxo.py deixa em fluxo.json desde quando cada linha
+    está na fase atual; aqui isso vira dois campos na própria linha: "et" (data e hora da entrada)
+    "ee" (entrada na etapa, que pode ser anterior quando a fase mudou dentro da mesma etapa)
+    e "ef" (de onde veio a data: h = Historico do app, r = rodada da Central, c = carimbo de última
+    atualização, que só garante o mínimo, i = início da medição). Sem o arquivo, a página segue
+    sem o bloco de fluxo."""
+    try:
+        m = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return {}
+    it = m.pop("itens", {})
+    def marca(rows, frente, chave):
+        d = {txt(k): v for k, v in it.get(frente, {}).items()}
+        for r in rows:
+            v = d.get(chave(r))
+            if v:
+                r["et"], r["ef"], r["ee"] = v[0], v[1], v[2]
+    marca(dados["clinicas"], "clinicas", lambda r: r["n"] + " · " + r["c"])
+    marca(dados["licitacoes"], "licitacoes", lambda r: r["id"])
+    marca(dados["quadro"], "quadro", lambda r: r["id"])
+    marca(dados["fiscal"]["documentos"], "documentos", lambda r: r["doc"])
+    # tarefas da Minha fila concluídas por semana (Feito ou Ciente na aba Tarefas_Status)
+    sem = {}
+    try:
+        H, rows = _linhas(tarefas_path)
+        for r in rows:
+            d = dict(zip(H, r + [""] * (len(H) - len(r))))
+            if str(d.get("Status") or "").strip().lower() in ("feito", "ciente"):
+                q = data_iso(d.get("Quando"))
+                if q:
+                    dia = dt.date.fromisoformat(q[:10])
+                    s = (dia - dt.timedelta(days=dia.weekday())).isoformat()
+                    sem[s] = sem.get(s, 0) + 1
+    except Exception:
+        pass
+    m["tarefas"] = sorted(sem.items())[-12:]
+    return m
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pipeline", required=True)
@@ -963,6 +1003,7 @@ def main():
     ap.add_argument("--equipe", default="", help="equipe.json (aba Equipe da Pipeline TRX, sem PIN)")
     ap.add_argument("--objetivos", default="", help="objetivos.json (aba Objetivos da Pipeline TRX)")
     ap.add_argument("--contratos", default="", help="contratos.json (aba Contratos da Documentos TRX)")
+    ap.add_argument("--fluxo", default="fluxo.json", help="fluxo.json gerado por scripts/fluxo.py (medição do fluxo)")
     a = ap.parse_args()
 
     pv = json.load(open(a.pipeline, encoding="utf-8"))
@@ -1032,6 +1073,7 @@ def main():
                     "contratos_fonte": {"id": DOCS_SHEET, "gid": CONTRATOS_GID}},
         "documentos_fonte": {"id": DOCS_SHEET, "gid": DOCS_GID},
     }
+    dados["fluxo"] = fluxo(a.fluxo, dados, a.tarefas)
     js = "window.CENTRAL=" + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n"
     open(a.saida, "w", encoding="utf-8").write(js)
     print(f"OK {a.saida}: {len(cl)} clinicas, {len(lic)} licitacoes, {len(qd)} municipios do quadro, "

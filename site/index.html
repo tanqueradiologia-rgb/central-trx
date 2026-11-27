@@ -570,12 +570,12 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     <div class="ini-grid">
       <div class="ini-col">
         <div id="urg" class="avisos urg" hidden></div>
-        <div id="hoje" class="hoje-band" hidden></div>
       </div>
       <div class="ini-col">
         <div id="equipe" class="avisos eqp" hidden></div>
       </div>
     </div>
+    <div id="hoje" class="hoje-band" hidden></div>
   </section>
   <section class="pane" id="pane-prioridades" hidden>
     <div class="agenda">
@@ -607,7 +607,9 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
   <section class="pane" id="pane-clinicas" hidden>
     <div class="kpis" id="k-clinicas"></div>
     <div class="band"><h3>Funil por fase</h3><div class="bar" id="bar-clinicas"></div><div class="legend" id="leg-clinicas"></div></div>
+    <div id="kbr-clinicas"></div>
     <div class="filters">
+      <div class="seg vis" id="vis-clinicas" role="group" aria-label="Visão"><button type="button" data-v="t" aria-pressed="true">Tabela</button><button type="button" data-v="q" aria-pressed="false">Quadro</button></div>
       <label>Buscar<input type="search" id="q-clinicas" placeholder="clínica, cidade, gancho…"></label>
       <label>UF<select id="uf-clinicas"><option value="">Todas</option></select></label>
       <label>Faixa<select id="fx-clinicas"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option><option>FORA DO ICP</option></select></label>
@@ -617,15 +619,18 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <span class="count" id="c-clinicas"></span>
     </div>
     <div class="tbl"><table><thead><tr>
-      <th data-k="n">Clínica</th><th data-k="fase">Fase</th><th data-k="sc">Score</th><th data-k="resp" class="hide-sm">Resp.</th><th data-k="prox">Próximo toque</th><th data-k="acao" class="hide-sm">Próxima ação</th>
+      <th data-k="n">Clínica</th><th data-k="fase">Fase</th><th data-k="idd" class="hide-sm" title="Dias na etapa atual. Clique para ordenar pelo mais parado.">Na etapa</th><th data-k="sc">Score</th><th data-k="resp" class="hide-sm">Resp.</th><th data-k="prox">Próximo toque</th><th data-k="acao" class="hide-sm">Próxima ação</th>
     </tr></thead><tbody id="t-clinicas"></tbody></table></div>
+    <div class="rt-board" id="kb-clinicas" hidden></div>
     <div class="more" id="m-clinicas"></div>
   </section>
 
   <section class="pane" id="pane-licitacoes" hidden>
     <div class="kpis" id="k-licitacoes"></div>
     <div class="band"><h3>Prazos das abertas</h3><div class="bar" id="bar-licitacoes"></div><div class="legend" id="leg-licitacoes"></div></div>
+    <div id="kbr-licitacoes"></div>
     <div class="filters">
+      <div class="seg vis" id="vis-licitacoes" role="group" aria-label="Visão"><button type="button" data-v="t" aria-pressed="true">Tabela</button><button type="button" data-v="q" aria-pressed="false">Quadro</button></div>
       <label>Buscar<input type="search" id="q-licitacoes" placeholder="órgão, cidade, objeto, edital…"></label>
       <label>UF<select id="uf-licitacoes"><option value="">Todas</option></select></label>
       <label>Modalidade<select id="mod-licitacoes"><option value="">Todas</option></select></label>
@@ -636,14 +641,15 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <span class="count" id="c-licitacoes"></span>
     </div>
     <div class="tbl"><table><thead><tr>
-      <th data-k="prazo">Prazo</th><th data-k="c">Órgão</th><th data-k="mod" class="hide-sm">Modalidade</th><th data-k="val">Valor estimado</th><th data-k="enc" class="hide-sm">Encaixe</th><th data-k="fase" class="hide-sm">Fase</th><th data-k="resp" class="hide-sm">Resp.</th>
+      <th data-k="prazo">Prazo</th><th data-k="c">Órgão</th><th data-k="mod" class="hide-sm">Modalidade</th><th data-k="val">Valor estimado</th><th data-k="enc" class="hide-sm">Encaixe</th><th data-k="fase" class="hide-sm">Fase</th><th data-k="idd" class="hide-sm" title="Dias na etapa atual. Clique para ordenar pelo mais parado.">Na etapa</th><th data-k="resp" class="hide-sm">Resp.</th>
     </tr></thead><tbody id="t-licitacoes"></tbody></table></div>
+    <div class="rt-board" id="kb-licitacoes" hidden></div>
     <div class="more" id="m-licitacoes"></div>
   </section>
 
   <section class="pane" id="pane-roteiro" hidden>
     <div class="rt-top">
-      <div class="seg" id="rt-fr" role="group" aria-label="Frente"><button type="button" data-v="particulares" aria-pressed="true">Clínicas e hospitais particulares</button><button type="button" data-v="licitacoes" aria-pressed="false">Licitações</button><button type="button" data-v="quadro" aria-pressed="false">Quadro público</button></div>
+      <div class="seg" id="rt-fr" role="group" aria-label="Frente"><button type="button" data-v="coord" aria-pressed="true">Coordenação por cliente</button><button type="button" data-v="particulares" aria-pressed="false">Clínicas e hospitais particulares</button><button type="button" data-v="licitacoes" aria-pressed="false">Licitações</button><button type="button" data-v="quadro" aria-pressed="false">Quadro público</button></div>
       <div class="filters"><label>Fila de quem<select id="rt-pes"><option value="">Todos</option></select></label></div>
     </div>
     <p class="meta" id="rt-aviso"></p>
@@ -652,6 +658,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
   </section>
 
   <section class="pane" id="pane-resultados" hidden>
+    <div id="fluxo"></div>
     <div class="kpis" id="k-resultados"></div>
     <div class="band"><h3>Por que não fechou: motivos registrados nos resultados</h3><div class="bar" id="bar-resultados"></div><div class="legend" id="leg-resultados"></div></div>
     <div class="filters">
@@ -738,6 +745,67 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 .gate button{font:inherit;font-weight:600;padding:10px 14px;border:0;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer}
 .gate button[disabled]{opacity:.6;cursor:wait}
 .gate .err{color:var(--bad);font-size:14px;min-height:1.2em}
+/* ===== Fluxo, o Kanban da Central (27/11/2026) ===== */
+.idd{display:inline-block;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);white-space:nowrap}
+.idd.warn{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,var(--surface))}
+.idd.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--surface))}
+.fx-res{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;font-size:13px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--turq);border-radius:var(--r);padding:9px 14px}
+.fx-res b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px}
+.fx-res .fx-n.bad b{color:var(--bad)} .fx-res .fx-pes{color:var(--muted);margin-left:auto}
+.seg.vis{align-self:flex-end}
+.rt-it.warn{border-left:3px solid var(--warn)} .rt-it.bad{border-left:3px solid var(--bad)}
+.rt-it .kb-pe{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.rt-it .kb-resp{font-size:11px;color:var(--muted)}
+.rt-it .kb-obj{display:block;font-size:12px;margin-top:4px;padding:3px 6px;border-radius:5px;background:var(--accent-soft);color:var(--ink)}
+.rt-it .kb-obj.ok{background:color-mix(in srgb,var(--ok) 14%,var(--surface))}
+.rt-col .kb-fila{font-size:12px;color:var(--muted);background:var(--surface2);border:1px dashed var(--line);border-radius:6px;padding:6px 8px}
+.rt-col .kb-fila b{color:var(--ink)} .rt-col .kb-fila a{color:var(--ink)}
+.rt-fases.pes span{background:var(--accent-soft)}
+.hoje-band .hj-kb{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;align-items:start}
+.hoje-band .hj-col{min-width:0;border-right:1px solid var(--line)} .hoje-band .hj-col:last-child{border-right:0}
+.hoje-band .hj-col h3{margin:0;padding:8px 12px;font-family:var(--f-display);font-size:13px;letter-spacing:.03em;text-transform:uppercase;color:var(--turq);display:flex;justify-content:space-between;gap:8px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.hoje-band .hj-col h3 b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.hoje-band .hj-col[data-col="claude"] h3,.hoje-band .hj-col[data-col="revisar"] h3{background:var(--accent-soft)}
+.hoje-band .hj-kb button.hj-l1{flex-wrap:wrap;padding:9px 12px;gap:4px 8px}
+.hoje-band .hj-kb button.hj-l1 b{flex:1 1 100%;order:-1;white-space:normal}
+.hoje-band .hj-kb button.hj-l1::after{margin-left:auto}
+.hoje-band .hj-kb .hj-pz{min-width:0;font-size:12px}
+.hoje-band .hj-kb .hj-corpo{padding:2px 12px 12px}
+.hoje-band .hj-kb .hj-vazio{padding:10px 12px;font-size:13px;color:var(--muted)}
+.hoje-band .hj-kb li.bloq{box-shadow:inset 3px 0 0 var(--bad)}
+.hoje-band .hj-bl{font-size:11px;font-weight:700;color:var(--bad);border:1px solid var(--bad);border-radius:4px;padding:0 5px}
+.hoje-band .hj-mk{flex-direction:column;align-items:stretch}
+.hoje-band .hj-mk .hj-o{min-width:0;width:100%}
+.hoje-band .hj-bts{display:flex;flex-wrap:wrap;gap:6px}
+.hoje-band .hj-mk button.sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.hoje-band .hj-mk button.sec:hover{border-color:var(--accent)}
+.hoje-band .hj-obs li.cl{background:var(--accent-soft);border-radius:5px;padding:2px 6px}
+.hoje-band .hj-eq{margin:0;padding:8px 16px;border-top:1px solid var(--line)}
+.hoje-band .hj-regra ul{margin:6px 0 8px 18px;padding:0;font-size:13px}
+@media (max-width:900px){.hoje-band .hj-kb{grid-template-columns:1fr}.hoje-band .hj-col{border-right:0;border-bottom:1px solid var(--line)}}
+.band.flx{gap:14px}
+.fx-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.fx-top h3{margin:0}
+.kpi .v small{font-size:14px;font-weight:600;color:var(--muted)}
+.fx-fig{min-width:0} .fx-fig h4{margin:0 0 4px;font-size:13px;font-weight:600;color:var(--ink)}
+.fx-fig svg{display:block;width:100%;height:auto;overflow:visible}
+.fx-fig.larga{overflow-x:auto} .fx-fig.larga>svg{min-width:660px} .fx-top .seg{max-width:100%;overflow-x:auto}
+.fx-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}@media (max-width:900px){.fx-2{grid-template-columns:1fr}}
+.fx-fig .g{stroke:var(--line);stroke-width:1} .fx-fig .ax{font-family:var(--f-body);font-size:11px;fill:var(--muted)} .fx-fig .ax.b{fill:var(--ink);font-weight:600}
+.fx-fig .pt{fill:var(--c-frio);stroke:var(--surface);stroke-width:2} .fx-fig .pt.warn{fill:var(--warn)} .fx-fig .pt.bad{fill:var(--bad)}
+.fx-fig a:hover .pt,.fx-fig a:focus .pt{stroke:var(--ink)}
+.fx-fig .lim{stroke-width:1.5} .fx-fig .lim.at{stroke:var(--warn)} .fx-fig .lim.pa{stroke:var(--bad)}
+.fx-fig .serie{fill:none;stroke:var(--turq);stroke-width:2;stroke-linejoin:round;stroke-linecap:round} .fx-fig .fim{fill:var(--turq);stroke:var(--surface);stroke-width:2}
+.fx-fig .col{fill:var(--turq)}
+.fx-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:4px}
+.fx-leg span{display:inline-flex;align-items:center;gap:5px}
+.fx-leg i.pt{width:9px;height:9px;border-radius:50%;background:var(--c-frio)} .fx-leg i.pt.warn{background:var(--warn)} .fx-leg i.pt.bad{background:var(--bad)}
+.fx-leg i.ln{width:16px;height:0;border-top:2px solid var(--warn)} .fx-leg i.ln.pa{border-top-color:var(--bad)}
+.fx-mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 12px;margin-top:8px}
+.fx-mini div{display:grid;grid-template-columns:1fr auto;align-items:end;gap:0 6px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:4px}
+.fx-mini span{grid-column:1/3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .fx-mini svg{height:30px} .fx-mini b{font-family:var(--f-mono);font-size:14px;color:var(--ink)}
+.fx-vz{margin:6px 0} .fx-prev{margin:0;font-size:14px}
+.fx-dica{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;line-height:1.4;border-radius:8px;padding:6px 10px;max-width:260px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.dk-kb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start}@media (max-width:900px){.dk-kb{grid-template-columns:1fr}}
 </style>
 <div class="gate" id="gate" hidden>
   <form id="gateForm" autocomplete="off">
@@ -896,6 +964,7 @@ function makeList(cfg){
   }
   function render(){
     const rows=sorted(filtered());
+    cfg.onRows && cfg.onRows(rows);
     ths.forEach(th=>{ th.dataset.dir = th.dataset.k===st.sort ? st.dir : ""; });
     cnt.textContent = rows.length.toLocaleString("pt-BR")+" de "+cfg.rows.length.toLocaleString("pt-BR");
     if(!rows.length){ tbody.innerHTML='<tr><td colspan="'+ths.length+'"><div class="empty">Nenhum item com esses filtros. Use "Limpar filtros" para ver tudo.</div></td></tr>'; more.innerHTML=""; return; }
@@ -967,6 +1036,104 @@ function rotBox(src, r){
 
 const PAL = ["var(--accent)","var(--c-quente)","var(--c-frio)","var(--ok)","var(--c-morno)","var(--c-atacar)","var(--c-sem)"];
 
+/* ---------- FLUXO (27/11/2026): o Kanban da Central ----------
+   A medição vem de scripts/fluxo.py: cada linha traz "ee" (entrada na etapa), "et" (entrada na fase)
+   e "ef" (de onde veio a data). As regras moram em config/fluxo.json e chegam em D.fluxo.cfg:
+   fases de fila, limite único por frente, faixa de dias por etapa e a regra de revisão do Claude.
+   Nada aqui trava a equipe: o limite e a faixa só avisam. */
+const FX = D.fluxo || {}, FCFG = FX.cfg || {};
+(((D.fiscal||{}).documentos)||[]).forEach(d=>{ const st=(d.st||"").toUpperCase(); d.fase = (st==="VENCIDO"||d.mot) ? "Vencido" : st.indexOf("VENCE EM")===0 ? "A vencer" : "Em dia"; });
+const naFila = (src,fase) => (((FCFG.fila||{})[src])||[]).indexOf(fase)>=0;
+const etN = (src,fase) => { if(src==="documentos") return ({"A vencer":1,"Vencido":2})[fase]||0; const i=rotInfo(src,fase); return i&&i.E?i.E.n:0; };
+// em andamento = já puxado e ainda não entregue (fora da fila, das saídas e da operação)
+function andando(src,r){ const e=etN(src,r.fase); if(!e||naFila(src,r.fase)) return false; if(src==="licitacoes" && e<3 && passou(r.prazo)) return false; return true; }
+function idade(r){ const d=parseD(r.ee||r.et); if(!d) return null; return Math.max(0,Math.floor((Date.now()-d.getTime())/864e5)); }
+function faixaEt(src,e){
+  const t=((FX.tempos||{})[src]||{})[String(e)], min=FCFG.amostra_minima||8;
+  if(t && t.n>=min){ const at=Math.max(1,Math.ceil(t.p70)); return {at:at, pa:Math.max(at+1,Math.ceil(t.p85)), p50:t.p50, real:true, n:t.n}; }
+  const A=FCFG.alerta_dias||{}, s=A[src]||{}, x=s[String(e)]||s.padrao||A.padrao||{atencao:14,parado:30};
+  return {at:x.atencao, pa:x.parado, real:false, n:t?t.n:0};
+}
+function nivel(src,r){ if(!andando(src,r)) return ""; const n=idade(r); if(n===null) return ""; const f=faixaEt(src,etN(src,r.fase)); return n>f.pa?"bad":n>f.at?"warn":""; }
+const FONTE_ET = {h:"registrado pelo app de Edição", r:"visto pela rodada da Central", c:"contado pela última atualização da linha, que é o mínimo", i:"contado desde o início da medição"};
+function selo(src,r){
+  if(!andando(src,r)) return ""; const n=idade(r); if(n===null) return "";
+  const nv=nivel(src,r), f=faixaEt(src,etN(src,r.fase)), rot=nv==="bad"?"parado":nv==="warn"?"atenção":"";
+  return '<span class="idd '+nv+'" title="'+esc("Na etapa desde "+fData(r.ee||r.et)+", "+(FONTE_ET[r.ef]||"")+". Faixa da etapa: atenção acima de "+f.at+" dias, parado acima de "+f.pa+" dias"+(f.real?" (tempo real de "+f.n+" passagens)":" (provisória, até a etapa ter histórico)")+".")+'">'+(r.ef==="c"||r.ef==="i"?"≥ ":"")+n+" d"+(rot?" · "+rot:"")+'</span>';
+}
+function teto(src){ const l=(FX.limites||{})[src]; return l&&l.n ? l : null; }
+// faixa-resumo do fluxo de uma frente: em andamento contra o teto, fila, parados, travados e quem está com quanto
+function resumoFluxo(src, rows){
+  if(!FX.gerado) return "";
+  const and=rows.filter(r=>andando(src,r)), fila=rows.filter(r=>naFila(src,r.fase)).length, t=teto(src);
+  const par=and.filter(r=>nivel(src,r)==="bad").length, at=and.filter(r=>nivel(src,r)==="warn").length, tr=and.filter(r=>r.bloq).length;
+  const pes={}; and.forEach(r=>{ const k=r.resp||"sem dono"; pes[k]=(pes[k]||0)+1; });
+  const acima=t && and.length>t.n;
+  return '<div class="fx-res"><span class="fx-n'+(acima?' bad':'')+'"><b>'+and.length+'</b>'+(t?' de '+t.n:'')+' em andamento'+(t?(acima?' · acima do teto':'')+(t.prov?' <span class="meta" title="Teto provisório: o que estava em andamento na primeira foto da medição. O Marcos fixa o valor definitivo em config/fluxo.json.">(teto provisório)</span>':''):'')+'</span>'
+    +'<span><b>'+fila+'</b> '+(src==="documentos"?"em dia":"na fila")+'</span>'
+    +(par?'<span class="d-bad"><b>'+par+'</b> parado'+(par>1?'s':'')+'</span>':'')+(at?'<span class="d-warn"><b>'+at+'</b> em atenção</span>':'')
+    +(tr?'<span><b>'+tr+'</b> com trava</span>':'')
+    +'<span class="fx-pes">'+Object.keys(pes).sort((a,b)=>pes[b]-pes[a]).map(k=>esc(papel(k))+' '+pes[k]).join(' · ')+'</span></div>';
+}
+function kbTitulo(src,r){ return src==="quadro" ? r.c+" · "+r.uf : src==="licitacoes" ? (r.org||r.id) : r.n; }
+function kbSub(src,r){
+  const lugar=[r.c,r.uf].filter(Boolean).join(" · ");
+  if(src==="licitacoes") return esc(rotFase("licitacoes",r.fase))+' · '+esc(lugar)+(r.prazo?' · prazo '+fData(r.prazo):'');
+  if(src==="clinicas"){ const t=r.prox||(proxToque(r)||{}).data; return esc(rotFase("clinicas",r.fase))+(lugar?' · '+esc(lugar):'')+(t?' · toque '+fData(t)+(dias(t)<0?' (atrasado)':''):''); }
+  return esc(rotFase("quadro",r.fase))+' · '+esc(r.org||"");
+}
+// o quadro em colunas: uma coluna por etapa do roteiro, cartão com dias na etapa, trava e dono
+function kbBoard(src, rows, o){
+  o=o||{}; const R=RT&&RT[FRT[src]]; if(!R) return "";
+  const MAX=o.max||8, ord={bad:0,warn:1,"":2};
+  return R.etapas.map(E=>{
+    const todos=rows.filter(r=>etN(src,r.fase)===E.n);
+    const fila=todos.filter(r=>naFila(src,r.fase));
+    const it=todos.filter(r=>!naFila(src,r.fase) && (src!=="licitacoes" || E.n>=3 || aberta(r)));
+    it.sort((a,b)=>(ord[nivel(src,a)]-ord[nivel(src,b)]) || ((idade(b)??-1)-(idade(a)??-1)));
+    const fases={}, pes={}; it.forEach(r=>{ fases[r.fase]=(fases[r.fase]||0)+1; const k=r.resp||"sem dono"; pes[k]=(pes[k]||0)+1; });
+    const f=faixaEt(src,E.n);
+    let h='<div class="rt-col" style="border-top-color:'+corEt(E.n)+'"><h3><span>'+E.n+'. '+esc(E.nome)+'</span><b title="Em andamento nesta etapa">'+it.length+'</b></h3>'
+      +'<div class="dono">Dono: '+esc(papel(E.dono))+(E.preco===undefined?'':'<span class="pz-tag '+(E.preco?'com':'sem')+'">'+(E.preco?'com preço':'sem preço')+'</span>')+'</div>';
+    if(Object.keys(fases).length>1) h+='<div class="rt-fases">'+Object.keys(fases).map(x=>'<span>'+esc(rotFase(src,x))+' '+fases[x]+'</span>').join("")+'</div>';
+    if(Object.keys(pes).length) h+='<div class="rt-fases pes">'+Object.keys(pes).sort((a,b)=>pes[b]-pes[a]).map(x=>'<span>'+esc(papel(x))+' '+pes[x]+'</span>').join("")+'</div>';
+    if(fila.length){
+      const prox=fila.slice().sort((a,b)=>((FX_ORD[a.fx]??5)-(FX_ORD[b.fx]??5)) || ((b.sc??-1)-(a.sc??-1))).slice(0,3);
+      h+='<div class="kb-fila"><b>'+fila.length+'</b> na fila para puxar. Próximos pela Dor: '+prox.map(r=>'<a href="'+editLink(src,r.l)+'" target="_blank" rel="noopener">'+esc(kbTitulo(src,r))+'</a>').join(", ")+'.</div>';
+    }
+    h+=it.slice(0,MAX).map(r=>{ const i=rotInfo(src,r.fase), nv=nivel(src,r);
+        const al = src==="clinicas" && r.resp && i && i.F.resp && !mesmoPapel(r.resp,i.F.resp);
+        return '<a class="rt-it '+nv+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener" title="'+esc(i?i.F.faz:"")+'"><span class="t">'+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span>'
+          +'<span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'
+          +(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')
+          +(al?'<span class="al">Na linha: '+esc(papel(r.resp))+' · roteiro: '+esc(papel(i.F.resp))+'</span>':'')+'</a>'; }).join("")
+      || '<div class="ag-vazio">Ninguém nesta etapa.</div>';
+    if(it.length>MAX) h+='<div class="meta">e mais '+(it.length-MAX)+', na tabela</div>';
+    return h+'<div class="vira"><b>Vira quando:</b> '+esc(E.fecha)+'<br><b>Faixa de dias:</b> atenção acima de '+f.at+', parado acima de '+f.pa+(f.real?' (tempo real de '+f.n+' passagens)':' (provisória)')+'</div></div>';
+  }).join("");
+}
+// botão Tabela ou Quadro de uma aba: o quadro mostra as mesmas linhas da tabela, com os mesmos filtros
+function ligaQuadro(id, src, todas){
+  const seg=$("#vis-"+id), kb=$("#kb-"+id), res=$("#kbr-"+id), tbl=$("#t-"+id).closest(".tbl"), more=$("#m-"+id);
+  if(!seg||!kb) return {rows(){}};
+  let v="t", ult=[]; try{ v=localStorage.getItem("central-vis-"+id)||"t"; }catch(_){}
+  function pinta(){
+    seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===v));
+    tbl.hidden = v==="q"; more.hidden = v==="q"; kb.hidden = v!=="q";
+    if(res) res.innerHTML=resumoFluxo(src, todas);
+    if(v==="q" && RT){ kb.style.setProperty("--n", RT[FRT[src]].etapas.length);
+      const fora=ult.filter(r=>etN(src,r.fase)===0).length + (src==="licitacoes" ? ult.filter(r=>{ const e=etN(src,r.fase); return e>0 && e<3 && !naFila(src,r.fase) && !aberta(r); }).length : 0);
+      kb.innerHTML=kbBoard(src, ult)+(fora?'<p class="meta" style="grid-column:1/-1;margin:0">'+fora+(fora===1?' linha dos filtros fica fora do quadro por já estar em operação ou encerrada; ela continua na tabela.':' linhas dos filtros ficam fora do quadro por já estarem em operação ou encerradas; elas continuam na tabela.')+'</p>':''); }
+  }
+  seg.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; v=b.dataset.v; try{localStorage.setItem("central-vis-"+id,v);}catch(_){} pinta(); });
+  return {rows(r){ ult=r; pinta(); }};
+}
+/* dica flutuante dos gráficos do fluxo */
+const dica=(function(){ const el=document.createElement("div"); el.className="fx-dica"; el.hidden=true; document.body.appendChild(el);
+  document.addEventListener("mousemove",e=>{ const m=e.target.closest&&e.target.closest("[data-dica]"); if(!m){ el.hidden=true; return; }
+    el.innerHTML=m.getAttribute("data-dica"); el.hidden=false; const w=el.offsetWidth; el.style.left=Math.max(8,Math.min(window.innerWidth-w-8,e.clientX+14))+"px"; el.style.top=(e.clientY+16)+"px"; });
+  return el; })();
+
 /* ---------- CLÍNICAS ---------- */
 const INATIVAS = new Set(["Descartado","Sem retorno","Em operacao"]);
 const ORDEM_FASE = RT ? Object.keys(RT.particulares.fases) : ["Mapeando","Pesquisando decisor","Em cadencia","Decisor engajado","Handoff gestor","Diagnostico operacional","Conversa clinica","Proposta escrita","Negociacao","Fechado","Implantacao","Em operacao","Sem retorno","Descartado"];
@@ -978,14 +1145,18 @@ $("#n-clinicas").textContent = CL.filter(r=>!INATIVAS.has(r.fase)).length;
 fillSelect("uf-clinicas", CL.map(r=>r.uf)); fillSelect("resp-clinicas", CL.map(r=>r.resp));
 function axis(lbl, v, sinal){ return '<div class="axis"><span class="lbl">'+lbl+'</span>'+(v==null?'<span class="meta">não medido</span>':'<span class="mono">'+Math.round(v)+' / 100</span><span class="meter"><span style="width:'+Math.max(0,Math.min(100,v))+'%"></span></span>')+(sinal?'<span class="meta">'+esc(sinal)+'</span>':'')+'</div>'; }
 function field(t, v){ return v ? '<div><h4>'+t+'</h4><p>'+esc(v)+'</p></div>' : ""; }
+const qCl = ligaQuadro("clinicas","clinicas",CL);
 const lCl = makeList({
-  id:"clinicas", rows:CL, sort:"sc", dir:"desc", defDir:{sc:"desc",prox:"asc"},
+  id:"clinicas", rows:CL, sort:"sc", dir:"desc", defDir:{sc:"desc",prox:"asc",idd:"desc"},
+  sortKey:(r,k)=> k==="idd" ? (andando("clinicas",r)?idade(r):null) : r[k],
+  onRows:rows=>qCl.rows(rows),
   hay:r=>[r.n,r.c,r.uf,r.g,r.mod,r.notas,r.acao,r.fase,r.resp].join(" "),
   filters:[{el:"uf-clinicas",test:(r,v)=>r.uf===v},{el:"fx-clinicas",test:(r,v)=>r.fx===v},{el:"resp-clinicas",test:(r,v)=>r.resp===v}],
   toggle:{el:"ativas-clinicas",def:true,test:r=>!INATIVAS.has(r.fase)},
   cells:r=>{ const dp=dias(r.prox); const late = dp!==null && dp<0 && !INATIVAS.has(r.fase);
     return '<td><div class="nm">'+esc(r.n)+'</div><div class="meta">'+esc(r.c)+(r.uf?" · "+esc(r.uf):"")+(r.pr?" · prioridade "+esc(r.pr.toLowerCase()):"")+'</div></td>'+
       '<td><span class="pill" style="border-color:'+(COR_FASE[r.fase]||"var(--line)")+'">'+esc(rotFase("clinicas",r.fase))+'</span>'+etTag("clinicas",r.fase)+'</td>'+
+      '<td class="hide-sm">'+(selo("clinicas",r)||'<span class="d-mut">—</span>')+'</td>'+
       '<td>'+fxPill(r.fx,r.sc)+(r.cob?'<div class="meta">'+esc(r.cob)+' eixos</div>':'')+'</td>'+
       '<td class="hide-sm">'+esc(r.resp||"—")+'</td>'+
       '<td class="mono">'+(r.prox?(late?'<span class="d-bad">'+fData(r.prox)+' · atrasado</span>':fData(r.prox)):'—')+'</td>'+
@@ -1024,9 +1195,11 @@ const FECHADAS = /perdid|descart|desist|encerr|n[aã]o particip/i;
 const aberta = r => !FECHADAS.test(r.fase) && !passou(r.prazo);
 $("#n-licitacoes").textContent = LI.filter(aberta).length;
 fillSelect("uf-licitacoes", LI.map(r=>r.uf)); fillSelect("mod-licitacoes", LI.map(r=>r.mod)); fillSelect("fase-licitacoes", LI.map(r=>r.fase), f=>rotFase("licitacoes",f));
+const qLi = ligaQuadro("licitacoes","licitacoes",LI);
 const lLi = makeList({
-  id:"licitacoes", rows:LI, sort:"prazo", dir:"asc", defDir:{val:"desc",prazo:"asc"},
-  sortKey:(r,k)=> k==="prazo" ? (r.prazo? parseD(r.prazo).getTime() : null) : k==="enc" ? ({alta:0,media:1,baixa:2}[r.enc] ?? 3) : r[k],
+  id:"licitacoes", rows:LI, sort:"prazo", dir:"asc", defDir:{val:"desc",prazo:"asc",idd:"desc"},
+  onRows:rows=>qLi.rows(rows),
+  sortKey:(r,k)=> k==="idd" ? (andando("licitacoes",r)?idade(r):null) : k==="prazo" ? (r.prazo? parseD(r.prazo).getTime() : null) : k==="enc" ? ({alta:0,media:1,baixa:2}[r.enc] ?? 3) : r[k],
   hay:r=>[r.org,r.c,r.uf,r.obj,r.ed,r.mod,r.onde,r.bloq,r.acao,r.notas,r.fase].join(" "),
   filters:[{el:"uf-licitacoes",test:(r,v)=>r.uf===v},{el:"mod-licitacoes",test:(r,v)=>r.mod===v},{el:"enc-licitacoes",test:(r,v)=>r.enc===v},{el:"fase-licitacoes",test:(r,v)=>r.fase===v}],
   toggle:{el:"abertas-licitacoes",def:true,test:aberta},
@@ -1035,7 +1208,7 @@ const lLi = makeList({
     '<td class="hide-sm">'+esc(r.mod)+'<div class="meta">'+esc(r.ed)+'</div></td>'+
     '<td class="mono">'+fMoeda(r.val)+'</td>'+
     '<td class="hide-sm">'+(r.enc?'<span class="pill">'+esc(r.enc==="media"?"média":r.enc)+'</span>':'—')+'</td>'+
-    '<td class="hide-sm">'+esc(rotFase("licitacoes",r.fase))+etTag("licitacoes",r.fase)+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
+    '<td class="hide-sm">'+esc(rotFase("licitacoes",r.fase))+etTag("licitacoes",r.fase)+'</td><td class="hide-sm">'+(selo("licitacoes",r)||'<span class="d-mut">—</span>')+'</td><td class="hide-sm">'+esc(r.resp||"—")+'</td>',
   detail:r=>rotBox("licitacoes",r)+'<div class="det-grid">'+field("Objeto",r.obj)+field("Onde disputa",r.onde)+field("Trava",r.bloq)+field("Próxima ação",r.acao)+field("Quando",r.qd?fData(r.qd):"")+field("Notas da Carla",r.notas)+field("Resultado",r.res)+field("Número de controle",r.id)+field("Atualizado em",r.at?fData(r.at):"")+'</div>'+
     '<div class="links">'+editBtn("licitacoes",r.l)+(r.pasta?'<a href="'+esc(r.pasta)+'" target="_blank" rel="noopener">Pasta do processo ↗</a>':'')+(r.lpn?'<a href="'+esc(r.lpn)+'" target="_blank" rel="noopener">Processo no PNCP ↗</a>':'')+(r.led?'<a href="'+esc(r.led)+'" target="_blank" rel="noopener">Edital ↗</a>':'')+'<a href="'+licLink(r.l)+'" target="_blank" rel="noopener">Abrir na planilha (linha '+r.l+') ↗</a></div>'
 });
@@ -1191,8 +1364,11 @@ const lPr = makeList({
     const k=sa(pessoa), out=[];
     IG.forEach(i=>{ if(meu(i.resp,k)) out.push({of:"ISGH", t:i.t, x:i.x, dt:i.dt||"", lk:i.lk||""}); });
     PR.forEach(p=>{ if(!meu(p.resp,k)) return; const d=p.dt?dias(p.dt):null;
-      if(d===null||d>7) return; out.push({of:p.tp, t:p.n, x:p.acao, dt:p.dt, p}); });
+      out.push({of:p.tp, t:p.n, x:p.acao, dt:p.dt, p, longe:d===null||d>7}); });
     out.forEach(it=>{ it.k=chave(it); });
+    const vis=out.filter(it=>!it.longe || ativo(pessoa,it.k)), tem=new Set(vis.map(it=>it.k));
+    (D.tarefas_status||[]).forEach(e=>{ if(sa(e.p)===k && !e.st && !tem.has(e.k) && ativo(pessoa,e.k)){ tem.add(e.k); vis.push({of:e.of, t:e.t||"tarefa", x:"", dt:"", k:e.k, orf:true}); } });
+    out.length=0; vis.forEach(it=>out.push(it));
     out.sort((a,b)=>{ const A=a.dt||"9999-99-99", B=b.dt||"9999-99-99"; return A<B?-1:A>B?1:0; });
     return out;
   }
@@ -1204,41 +1380,76 @@ const lPr = makeList({
     const lim=Date.now()-15*864e5;
     return [...ks].map(k=>Object.assign({k},estado(pessoa,k))).filter(e=>e.st && qMs(e.q)>=lim).sort((a,b)=>qMs(b.q)-qMs(a.q));
   }
-  const obsHtml = obs => obs.length?'<ul class="hj-obs">'+obs.slice(-4).map(o=>'<li><span class="meta">'+esc(o.q)+' · '+esc(o.a)+':</span> '+esc(o.o)+'</li>').join("")+'</ul>':'';
+  /* MINHA FILA EM QUADRO (27/11/2026). Quatro colunas: A fazer, Fazendo, Com o Claude e Para revisar.
+     A coluna de cada tarefa sai das próprias observações da aba Tarefas_Status, em ordem:
+       "fazendo" leva para Fazendo; "a fazer" devolve; "bloqueado: motivo" marca a trava e "liberado" tira;
+       "@claude pedido" leva para Com o Claude; a resposta com Autor Claude leva para Para revisar.
+     Feito ou Ciente continua arquivando. Nada disso exige versão nova do app de Edição. */
+  const marca = o => { const t=sa(o); return t.indexOf("fazendo")===0?"fazendo": t.indexOf("bloqueado")===0?"bloqueado": t.indexOf("liberado")===0?"liberado": t==="a fazer"?"afazer":""; };
+  function onde(e){
+    let col="afazer", bloq="", claude=false, rev=false;
+    (e.obs||[]).forEach(o=>{ const m=marca(o.o);
+      if(sa(o.a)==="claude"){ if(claude){ claude=false; rev=true; } return; }
+      if(m==="fazendo") col="fazendo"; else if(m==="afazer") col="afazer";
+      else if(m==="bloqueado") bloq=String(o.o).replace(/^\s*bloqueado\s*:?\s*/i,"")||"sem motivo informado";
+      else if(m==="liberado") bloq="";
+      else if(/^@claude\b/i.test(String(o.o).trim())){ claude=true; rev=false; } });
+    return {col: claude?"claude":rev?"revisar":col, bloq};
+  }
+  const ativo = (pessoa,k) => { const w=onde(estado(pessoa,k)); return w.col!=="afazer" || !!w.bloq; };
+  const notas = obs => (obs||[]).filter(o=>{ const m=marca(o.o); return !m || m==="bloqueado"; });
+  const obsHtml = obs => { const v=notas(obs); return v.length?'<ul class="hj-obs">'+v.slice(-5).map(o=>'<li'+(sa(o.a)==="claude"?' class="cl"':'')+'><span class="meta">'+esc(o.q)+' · '+esc(o.a)+':</span> '+esc(o.o)+'</li>').join("")+'</ul>':''; };
+  const COLS=[["afazer","A fazer","Tem prazo nos próximos 7 dias e ninguém começou."],["fazendo","Fazendo","Alguém começou. O combinado é terminar antes de puxar outra."],
+              ["claude","Com o Claude","Pedido feito com @claude. Ele lê às 10h37, 13h37, 16h37, 19h37 e 22h37."],["revisar","Para revisar","O Claude devolveu. Uma pessoa confere e marca Feito."]];
+  const LIM=((FCFG.limites||{}).fazendo_por_pessoa)||3;
   function linha(it,n){
     const pz = it.dt ? fDias(dias(it.dt))+' <span class="d-mut">'+fData(it.dt)+'</span>' : '<span class="d-mut">sem data</span>';
     let ac='';
     if(it.p) ac = editBtn(it.p.src,it.p.r.l)+'<a href="'+it.p.link+'" target="_blank" rel="noopener">Abrir na planilha ↗</a><a href="#'+it.p.src+'">Ver na aba</a>';
-    else { if(it.x && it.x.length>60) ac = '<button type="button" data-c="'+n+'">Copiar o texto</button>';
+    else if(!it.orf){ if(it.x && it.x.length>60) ac = '<button type="button" data-c="'+n+'">Copiar o texto</button>';
            if(it.lk) ac += '<a href="'+esc(it.lk)+'" target="_blank" rel="noopener">Detalhe ↗</a>';
            ac += '<a href="#isgh">Ver o dossiê do ISGH</a>'; }
-    const nObs=(estado(atual,it.k).obs||[]).length;
-    return '<li data-n="'+n+'"><button type="button" class="hj-l1" aria-expanded="false"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span>'+(nObs?'<span class="hj-nobs">'+nObs+(nObs===1?' nota':' notas')+'</span>':'')+'</button>'
+    const nObs=notas(it.e.obs).length, c=it.w.col, b=(a,t,sec)=>'<button type="button" data-a="'+a+'"'+(sec?' class="sec"':'')+'>'+t+'</button>';
+    return '<li data-n="'+n+'"'+(it.w.bloq?' class="bloq"':'')+'><button type="button" class="hj-l1" aria-expanded="false"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span>'
+      +(it.w.bloq?'<span class="hj-bl" title="'+esc(it.w.bloq)+'">travada</span>':'')+(nObs?'<span class="hj-nobs">'+nObs+(nObs===1?' nota':' notas')+'</span>':'')+'</button>'
       + '<div class="hj-corpo">'
+      + (it.w.bloq?'<div class="hj-x d-bad">Travada: '+esc(it.w.bloq)+'</div>':'')
+      + (it.orf?'<div class="hj-x meta">Esta tarefa saiu da lista de prazos dos próximos 7 dias, mas continua aqui porque está em andamento.</div>':'')
       + (it.x?'<div class="hj-x">'+esc(it.x)+'</div>':'')
       + (ac?'<div class="hj-ac">'+ac+'</div>':'')
-      + obsHtml(estado(atual,it.k).obs)
-      + '<form class="hj-mk" autocomplete="off"><label><input type="checkbox" value="feito"> Feito</label><label><input type="checkbox" value="ciente"> Ciente</label>'
-      + '<input class="hj-o" maxlength="600" placeholder="Observação para a equipe (opcional; comece com @claude para pedir ao Claude)"><button type="submit">Salvar</button><span class="hj-st meta"></span></form></div></li>';
+      + obsHtml(it.e.obs)
+      + '<form class="hj-mk" autocomplete="off"><input class="hj-o" maxlength="560" placeholder="Nota para a equipe, motivo da trava ou pedido ao Claude">'
+      + '<span class="hj-bts">'+(c==="afazer"?b("fazendo","Começar"):c==="fazendo"?b("afazer","Devolver para A fazer",1):"")+b("feito","Feito")+b("ciente","Ciente",1)
+      + b("nota","Salvar nota",1)+(it.w.bloq?b("liberado","Destravar",1):b("bloqueado","Travou",1))+(c==="claude"?"":b("claude","Pedir ao Claude",1))+'</span><span class="hj-st meta"></span></form></div></li>';
   }
   const CK="central-mural-cred";   // mesma credencial do Mural: entrou num, vale no outro
   const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
-  let atual=null, lista=[];
+  let atual=null, lista=[], nFaz=0;
   function render(){
-    lista=itens(atual).filter(it=>!estado(atual,it.k).st).slice(0,14);
+    const todos=itens(atual).filter(it=>!estado(atual,it.k).st);
+    todos.forEach(it=>{ it.e=estado(atual,it.k); it.w=onde(it.e); });
+    const fora=todos.filter(it=>it.w.col!=="afazer"), af=todos.filter(it=>it.w.col==="afazer").slice(0,14);
+    lista=fora.concat(af); nFaz=lista.filter(it=>it.w.col==="fazendo").length;
     const arq=arquivadas(atual), c=cred();
     const opts=pessoas.map(p=>'<option'+(p===atual?' selected':'')+'>'+esc(p)+'</option>').join("");
+    // a equipe inteira: o que está com o Claude, o que espera revisão e o que travou
+    let eqC=0, eqR=0, eqB=0; (D.tarefas_status||[]).forEach(e=>{ if(e.st) return; const w=onde(estado(e.p,e.k)); if(w.col==="claude") eqC++; if(w.col==="revisar") eqR++; if(w.bloq) eqB++; });
     el.innerHTML='<div class="hj-top"><h2>Minha fila</h2><select id="hj-quem">'+opts+'</select>'
       +'<span class="hj-n">'+(lista.length?lista.length+(lista.length===1?' item':' itens'):'nada em aberto')+'</span>'
       +'<span class="hj-cred meta">'+(c?'marcando como <b>'+esc(c.apelido)+'</b> · <a href="#" id="hj-troca">trocar</a>'
         :'para marcar: <input id="hj-ap" placeholder="apelido" size="9" autocapitalize="none"> <input id="hj-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">')+'</span></div>'
-      +(()=>{ if(!lista.length) return '<div class="hj-vazio">Nada com prazo nos próximos 7 dias para '+esc(atual)+'.</div>';
-        const cd=[], sd=[]; lista.forEach((it,n)=>(it.dt?cd:sd).push(linha(it,n)));
-        return (cd.length?'<ul class="hj-lista">'+cd.join("")+'</ul>':'<div class="hj-vazio">Nada com prazo para '+esc(atual)+'.</div>')
-          +(sd.length?'<details class="hj-sd"><summary>Sem data · '+sd.length+'</summary><ul class="hj-lista">'+sd.join("")+'</ul></details>':''); })()
+      +'<div class="hj-kb">'+COLS.map(([k,nome,dicaTxt])=>{
+          const it=lista.map((x,n)=>[x,n]).filter(([x])=>x.w.col===k);
+          const cd=it.filter(([x])=>x.dt||k!=="afazer").map(([x,n])=>linha(x,n)), sd=k==="afazer"?it.filter(([x])=>!x.dt).map(([x,n])=>linha(x,n)):[];
+          const lim = k==="fazendo" ? '<b class="'+(nFaz>LIM?'d-bad':'')+'" title="Combinado: no máximo '+LIM+' em andamento por pessoa">'+it.length+' de '+LIM+'</b>' : '<b>'+it.length+'</b>';
+          return '<div class="hj-col" data-col="'+k+'"><h3 title="'+esc(dicaTxt)+'"><span>'+nome+'</span>'+lim+'</h3>'
+            +(cd.length?'<ul class="hj-lista">'+cd.join("")+'</ul>':(sd.length?'':'<div class="hj-vazio">'+(k==="afazer"?'Nada com prazo nos próximos 7 dias para '+esc(atual)+'.':'Nada aqui.')+'</div>'))
+            +(sd.length?'<details class="hj-sd"><summary>Sem data · '+sd.length+'</summary><ul class="hj-lista">'+sd.join("")+'</ul></details>':'')+'</div>'; }).join("")+'</div>'
+      +((eqC||eqR||eqB)?'<p class="hj-eq meta">Na equipe inteira: <b>'+eqC+'</b> com o Claude · <b>'+eqR+'</b> para revisar · <b>'+eqB+'</b> travada'+(eqB===1?'':'s')+'.</p>':'')
       +(arq.length?'<details class="hj-arq"><summary>Arquivadas nos últimos 15 dias · '+arq.length+'</summary><ul>'+arq.map(e=>
           '<li><span class="tag '+(e.st==="feito"?'ok':'ci')+'">'+(e.st==="feito"?'✓ Feito':'Ciente')+'</span> <b>'+esc(e.t||"tarefa")+'</b>'
-          +(e.of?' <span class="hj-of">'+esc(e.of)+'</span>':'')+' <span class="meta">· '+esc(e.a)+' em '+esc(e.q)+'</span>'+obsHtml(e.obs)+'</li>').join("")+'</ul></details>':'');
+          +(e.of?' <span class="hj-of">'+esc(e.of)+'</span>':'')+' <span class="meta">· '+esc(e.a)+' em '+esc(e.q)+'</span>'+obsHtml(e.obs)+'</li>').join("")+'</ul></details>':'')
+      +((FCFG.revisao||[]).length?'<details class="hj-arq hj-regra"><summary>Regra de revisão do que passa pelo Claude</summary><ul>'+FCFG.revisao.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></details>':'');
     el.hidden=false;
     $("#hj-quem").addEventListener("change",e=>{ atual=e.target.value; try{localStorage.setItem("central-quem",atual);}catch(_){} render(); });
     const tr=$("#hj-troca"); if(tr) tr.addEventListener("click",ev=>{ ev.preventDefault(); try{localStorage.removeItem(CK);}catch(_){} render(); window.dispatchEvent(new Event("central-cred")); });
@@ -1249,21 +1460,29 @@ const lPr = makeList({
       catch(_){ b.textContent="Selecione e copie à mão"; }
     }));
     el.querySelectorAll(".hj-mk").forEach(f=>{
-      const cx=f.querySelectorAll("input[type=checkbox]");
-      cx.forEach(x=>x.addEventListener("change",()=>{ if(x.checked) cx.forEach(y=>{ if(y!==x) y.checked=false; }); }));
-      f.addEventListener("submit",ev=>{ ev.preventDefault(); marcar(f, lista[+f.closest("li").dataset.n]); });
+      const it=()=>lista[+f.closest("li").dataset.n];
+      f.querySelectorAll("button[data-a]").forEach(b=>b.addEventListener("click",()=>marcar(f,it(),b.dataset.a)));
+      f.addEventListener("submit",ev=>{ ev.preventDefault(); marcar(f,it(),"nota"); });
     });
   }
-  async function marcar(f,it){
+  async function marcar(f,it,acao){
     if(!it) return;
-    const stEl=f.querySelector(".hj-st"), bt=f.querySelector("button");
-    const ch=f.querySelector("input[type=checkbox]:checked"), st=ch?ch.value:"", o=f.querySelector(".hj-o").value.trim();
-    if(!st && !o){ stEl.textContent="Marque Feito ou Ciente, ou escreva a observação."; return; }
+    const stEl=f.querySelector(".hj-st"), bts=f.querySelectorAll("button"), txt=f.querySelector(".hj-o").value.trim();
+    let st="", o=txt;
+    if(acao==="feito"||acao==="ciente") st=acao;
+    else if(acao==="fazendo"){
+      if(nFaz>=LIM && !f.dataset.conf){ f.dataset.conf="1"; stEl.textContent="Você já tem "+nFaz+" em andamento e o combinado é "+LIM+". Termine uma antes, ou clique em Começar de novo para seguir assim mesmo."; return; }
+      o="fazendo"+(txt?": "+txt:""); }
+    else if(acao==="afazer") o="a fazer";
+    else if(acao==="bloqueado"){ if(!txt){ stEl.textContent="Escreva no campo o motivo da trava e clique em Travou."; return; } o="bloqueado: "+txt; }
+    else if(acao==="liberado") o="liberado"+(txt?": "+txt:"");
+    else if(acao==="claude"){ if(!txt){ stEl.textContent="Escreva no campo o que o Claude deve fazer e clique em Pedir ao Claude."; return; } o=/^@claude\b/i.test(txt)?txt:"@claude "+txt; }
+    else if(!txt){ stEl.textContent="Escreva a nota no campo."; return; }
     let c=cred();
     if(!c){ const ap=(($("#hj-ap")||{}).value||"").trim().toLowerCase(), pin=(($("#hj-pin")||{}).value||"").trim();
       if(!ap||!pin){ stEl.textContent="Preencha apelido e PIN no alto do bloco (os mesmos do app de Edição)."; return; }
       c={apelido:ap,pin:pin}; }
-    bt.disabled=true; stEl.textContent="Salvando…";
+    bts.forEach(b=>b.disabled=true); stEl.textContent="Salvando…";
     try{
       const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:"tarefaMarcar",cred:c,
         t:{pessoa:atual,chave:it.k,titulo:it.t,origem:it.of,status:st,obs:o}})});
@@ -1277,7 +1496,7 @@ const lPr = makeList({
       const m=String((err&&err.message)||err);
       stEl.textContent=m.indexOf("LOGIN")>=0?"Apelido ou PIN não conferem.":("Não deu: "+m);
       if(m.indexOf("LOGIN")>=0){ try{localStorage.removeItem(CK);}catch(_){} }
-      bt.disabled=false;
+      bts.forEach(b=>b.disabled=false);
     }
   }
   window.addEventListener("central-cred",()=>{ if(!el.contains(document.activeElement)) render(); });
@@ -1471,56 +1690,170 @@ const lIsgh = (function(){
 /* ---------- ROTEIRO: o funil em etapas, com o dono de cada uma ---------- */
 const lRot = (function(){
   if(!RT){ $("#rt-aviso").textContent="O roteiro não carregou. Recarregue a página."; return {render(){}}; }
-  let fr="particulares";
+  let fr="coord";
   const SRC={particulares:"clinicas", licitacoes:"licitacoes", quadro:"quadro"};
   const pes=$("#rt-pes"); Object.keys(RT.papeis).forEach(k=>{ const o=document.createElement("option"); o.value=k; o.textContent=papel(k).replace(/^./,c=>c.toUpperCase()); pes.appendChild(o); });
-  function itens(){
-    const src=SRC[fr];
-    const base = src==="clinicas" ? CL : src==="licitacoes" ? LI : QD;
-    return base.map(r=>{ const i=rotInfo(src,r.fase); return i&&i.E ? {r,src,i} : null; }).filter(Boolean)
-      .filter(x=> src!=="licitacoes" || x.i.E.n>=3 || aberta(x.r));
-  }
-  function chave(x){
-    const r=x.r, fi=Object.keys(x.i.R.fases).indexOf(r.fase);
-    if(x.src==="licitacoes"){ const d=dias(r.prazo); return [d===null?999:d, -fi]; }
-    const t=x.src==="clinicas"?(r.prox||(proxToque(r)||{}).data||""):"";
-    const dd=t?dias(t):999;
-    return [-fi, dd, -(r.sc??-1)];
-  }
-  function cmp(a,b){ const x=chave(a), y=chave(b); for(let i=0;i<x.length;i++){ if(x[i]!==y[i]) return x[i]-y[i]; } return 0; }
-  function sub(x){
-    const r=x.r; const lugar=[r.c,r.uf].filter(Boolean).join(" · ");
-    if(x.src==="licitacoes") return esc(rotFase("licitacoes",r.fase))+' · '+esc(lugar)+(r.prazo?' · prazo '+fData(r.prazo):'');
-    if(x.src==="clinicas"){ const t=r.prox||(proxToque(r)||{}).data; return esc(rotFase("clinicas",r.fase))+(lugar?' · '+esc(lugar):'')+(t?' · toque '+fData(t)+(dias(t)<0?' (atrasado)':''):''); }
-    return esc(rotFase("quadro",r.fase))+' · '+esc(r.org||"");
+  /* Quadro de coordenação por cliente (27/11/2026): um cartão por cliente que já saiu da prospecção fria,
+     atravessando as áreas da empresa, da conversa ao laudo em produção. Junta as clínicas, as licitações e
+     a aba Contratos, e liga cada cartão aos Objetivos da semana que citam o cliente. */
+  const STOP=new Set(["clinica","clinicas","hospital","instituto","centro","secretaria","municipal","saude","prefeitura","regional","diagnostico","imagem","medicina","servicos","contrato","proposta","estado","fundo","santa","nossa","senhora","radiologia","laudos","telelaudo","exames","medica","medico","associacao","fundacao","universitario","servico"]);
+  const toks = t => norm(t).replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w=>w.length>=5 && !STOP.has(w));
+  const siglas = t => (String(t||"").match(/\b[A-Z]{3,6}\b/g)||[]).map(x=>x.toLowerCase());
+  function coord(){
+    const C=FCFG.coordenacao||{}, cols=(C.colunas||["Prospecção","Proposta e contrato","Implantação","Produção estável"]).map(n=>({n,it:[]}));
+    const eRaw=(src,fase)=>{ const R=RT[FRT[src]], F=R&&R.fases[fase]; return F?F.e:0; };
+    const poe=(src,r,tipo)=>{ const c=(C[src]||{})[String(eRaw(src,r.fase))]; if(c===undefined) return;
+      if(src==="licitacoes" && eRaw(src,r.fase)<=5 && FECHADAS.test(r.fase)) return;
+      cols[c].it.push({src,r,tipo,nome:kbTitulo(src,r),fase:rotFase(src,r.fase),resp:r.resp,href:editLink(src,r.l),obj:[]}); };
+    CL.forEach(r=>poe("clinicas",r,"Clínica")); LI.forEach(r=>poe("licitacoes",r,r.aba==="CREDENCIAMENTO"?"Credenciamento":"Pregão"));
+    // palavra que aparece no nome de mais de um cliente não identifica ninguém: só vale a que é de um só
+    const freq={}; cols.forEach(c=>c.it.forEach(x=>new Set(toks(x.nome).concat(siglas(x.nome))).forEach(w=>{ freq[w]=(freq[w]||0)+1; })));
+    const unic = t => toks(t).concat(siglas(t)).filter(w=>(freq[w]||0)<=1);
+    ((D.fiscal||{}).contratos||[]).forEach(c=>{
+      if(/alug/i.test(c.tp||"")) return;
+      const col = c.st==="Ativo" ? 3 : /an[aá]lise/i.test(c.st||"") ? 1 : -1; if(col<0) return;
+      const chave=new Set(toks(c.n+" "+c.parte).concat(siglas(c.n+" "+c.parte)));
+      const ja=cols[col].it.find(x=>unic(x.nome).some(w=>chave.has(w)));
+      if(ja){ ja.contrato=c; return; }
+      cols[col].it.push({src:"contratos",contrato:c,tipo:"Contrato",nome:c.n,fase:c.st+(c.acao?" · "+c.acao:""),resp:c.resp,href:"#fiscal",obj:[]});
+    });
+    // objetivos da semana (os da semana corrente e os abertos das anteriores) ligados pelo nome do cliente
+    const seg=new Date(HOJE); seg.setDate(seg.getDate()-((seg.getDay()+6)%7));
+    const semD=s=>{ const m=/(\d{2})\/(\d{2})\/(\d{4})/.exec(s||""); return m?new Date(+m[3],+m[2]-1,+m[1]):null; };
+    const OB=(D.objetivos||[]).filter(o=>{ const d=semD(o.sem); return d && (d.getTime()===seg.getTime() || (d<seg && o.st==="aberto")); });
+    const soltos=[];
+    OB.forEach(o=>{ const t=" "+norm(o.t).replace(/[^a-z0-9 ]/g," ")+" "; let achou=false;
+      cols.forEach(c=>c.it.forEach(x=>{ const nm=norm(x.nome).replace(/[^a-z0-9 ]/g," ").trim();
+        const ks=unic(x.nome).concat(x.contrato?siglas(x.contrato.n):[]);
+        if((nm.length>=5 && t.indexOf(" "+nm+" ")>=0) || ks.some(w=>t.indexOf(" "+w+" ")>=0)){ x.obj.push(o); achou=true; } }));
+      if(!achou) soltos.push(o); });
+    const brd=$("#rt-board"); brd.style.setProperty("--n", cols.length);
+    brd.innerHTML=cols.map((c,ci)=>'<div class="rt-col" style="border-top-color:'+corEt([2,4,6,5][ci]||1)+'"><h3><span>'+esc(c.n)+'</span><b>'+c.it.length+'</b></h3>'
+      +(c.it.map(x=>'<a class="rt-it '+(x.r?nivel(x.src,x.r):"")+'" href="'+x.href+'"'+(x.src==="contratos"?'':' target="_blank" rel="noopener"')+'><span class="t">'+esc(x.nome)+'</span>'
+        +'<span class="s">'+esc(x.tipo)+' · '+esc(x.fase)+(x.contrato&&x.src!=="contratos"?' · contrato '+esc(x.contrato.st.toLowerCase()):'')+'</span>'
+        +'<span class="kb-pe">'+(x.r?selo(x.src,x.r):'')+(x.resp?'<span class="kb-resp">'+esc(papel(x.resp))+'</span>':'')+'</span>'
+        +(x.r&&x.r.bloq?'<span class="al">Trava: '+esc(x.r.bloq)+'</span>':'')
+        +x.obj.map(o=>'<span class="kb-obj'+(o.st==="feito"?' ok':'')+'">Objetivo da semana'+(o.st==="feito"?' (feito)':'')+': '+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+'</span>').join("")+'</a>').join("")
+        || '<div class="ag-vazio">Nenhum cliente aqui.</div>')+'</div>').join("");
+    $("#rt-aviso").textContent="Um cartão por cliente, da primeira reunião ao laudo em produção. Mostra em que área da empresa cada cliente está, há quantos dias e qual objetivo da semana empurra o cartão.";
+    $("#rt-extra").innerHTML='<div class="band"><h3>Objetivos da semana sem cliente ligado</h3>'+(soltos.length?'<ul>'+soltos.map(o=>'<li>'+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+(o.st!=="aberto"?' · '+esc(o.st):'')+'</li>').join("")+'</ul><p class="meta" style="margin:0">O objetivo se liga ao cartão quando o texto cita o nome do cliente como ele aparece no quadro.</p>':'<p class="meta" style="margin:0">Todos os objetivos da semana estão ligados a um cliente do quadro'+(OB.length?'':' (nenhum objetivo lançado nesta semana)')+'.</p>')+'</div>'
+      +'<div class="band"><h3>De onde vem cada coluna</h3><ul><li><b>Prospecção:</b> clínica a partir da reunião de diagnóstico e edital em disputa.</li><li><b>Proposta e contrato:</b> proposta escrita, negociação, processo habilitado ou ganho e contrato em análise.</li><li><b>Implantação:</b> contrato fechado até o primeiro laudo em produção.</li><li><b>Produção estável:</b> cliente em operação e contrato ativo.</li></ul></div>';
   }
   function render(){
-    const R=RT[fr], p=pes.value, MAX=8;
-    $("#rt-aviso").textContent = (R.aviso? R.aviso+" " : "") + "O roteiro orienta; quem decide é a equipe. Clique num item para editar a linha.";
-    const todos=itens();
-    const lista = p ? todos.filter(x=>x.i.F.resp===p) : todos;
+    pes.closest(".filters").hidden = fr==="coord";
+    if(fr==="coord"){ coord(); return; }
+    const R=RT[fr], p=pes.value, src=SRC[fr];
+    $("#rt-aviso").textContent = (R.aviso? R.aviso+" " : "") + "O roteiro orienta; quem decide é a equipe. Clique num cartão para editar a linha.";
+    const base = src==="clinicas" ? CL : src==="licitacoes" ? LI : QD;
+    const lista = p ? base.filter(r=>{ const i=rotInfo(src,r.fase); return i && i.F.resp===p; }) : base;
     $("#rt-board").style.setProperty("--n", R.etapas.length);
-    $("#rt-board").innerHTML = R.etapas.map(E=>{
-      const it=lista.filter(x=>x.i.E.n===E.n).sort(cmp);
-      const cont={}; it.forEach(x=>cont[x.r.fase]=(cont[x.r.fase]||0)+1);
-      return '<div class="rt-col" style="border-top-color:'+corEt(E.n)+'"><h3><span>'+E.n+'. '+esc(E.nome)+'</span><b>'+it.length+'</b></h3>'+
-        '<div class="dono">Dono: '+esc(papel(E.dono))+'<span class="pz-tag '+(E.preco?'com':'sem')+'">'+(E.preco?'com preço':'sem preço')+'</span></div>'+
-        (Object.keys(cont).length?'<div class="rt-fases">'+Object.keys(cont).map(f=>'<span>'+esc(f)+' '+cont[f]+'</span>').join("")+'</div>':'')+
-        (it.slice(0,MAX).map(x=>{ const al = x.src==="clinicas" && x.r.resp && x.i.F.resp && !mesmoPapel(x.r.resp,x.i.F.resp);
-          return '<a class="rt-it" href="'+editLink(x.src,x.r.l)+'" target="_blank" rel="noopener" title="'+esc(x.i.F.faz)+'"><span class="t">'+esc(x.src==="quadro"?x.r.c+" · "+x.r.uf:(x.src==="licitacoes"?(x.r.org||x.r.id):x.r.n))+'</span><span class="s">'+sub(x)+'</span>'+(al?'<span class="al">Na linha: '+esc(papel(x.r.resp))+' · roteiro: '+esc(papel(x.i.F.resp))+'</span>':'')+'</a>'; }).join("") || '<div class="ag-vazio">Ninguém nesta etapa.</div>')+
-        (it.length>MAX?'<div class="meta">e mais '+(it.length-MAX)+' na aba da frente</div>':'')+
-        '<div class="vira"><b>Vira quando:</b> '+esc(E.fecha)+'</div></div>';
-    }).join("");
+    $("#rt-board").innerHTML = kbBoard(src, lista);
     let ex='<div class="band"><h3>As quatro regras de mesa</h3><ul>'+RT.regras.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
     if(fr==="particulares") ex+='<div class="band"><h3>Cadência de 6 toques da etapa 1 (cerca de 21 dias)</h3><div class="tbl"><table><thead><tr><th>Toque</th><th>Dia</th><th>Canal</th><th>Objetivo</th></tr></thead><tbody>'+
       RT.particulares.cadencia.map(c=>'<tr><td class="mono">'+c.n+'</td><td class="mono">'+c.dia+'</td><td>'+esc(c.canal)+'</td><td>'+esc(c.obj)+'</td></tr>').join("")+'</tbody></table></div><p class="meta" style="margin:0">Se o decisor responder em qualquer toque, a cadência para e a Fase vira Decisor engajado.</p></div>';
     ex+='<div class="band"><h3>Quem faz o quê</h3><ul>'+Object.keys(RT.papeis).map(k=>'<li><b>'+esc(papel(k).replace(/^./,c=>c.toUpperCase()))+':</b> '+esc(RT.papeis[k])+'</li>').join("")+'</ul><p class="meta" style="margin:0">Depois da implantação vêm a gestão do contrato, o faturamento e a distribuição de valores, que entram numa fase futura da Central.</p></div>';
-    $("#rt-extra").innerHTML=ex;
+    $("#rt-extra").innerHTML=resumoFluxo(src, base)+ex;
   }
   $("#rt-fr").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; fr=b.dataset.v; $("#rt-fr").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); render(); });
   pes.addEventListener("input",render);
   $("#n-roteiro").textContent = CL.filter(r=>{ const i=rotInfo("clinicas",r.fase); return i&&i.E&&i.E.n>=2&&i.E.n<=6; }).length;
   return {render};
+})();
+
+
+/* ---------- FLUXO em Resultados (27/11/2026): em andamento contra o teto, dias na etapa, vazão e previsão ---------- */
+(function(){
+  const el=$("#fluxo"); if(!el) return;
+  if(!FX.gerado){ el.innerHTML='<div class="band"><h3>Fluxo</h3><p class="meta" style="margin:0">A medição do fluxo ainda não rodou. Ela começa na próxima rodada da Central e os números aparecem aqui.</p></div>'; return; }
+  const DOCS=((D.fiscal||{}).documentos)||[];
+  const FR={clinicas:{n:"Clínicas",rows:CL,et:RT?RT.particulares.etapas:[]}, licitacoes:{n:"Licitações",rows:LI,et:RT?RT.licitacoes.etapas:[]},
+            quadro:{n:"Quadro público",rows:QD,et:RT?RT.quadro.etapas:[]}, documentos:{n:"Documentos",rows:DOCS,et:[{n:1,nome:"A vencer"},{n:2,nome:"Vencido, em regularização"}]}};
+  let fr="clinicas"; try{ fr=localStorage.getItem("central-fluxo-fr")||"clinicas"; }catch(_){} if(!FR[fr]) fr="clinicas";
+  const dm = iso => iso.slice(8,10)+"/"+iso.slice(5,7);
+  const passo = m => { const a=[1,2,5,10,20,25,50,100,200,500,1000]; return a.find(x=>m/x<=4)||2000; };
+  const nomeDe = (src,r) => src==="documentos" ? r.doc : kbTitulo(src,r);
+  const linkDe = (src,r) => src==="documentos" ? "#fiscal" : editLink(src,r.l);
+
+  // 1) dias na etapa de cada item em andamento, por etapa, com a faixa de atenção e de parado
+  function gIdade(src, and, ets){
+    const W=1040,H=290,L=38,R=10,T=16,B=46, cw=(W-L-R)/ets.length;
+    const fx=ets.map(E=>faixaEt(src,E.n));
+    const maxV=Math.max(10, ...and.map(r=>idade(r)||0), ...fx.map(f=>f.pa))*1.08, st=passo(maxV), topo=Math.ceil(maxV/st)*st;
+    const y=v=>T+(H-T-B)*(1-Math.min(v,topo)/topo);
+    let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Dias na etapa de cada item em andamento, por etapa">';
+    for(let v=0;v<=topo;v+=st) s+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text class="ax" x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+v+'</text>';
+    ets.forEach((E,i)=>{
+      const x0=L+cw*i, f=fx[i], it=and.filter(r=>etN(src,r.fase)===E.n).sort((a,b)=>(idade(a)||0)-(idade(b)||0));
+      if(i) s+='<line class="g" x1="'+x0+'" x2="'+x0+'" y1="'+T+'" y2="'+(H-B)+'"/>';
+      s+='<line class="lim at" x1="'+(x0+6)+'" x2="'+(x0+cw-6)+'" y1="'+y(f.at)+'" y2="'+y(f.at)+'"/><line class="lim pa" x1="'+(x0+6)+'" x2="'+(x0+cw-6)+'" y1="'+y(f.pa)+'" y2="'+y(f.pa)+'"/>';
+      const col=Math.max(1,Math.floor((cw-28)/13));
+      it.forEach((r,k)=>{ const n=idade(r)||0, nv=nivel(src,r), cx=x0+14+((k%col)+.5)*((cw-28)/col), cy=y(n);
+        s+='<a href="'+linkDe(src,r)+'"'+(src==="documentos"?'':' target="_blank" rel="noopener"')+' data-dica="'+esc('<b>'+esc(nomeDe(src,r))+'</b><br>'+n+' dias na etapa'+(nv==="bad"?' · parado':nv==="warn"?' · atenção':'')+(r.resp?'<br>Com: '+esc(papel(r.resp)):''))+'"><circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="10" fill="transparent"/><circle class="pt '+nv+'" cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="4.5"/></a>'; });
+      const nome=E.n+". "+E.nome, curto=nome.length>Math.floor(cw/6.4)?nome.slice(0,Math.floor(cw/6.4)-1)+"…":nome;
+      s+='<text class="ax" x="'+(x0+cw/2)+'" y="'+(H-B+18)+'" text-anchor="middle"><title>'+esc(nome)+'</title>'+esc(curto)+'</text><text class="ax b" x="'+(x0+cw/2)+'" y="'+(H-B+34)+'" text-anchor="middle">'+it.length+(it.length===1?' item':' itens')+'</text>';
+    });
+    return s+'<text class="ax" x="'+L+'" y="10">dias</text></svg>'
+      +'<div class="fx-leg"><span><i class="pt"></i>no ritmo</span><span><i class="pt warn"></i>atenção</span><span><i class="pt bad"></i>parado</span><span><i class="ln at"></i>faixa de atenção</span><span><i class="ln pa"></i>faixa de parado</span></div>';
+  }
+  // 2) em andamento por dia contra o teto (uma série só) e uma linha pequena por etapa
+  function gAndamento(src, ets, t){
+    const dias=Object.keys(FX.fotos||{}).sort(), pts=dias.map(d=>[d,((FX.fotos[d]||{})[src]||{}).w]).filter(p=>p[1]!==undefined);
+    if(pts.length<3) return '<p class="meta fx-vz">O gráfico aparece com três dias de fotos. A medição começou em '+(FX.inicio?fData(FX.inicio):"hoje")+' e a Central guarda uma foto por dia.</p>';
+    const W=520,H=190,L=34,R=62,T=14,B=26, maxV=Math.max(...pts.map(p=>p[1]),t?t.n:0,4)*1.15, st=passo(maxV), topo=Math.ceil(maxV/st)*st;
+    const x=i=>L+(W-L-R)*(pts.length===1?0:i/(pts.length-1)), y=v=>T+(H-T-B)*(1-v/topo);
+    let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Itens em andamento por dia">';
+    for(let v=0;v<=topo;v+=st) s+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text class="ax" x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+v+'</text>';
+    if(t) s+='<line class="lim pa" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(t.n)+'" y2="'+y(t.n)+'"/><text class="ax" x="'+(W-R+6)+'" y="'+(y(t.n)+(Math.abs(y(t.n)-y(pts[pts.length-1][1]))<12?-8:4))+'">teto '+t.n+'</text>';
+    s+='<polyline class="serie" points="'+pts.map((p,i)=>x(i).toFixed(1)+","+y(p[1]).toFixed(1)).join(" ")+'"/>';
+    const u=pts[pts.length-1]; s+='<circle class="fim" cx="'+x(pts.length-1)+'" cy="'+y(u[1])+'" r="4.5"/><text class="ax b" x="'+(W-R+6)+'" y="'+(y(u[1])+4)+'">'+u[1]+' hoje</text>';
+    s+='<text class="ax" x="'+L+'" y="'+(H-6)+'">'+dm(pts[0][0])+'</text><text class="ax" x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end">'+dm(u[0])+'</text>';
+    const bw=(W-L-R)/Math.max(1,pts.length-1);
+    pts.forEach((p,i)=>{ s+='<rect x="'+(x(i)-bw/2)+'" y="'+T+'" width="'+bw+'" height="'+(H-T-B)+'" fill="transparent" data-dica="'+esc('<b>'+dm(p[0])+'</b><br>'+p[1]+' em andamento'+(t?'<br>teto '+t.n:''))+'"/>'; });
+    return s+'</svg><div class="fx-mini">'+ets.map(E=>{ const v=dias.map(d=>(((FX.fotos[d]||{})[src]||{})[String(E.n)])||0), m=Math.max(1,...v);
+      const p=v.map((n,i)=>(4+112*(v.length===1?0:i/(v.length-1))).toFixed(1)+","+(30-26*n/m).toFixed(1)).join(" ");
+      return '<div data-dica="'+esc('<b>'+E.n+'. '+esc(E.nome)+'</b><br>'+v[v.length-1]+' hoje · máximo de '+m+' no período')+'"><span>'+E.n+'. '+esc(E.nome)+'</span><svg viewBox="0 0 120 34" aria-hidden="true"><polyline class="serie" points="'+p+'"/></svg><b>'+v[v.length-1]+'</b></div>'; }).join("")+'</div>';
+  }
+  // 3) passagens de etapa por semana
+  function gVazao(src){
+    const vz=((FX.vazao||{})[src])||[], doc=src==="documentos", val=w=>doc?w[2]:w[1];
+    if(!vz.some(w=>val(w))) return '<p class="meta fx-vz">Nenhuma '+(doc?'regularização':'passagem de etapa')+' registrada nas últimas 12 semanas.</p>';
+    const W=520,H=190,L=34,R=10,T=18,B=26, maxV=Math.max(...vz.map(val),4), st=passo(maxV), topo=Math.ceil(maxV/st)*st, cw=(W-L-R)/vz.length, bw=Math.min(24,cw-8);
+    const y=v=>T+(H-T-B)*(1-v/topo), iMax=vz.reduce((a,w,i)=>val(w)>val(vz[a])?i:a,0);
+    let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+(doc?'Documentos regularizados':'Passagens de etapa')+' por semana">';
+    for(let v=0;v<=topo;v+=st) s+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text class="ax" x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+v+'</text>';
+    vz.forEach((w,i)=>{ const v=val(w), xc=L+cw*(i+.5), h=(H-B)-y(v), r=Math.min(4,h);
+      if(v) s+='<path class="col" d="M'+(xc-bw/2)+','+(H-B)+' v'+(-(h-r))+' q0,'+(-r)+' '+r+','+(-r)+' h'+(bw-2*r)+' q'+r+',0 '+r+','+r+' v'+(h-r)+' z"/>';
+      if(v && (i===iMax||i===vz.length-1)) s+='<text class="ax b" x="'+xc+'" y="'+(y(v)-5)+'" text-anchor="middle">'+v+'</text>';
+      if(i%3===0||i===vz.length-1) s+='<text class="ax" x="'+xc+'" y="'+(H-6)+'" text-anchor="middle">'+dm(w[0])+'</text>';
+      s+='<rect x="'+(L+cw*i)+'" y="'+T+'" width="'+cw+'" height="'+(H-T-B)+'" fill="transparent" data-dica="'+esc('<b>Semana de '+dm(w[0])+'</b><br>'+(doc?w[2]+' regularizado'+(w[2]===1?'':'s'):w[1]+' passagen'+(w[1]===1?'':'s')+' de etapa<br>'+w[2]+' chegada'+(w[2]===1?'':'s')+' à operação · '+w[3]+' saída'+(w[3]===1?'':'s')+' do funil'))+'"/>'; });
+    return s+'</svg>';
+  }
+  function render(){
+    const F=FR[fr], src=fr, rows=F.rows, and=rows.filter(r=>andando(src,r)), t=teto(src), ets=F.et;
+    const par=and.filter(r=>nivel(src,r)==="bad"), velho=and.slice().sort((a,b)=>(idade(b)||0)-(idade(a)||0))[0];
+    const vz=((FX.vazao||{})[src])||[], doc=src==="documentos", val=w=>w?(doc?w[2]:w[1]):0, sem=val(vz[vz.length-1]), ant=val(vz[vz.length-2]);
+    const acima=t&&and.length>t.n, k=(v,l,cls,sub)=>'<div class="kpi '+(cls||"")+'" style="cursor:default"><span class="v">'+v+'</span><span class="k">'+l+'</span>'+(sub?'<span class="k">'+sub+'</span>':'')+'</div>';
+    let h='<div class="band flx"><div class="fx-top"><h3>Fluxo: o que anda, o que parou e quanto cabe</h3><div class="seg" id="fx-fr" role="group" aria-label="Frente">'
+      +Object.keys(FR).map(x=>'<button type="button" data-v="'+x+'" aria-pressed="'+(x===fr)+'">'+FR[x].n+'</button>').join("")+'</div></div>'
+      +'<p class="meta" style="margin:0">Medição iniciada em '+(FX.inicio?fData(FX.inicio):"hoje")+'. A hora de cada passagem vem do app de Edição; mudança feita direto na planilha entra com a hora da rodada seguinte.</p>'
+      +'<div class="kpis">'+k(and.length+(t?'<small> de '+t.n+'</small>':''),"em andamento"+(t&&t.prov?" · teto provisório":t?" · teto":""),acima?"bad":"",acima?"acima do teto: terminar antes de puxar":"")
+        +k(sem,(doc?"regularizados":"passagens de etapa")+" nesta semana","",ant+" na semana anterior")
+        +k(par.length,"parados além da faixa",par.length?"bad":"ok")
+        +k(velho?(idade(velho)||0)+'<small> d</small>':"—","item mais antigo","",velho?esc(nomeDe(src,velho)).slice(0,40):"")+'</div>'
+      +'<div class="fx-fig larga"><h4>Dias na etapa de cada item em andamento</h4>'+(and.length?gIdade(src,and,ets):'<p class="meta fx-vz">Nenhum item em andamento nesta frente.</p>')+'</div>'
+      +'<div class="fx-2"><div class="fx-fig"><h4>Em andamento por dia'+(t?', contra o teto':'')+'</h4>'+gAndamento(src,ets,t)+'</div>'
+      +'<div class="fx-fig"><h4>'+(doc?'Documentos regularizados por semana':'Passagens de etapa por semana')+'</h4>'+gVazao(src)+'</div></div>';
+    h+='<div class="tbl"><table><thead><tr><th>Etapa</th><th>Em andamento agora</th><th>Passagens medidas</th><th>Metade sai em até</th><th>85% saem em até</th><th>Faixa em uso (atenção · parado)</th></tr></thead><tbody>'
+      +ets.map(E=>{ const f=faixaEt(src,E.n), tt=((FX.tempos||{})[src]||{})[String(E.n)];
+        return '<tr><td><b>'+E.n+'. '+esc(E.nome)+'</b></td><td class="mono">'+and.filter(r=>etN(src,r.fase)===E.n).length+'</td><td class="mono">'+(tt?tt.n:0)+'</td><td class="mono">'+(tt?String(tt.p50).replace(".",",")+' d':'—')+'</td><td class="mono">'+(tt?String(tt.p85).replace(".",",")+' d':'—')+'</td><td>'+f.at+' d · '+f.pa+' d <span class="meta">'+(f.real?'tempo real':'provisória, faltam '+Math.max(0,(FCFG.amostra_minima||8)-f.n)+' passagens')+'</span></td></tr>'; }).join("")+'</tbody></table></div>';
+    const p=(FX.prev||{})[src];
+    if(p) h+='<p class="fx-prev">'+(p.falta?'<b>Previsão:</b> a simulação aparece com '+((FCFG.previsao||{}).semanas_minimas||8)+' semanas de passagens registradas. Há '+p.sem+'; faltam '+p.falta+'.'
+      :'<b>Previsão para as próximas '+p.h+' semanas</b>, simulando '+p.sem+' semanas de histórico: metade dos cenários dá <b>'+p.p50+'</b> passagens de etapa ou mais; com 85% de chance, pelo menos <b>'+p.p85+'</b>; com 95%, pelo menos <b>'+p.p95+'</b>.')+'</p>';
+    const tf=FX.tarefas||[]; if(tf.length) h+='<p class="fx-prev"><b>Minha fila da equipe:</b> '+tf.slice(-4).map(x=>x[1]+' tarefa'+(x[1]===1?'':'s')+' concluída'+(x[1]===1?'':'s')+' na semana de '+dm(x[0])).join(" · ")+'.</p>';
+    el.innerHTML=h+'</div>';
+    $("#fx-fr").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; fr=b.dataset.v; try{localStorage.setItem("central-fluxo-fr",fr);}catch(_){} render(); });
+  }
+  render();
 })();
 
 /* ---------- PRODUÇÃO DOS SÓCIOS: coeficiente de esforço e score por médico (11/11/2026) ----------
@@ -1705,6 +2038,16 @@ const lFis=(function(){
     h+=prazos.length?'<div class="tbl"><table><thead><tr><th>Prazo</th><th>Órgão</th><th class="hide-sm">Modalidade</th><th>Fase</th><th>Responsável</th></tr></thead><tbody>'
       +prazos.map(l=>'<tr><td class="mono">'+esc((l.prazo||"").slice(0,10))+'</td><td><b>'+esc(l.org||l.id||"")+'</b>'+(l.obj?'<div class="meta">'+esc(l.obj)+'</div>':'')+'</td><td class="hide-sm">'+esc(l.tp||l.mod||"—")+'</td><td>'+esc(l.fase||"—")+'</td><td>'+esc(l.resp||"—")+'</td></tr>').join("")
       +'</tbody></table></div>':'<p class="vazio">Nenhum prazo de licitação nos próximos 30 dias.</p>';
+    // quadro do ciclo do documento (27/11/2026): a vencer, vencido em regularização e em dia
+    const dk=(fase)=>DOCS.filter(d=>d.fase===fase).sort((a,b)=>(a.val||"9999")<(b.val||"9999")?-1:1);
+    const dcard=d=>{ const dd=d.val?dias(d.val):null;
+      return '<div class="rt-it '+nivel("documentos",d)+'"><span class="t">'+esc(d.doc)+'</span><span class="s">'+(d.val?'validade '+fData(d.val)+(dd!==null?(dd<0?' · venceu há '+(-dd)+' d':' · vence em '+dd+' d'):''):'sem validade')+'</span>'
+        +'<span class="kb-pe">'+selo("documentos",d)+'<span class="kb-resp">'+(d.fase==="Vencido"?'Marcos regulariza; '+esc(d.resp||"Carla")+' acompanha':esc(d.resp||"sem dono"))+'</span></span>'+(d.mot?'<span class="al">'+esc(d.mot)+'</span>':'')+'</div>'; };
+    const av=dk("A vencer"), ve=dk("Vencido"), ok=dk("Em dia"), prox=ok.filter(d=>d.val)[0];
+    h+='<div class="pr-sec">Ciclo dos documentos</div>'+resumoFluxo("documentos",DOCS)
+      +'<div class="dk-kb"><div class="rt-col" style="border-top-color:var(--warn)"><h3><span>A vencer em 30 dias</span><b>'+av.length+'</b></h3><div class="dono">Dono: '+esc("Carla, até o vencimento")+'</div>'+(av.map(dcard).join("")||'<div class="ag-vazio">Nada a vencer.</div>')+'<div class="vira"><b>Vira quando:</b> a certidão nova entra na planilha Documentos TRX.</div></div>'
+      +'<div class="rt-col" style="border-top-color:var(--bad)"><h3><span>Vencido, em regularização</span><b>'+ve.length+'</b></h3><div class="dono">Dono: Marcos e automação</div>'+(ve.map(dcard).join("")||'<div class="ag-vazio">Nenhum vencido.</div>')+'<div class="vira"><b>Vira quando:</b> o documento regularizado volta a ficar em dia. A meta é zero vencido no mês.</div></div>'
+      +'<div class="rt-col" style="border-top-color:var(--ok)"><h3><span>Em dia</span><b>'+ok.length+'</b></h3><div class="dono">'+(prox?'Próximo a entrar na fila: '+esc(prox.doc)+', em '+fData(prox.val):'Sem validade próxima')+'</div><div class="vira">O documento entra sozinho em A vencer quando faltam 30 dias, e a lista completa está na tabela abaixo.</div></div></div>';
     h+='<div class="pr-sec">Documentos da empresa e validades</div>';
     h+=DOCS.length?'<div class="tbl"><table><thead><tr><th>Documento</th><th>Validade</th><th>Status</th><th class="hide-sm">Situação</th><th>Responsável</th></tr></thead><tbody>'
       +DOCS.map(d=>'<tr><td><b>'+esc(d.doc)+'</b>'+(d.mot?'<div class="meta d-bad">'+esc(d.mot)+'</div>':'')+'</td><td class="mono">'+esc(d.val||"—")+'</td><td class="'+stCls(d.st)+'">'+esc(d.st||"—")+'</td><td class="hide-sm">'+esc(d.sit||"—")+'</td><td>'+esc(d.resp||"—")+'</td></tr>').join("")
@@ -1728,6 +2071,14 @@ const lFis=(function(){
   (D.documentos_alerta||[]).filter(x=>x.venc)
     .forEach(x=>it.push({d:x.val?dias(x.val):-1,dt:x.val||"",t:x.doc,of:"Documento",r:x.resp,x:["Documento vencido"+(x.val?" em "+fData(x.val):"")+". O Marcos regulariza; a Carla acompanha."],
       ac:[["#fiscal","Ver em Fiscal e Jurídico"]]}));
+  // parado além da faixa (27/11/2026): só entra quando a faixa da etapa já é tempo real, não a provisória
+  [["clinicas",CL,"clínica parada","clínicas paradas"],["licitacoes",LI,"processo parado","processos parados"]].forEach(([src,rows,um,varios])=>{
+    const par=rows.filter(r=>nivel(src,r)==="bad" && faixaEt(src,etN(src,r.fase)).real).sort((a,b)=>(idade(b)||0)-(idade(a)||0));
+    if(!par.length) return;
+    it.push({d:1,dt:"",rot:"até "+idade(par[0])+" d na etapa",t:par.length+" "+(par.length===1?um:varios)+" além da faixa da etapa",of:"Fluxo",r:"",
+      x:["Passaram do tempo em que 85% dos itens da mesma etapa já saíram. Decida em cada um: empurrar, devolver para a fila ou encerrar."]
+        .concat(par.slice(0,8).map(r=>kbTitulo(src,r)+" · "+rotFase(src,r.fase)+" · "+idade(r)+" dias"+(r.resp?" · "+papel(r.resp):""))).concat(par.length>8?["e mais "+(par.length-8)+"."]:[]),
+      ac:[["#"+src,"Ver na aba, ordenando por Na etapa"],["#resultados","Ver o fluxo"]]}); });
   // documento vencido sempre no topo (Marcos, 17/11/2026); depois o resto pela data
   it.sort((a,b)=>((a.of==="Documento"?0:1)-(b.of==="Documento"?0:1))||((a.d??0)-(b.d??0)));
   const MAX=8;
@@ -1744,7 +2095,7 @@ const lFis=(function(){
     return '<ul class="u-cv">'+obs.map(o=>'<li class="'+(/^claude/i.test(o.a||"")?'cl':'')+'"><span class="meta">'+esc(o.q)+' · '+esc(o.a)+'</span> '+esc(o.o)+'</li>').join("")+'</ul>';
   }
   const pedir=x=>'<form class="u-pd" data-k="'+esc(ukey(x))+'" autocomplete="off"><input maxlength="560" placeholder="Pedir ao Claude: o que você quer que eu resolva aqui?"><button type="submit">Pedir ao Claude</button><span class="meta u-st"></span></form>';
-  const li=x=>'<li><details><summary><span class="u-d '+(x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):'')+'</span>'
+  const li=x=>'<li><details><summary><span class="u-d '+(x.rot?'venc':x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.rot?esc(x.rot):(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):''))+'</span>'
     +'<b>'+esc(x.t)+'</b><span class="u-of">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</summary>'
     +'<div class="u-x">'+x.x.map(t=>'<p>'+esc(t)+'</p>').join("")+(x.r?'<p class="meta">Com: '+esc(x.r)+'</p>':'')
     +'<div class="u-ac">'+x.ac.filter(Boolean).map(a=>'<a href="'+esc(a[0])+'"'+(a[2]?' target="_blank" rel="noopener"':'')+'>'+esc(a[1])+'</a>').join("")+'</div>'

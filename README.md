@@ -34,6 +34,32 @@ Três abas da Pipeline Licitações alimentam a aba, e a régua mora na planilha
 
 O score é a média ponderada de quatro eixos (esforço, prazo, margem e cobertura de escala). **Eixo sem dado no período sai da conta e o peso dele é redistribuído entre os eixos medidos**, então a aba já serve antes de a escala estar preenchida. Mudar um coeficiente ou um peso na `Producao_Params` muda a página na rodada seguinte; mudança de régua passa pelo Marcos.
 
+## Fluxo: o Kanban da Central (27/11/2026)
+A Central mede o fluxo das frentes e mostra o trabalho em quadro. Faturamento, Relatórios, Produção e Kit ficam fora, por decisão do Marcos.
+
+| Onde | O que mostra |
+|---|---|
+| Início, Minha fila | quadro com A fazer, Fazendo, Com o Claude e Para revisar; trava com motivo; no máximo 3 em Fazendo por pessoa (avisa, não trava) |
+| Clínicas e Licitações | botão Tabela ou Quadro; coluna "Na etapa" com os dias na etapa; faixa-resumo com em andamento, teto, fila, parados e carga por pessoa |
+| Roteiro | quadro de coordenação por cliente (Prospecção, Proposta e contrato, Implantação, Produção estável), ligado aos Objetivos da semana, e os quadros por frente |
+| Resultados | bloco de fluxo: em andamento contra o teto, dias na etapa de cada item, passagens por semana, tempo por etapa e previsão por simulação |
+| Fiscal | ciclo dos documentos: A vencer, Vencido em regularização e Em dia |
+| Urgente agora | uma linha por frente com o que passou da faixa de parado, só quando a faixa já é tempo real |
+
+**Como a medição funciona.** `scripts/fluxo.py` roda a cada rodada, depois de baixar as planilhas. Ele compara a Fase de cada linha com a da rodada anterior e registra a passagem. A hora exata vem da aba Historico quando a mudança foi feita pelo app de Edição; mudança feita direto na planilha entra com a hora da rodada. O estado mora em três abas da Pipeline Licitações, criadas na primeira rodada:
+
+| Aba | O que guarda |
+|---|---|
+| `Fluxo_Estado` | uma linha por item: Frente, Chave, Fase, Desde, Fonte e Desde_etapa. É reescrita quando algo muda |
+| `Fluxo_Transicoes` | uma linha por passagem de fase: Quando, Frente, Chave, De, Para e Fonte. Só cresce |
+| `Fluxo_Fotos` | uma foto por dia: Dia, Frente, Fase e Itens, mais a linha "(em andamento)" de cada frente |
+
+Não edite essas abas à mão. Apagar a `Fluxo_Estado` faz a medição recomeçar, semeada pelo Historico.
+
+**Regras.** `config/fluxo.json` guarda as fases de fila, o limite único por frente, a faixa de dias por etapa, as colunas do quadro de coordenação e a regra de revisão do Claude. Enquanto o limite de uma frente está `null`, vale o teto provisório: o que estava em andamento na primeira foto. A faixa de dias é provisória até a etapa ter 8 passagens medidas; daí em diante é o percentil 70 (atenção) e o percentil 85 (parado) do tempo real. A previsão por simulação aparece com 8 semanas de passagens. Mudança de limite ou de faixa passa pelo Marcos.
+
+**Minha fila sem versão nova do app.** A coluna de cada tarefa sai das observações da aba Tarefas_Status: `fazendo`, `a fazer`, `bloqueado: motivo`, `liberado` e `@claude pedido`. A resposta com Autor Claude leva o cartão para Para revisar. O app de Edição v18 já grava tudo isso.
+
 ## Segredos necessários (Settings → Secrets and variables → Actions)
 - `GOOGLE_SA_JSON`: conteúdo do arquivo JSON da chave da conta de serviço. As planilhas precisam estar compartilhadas com o e-mail dessa conta, como leitor.
 - `CENTRAL_SENHA`: senha da equipe (8 caracteres ou mais). Desde 20/10/2026 a página publica só `central.enc`: `dados_central.js`, `saude.js` e `roteiro.js` são cifrados (PBKDF2 + AES-256-GCM, `scripts/cifrar_central.py`) e apagados antes da publicação. A página pede a senha uma vez e a guarda no navegador; o botão Sair apaga. Para trocar a senha: trocar o segredo, rodar o workflow e avisar a equipe. Sem o segredo a rodada falha e nada é publicado.

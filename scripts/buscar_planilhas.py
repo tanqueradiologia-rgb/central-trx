@@ -145,6 +145,16 @@ except Exception as e:
     json.dump({"values": []}, open("objetivos.json", "w", encoding="utf-8"))
     print(f"::warning::Nao consegui ler a aba Objetivos: {e}")
 
+# Historico do app de Edição (27/11/2026): só as colunas A a H, para a medição do fluxo (scripts/fluxo.py)
+# saber a hora exata de cada mudança de Fase. Mensagens e menções (I e J) não são lidas.
+try:
+    hv = sheets.spreadsheets().values().get(spreadsheetId=PIPELINE_ID, range="Historico!A1:H60000").execute()
+    json.dump(hv, open("historico.json", "w", encoding="utf-8"), ensure_ascii=False)
+    print(f"OK: historico {len(hv.get('values', []))} linhas")
+except Exception as e:
+    json.dump({"values": []}, open("historico.json", "w", encoding="utf-8"))
+    print(f"::warning::Nao consegui ler a aba Historico: {e}")
+
 # O xlsx do robô do Mac (LICIT_ID) deixou de ser baixado em 02/10/2026: o radar do Mac foi
 # aposentado e a planilha Google de licitações é a única fonte.
 open("mods.env", "w").write(f"MOD_PIPELINE={mod(PIPELINE_ID)}\n")

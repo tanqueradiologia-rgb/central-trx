@@ -192,6 +192,15 @@ def main():
     if sem_prazo:
         avisos.append(f"{len(sem_prazo)} processos abertos sem prazo na planilha.")
 
+    # fluxo (27/11/2026): a medição precisa ter rodado e acompanhar todas as linhas das frentes
+    try:
+        fx = json.load(open("fluxo.json", encoding="utf-8"))
+        n_fx = sum(len(v) for v in (fx.get("itens") or {}).values())
+        info["fluxo_itens"] = n_fx
+        if not n_fx:
+            avisos.append("A medição do fluxo rodou, mas não acompanhou nenhum item.")
+    except Exception:
+        avisos.append("A medição do fluxo não rodou nesta rodada (fluxo.json ausente).")
     status = "alerta" if alertas else ("atencao" if avisos else "ok")
     saude = {"gerado": AGORA.strftime("%Y-%m-%dT%H:%M"), "status": status,
              "alertas": alertas, "avisos": avisos, "numeros": info,
