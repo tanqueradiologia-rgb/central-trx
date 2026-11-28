@@ -548,6 +548,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
       <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
       <a href="#kit" data-tab="kit" title="Modelos no padrão gráfico da TRX">Kit<span class="n" id="n-kit"></span></a>
+      <a href="https://app.audo.com.br/login" class="ext" target="_blank" rel="noopener" title="Abre o Audo, o sistema de laudos, em outra janela. Usuário e senha são os de cada um.">Audo ↗</a>
       <span hidden><span id="n-isgh"></span><span id="n-fiscal"></span></span>
     </nav>
     <div id="saude" class="saude" hidden></div>
@@ -897,6 +898,9 @@ footer{border-top:3px solid var(--ciano);padding-top:12px}
 /* Comunicação e documentos (28/11/2026): equipe em largura cheia, contatos em colunas */
 .eqp .eq-l{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));column-gap:28px}
 .eqp .eq-mail{max-width:760px}
+/* atalho para o Audo (28/11/2026): link externo no menu, depois do Kit */
+nav.tabs a.ext{border:1px solid rgba(255,255,255,.35);padding:5px 12px;margin-left:6px;color:#fff}
+nav.tabs a.ext:hover{border-color:var(--ciano)}
 </style>
 <div class="gate" id="gate" hidden>
   <form id="gateForm" autocomplete="off">
