@@ -43,6 +43,20 @@ UF_COD = {"12": "AC", "27": "AL", "13": "AM", "16": "AP", "29": "BA", "23": "CE"
           "28": "SE", "35": "SP", "17": "TO"}
 
 
+def conectar(timeout=180, tentativas=8):
+    """Abre o FTP do DATASUS insistindo: o servidor recusa conexões por minutos e depois volta."""
+    for i in range(tentativas):
+        try:
+            ftp = ftplib.FTP(FTP_HOST, timeout=timeout)
+            ftp.login()
+            return ftp
+        except Exception as e:
+            print(f"::warning::FTP não conectou, tentativa {i + 1} de {tentativas} ({e})")
+            time.sleep(min(30 * (i + 1), 180))
+    print("::error::FTP do DATASUS não reconectou; a planilha não foi tocada.")
+    sys.exit(1)
+
+
 def ler_dbc(ftp, caminho, filtro=None):
     """Lê um .dbc do FTP. Com filtro, devolve só as linhas aceitas (o PF de SP tem milhões de linhas)."""
     import pyreaddbc, dbfread
@@ -107,7 +121,7 @@ def municipios():
 
 def main():
     lista = {}
-    for tentativa in range(6):   # o FTP do DATASUS às vezes não abre a conexão de dados; espera e tenta de novo
+    for tentativa in range(12):   # o FTP do DATASUS às vezes não abre a conexão de dados; espera e tenta de novo
         try:
             ftp = ftplib.FTP(FTP_HOST, timeout=180)
             ftp.login()
@@ -134,7 +148,7 @@ def main():
         arq = cands[-1]
         aamm = arq[4:8]
         comps[uf] = f"20{aamm[:2]}-{aamm[2:]}"
-        for tentativa in range(3):
+        for tentativa in range(5):
             try:
                 eq = ler_dbc(ftp, f"{FTP_DIR}/EQ/{arq}")
                 sr_nome = f"SR{uf}{aamm}.dbc"
@@ -142,11 +156,11 @@ def main():
                 break
             except Exception as e:
                 print(f"::warning::{uf}: tentativa {tentativa + 1} falhou ({e})")
-                time.sleep(10)
-                ftp = ftplib.FTP(FTP_HOST, timeout=120)
-                ftp.login()
+                time.sleep(20 * (tentativa + 1))
+                ftp = conectar(120)
         else:
-            continue
+            print(f"::error::{uf}: EQ/SR não baixou em 5 tentativas; a planilha não foi tocada (ficaria sem a UF).")
+            sys.exit(1)
         for r in eq:
             cnes = str(r.get("CNES") or "").strip()
             e = est.setdefault(cnes, {"cnes": cnes, "uf": uf, "mun": str(r.get("CODUFMUN") or ""),
@@ -190,9 +204,8 @@ def main():
                 break
             except Exception as e:
                 print(f"::warning::{uf}: PF tentativa {tentativa + 1} falhou ({e})")
-                time.sleep(10)
-                ftp = ftplib.FTP(FTP_HOST, timeout=300)
-                ftp.login()
+                time.sleep(20 * (tentativa + 1))
+                ftp = conectar(300)
         if pf is None:
             print(f"::warning::{uf}: sem arquivo PF {aamm}; radiologistas da UF ficam em branco")
         else:
