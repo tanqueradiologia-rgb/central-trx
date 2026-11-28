@@ -1964,7 +1964,12 @@ const lProd = (function(){
     const A = p.acerto;
     if(!A) return "";
     const sinal = v => (v<0?"− ":"+ ")+money(Math.abs(v));
-    let h = '<div class="pr-sec">A faturar no período '+esc(p.per)+'</div>';
+    // Produção de um mês é faturada no mês seguinte (Marcos, 28/11/2026): o título diz os dois.
+    const MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+    const mm=/^(\d{4})-(\d{2})$/.exec(p.per||"");
+    const tit = mm ? 'A faturar em '+MESES[(+mm[2])%12]+' de '+(+mm[2]===12?+mm[1]+1:+mm[1])+', pela produção de '+MESES[+mm[2]-1]+' de '+mm[1] : 'A faturar no período '+esc(p.per);
+    let h = '<div class="pr-sec">'+tit+'</div>'
+      + (mm?'<p class="meta">Valor atualizado a cada relatório lançado. Fica definitivo quando o mês fecha, no último dia de '+MESES[+mm[2]-1]+'. Para ver também os médicos de fora do quadro, troque para "Todos os laudadores".</p>':'');
     if(!A.fixa){
       h += '<p class="meta"><b>As despesas fixas ainda não estão lançadas na régua.</b> Enquanto não houver chave <b>despesa_</b> na aba Producao_Params, o acerto abaixo sai sem desconto de estrutura.</p>';
     }
