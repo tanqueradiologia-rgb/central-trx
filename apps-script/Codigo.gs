@@ -885,7 +885,10 @@ function entregaGuardar(cred, e) {
  * O fechamento para nota fiscal da aba Relatorios grava na aba Medicoes da planilha
  * "Faturamento e Cobranca HRVJ ISGH" os laudos de RM (F) e a data do relatorio (K) da medicao
  * escolhida, para a tarefa de cobranca enxergar sem ninguem digitar de novo. So F e K: Q, R e S
- * sao formulas e o resto e preenchimento da equipe. */
+ * sao formulas e o resto e preenchimento da equipe.
+ * m164 (28/11/2026): a coluna F guarda so os laudos do PERIODO da medicao. A aba Relatorios manda
+ * o acumulado do relatorio com m.acumulado = true e aqui se desconta o que ja esta nas medicoes
+ * anteriores da mesma Parte (A-2 = acumulado menos A-1). Sem isso a A-1 era cobrada de novo. */
 
 const FATUR_ID = '14i23-uo6aCZ30SM-XoSKtrqIN4dyCmcsGyFZ1RdFCTk';
 
@@ -908,12 +911,23 @@ function medicaoGravar(cred, m) {
     col.forEach(function (r, i) { if (String(r[0]).trim().toUpperCase() === numero) linha = i + 1; });
     if (!linha) throw new Error('Nao achei a medicao ' + numero + ' na aba Medicoes.');
     const antes = sh.getRange(linha, 6).getDisplayValue();
-    sh.getRange(linha, 6).setValue(laudos);
+    let gravar = laudos, anteriores = 0, deQuais = [];
+    if (m.acumulado) {
+      const parte = numero.charAt(0);
+      if (linha > 2) sh.getRange(2, 1, linha - 2, 6).getValues().forEach(function (r) {
+        const n = String(r[0]).trim().toUpperCase(), q = parseInt(r[5], 10);
+        if (n.charAt(0) === parte && /^[AB]-\d$/.test(n) && q > 0) { anteriores += q; deQuais.push(n + ' ' + q); }
+      });
+      gravar = laudos - anteriores;
+      if (!(gravar > 0)) throw new Error('O acumulado (' + laudos + ') nao passa do que ja esta nas medicoes anteriores (' + anteriores + '). Nada foi gravado.');
+    }
+    sh.getRange(linha, 6).setValue(gravar);
     if (enviado) sh.getRange(linha, 11).setValue(enviado);
     const agora = Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
     const obs = sh.getRange(linha, 20);
-    obs.setValue((String(obs.getValue() || '') + ' | ' + agora + ': ' + (eu.nome || eu.email) + ' gravou ' + laudos + ' laudos de RM pela aba Relatórios'
-      + (antes && String(antes) !== String(laudos) ? ' (antes: ' + antes + ')' : '') + (enviado ? ', relatório de ' + enviado : '') + '.').replace(/^ \| /, ''));
-    return { numero: numero, laudos: laudos, antes: antes };
+    obs.setValue((String(obs.getValue() || '') + ' | ' + agora + ': ' + (eu.nome || eu.email) + ' gravou ' + gravar + ' laudos de RM pela aba Relatórios'
+      + (anteriores ? ' (' + laudos + ' acumulados menos ' + anteriores + ' de ' + deQuais.join(', ') + ')' : '')
+      + (antes && String(antes) !== String(gravar) ? ' (antes: ' + antes + ')' : '') + (enviado ? ', relatório de ' + enviado : '') + '.').replace(/^ \| /, ''));
+    return { numero: numero, laudos: gravar, antes: antes, acumulado: laudos, anteriores: anteriores };
   } finally { lock.releaseLock(); }
 }

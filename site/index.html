@@ -2731,9 +2731,9 @@ const lRel = (function(){
       + '<div class="band"><p class="meta" style="margin:0 0 8px"><b>Atualizar a produção</b> grava na planilha a produção de <b>'+esc(md)+'</b> do <b>'+esc(sig)+'</b> em <b>'+esc(perProd)+'</b> com tudo que está neste conjunto ('+esc(D.primeiro)+' a '+esc(D.ultimo)+') e substitui o que já estava lançado para esse mês. Por isso o arquivo tem de ser o acumulado. O repasse de cada médico é aplicado pela planilha (aba Producao_Params), não por esta tela.</p>'
       + (leg ? ''
       + '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end"><label>Medição<br><select id="rl-mednum">'+["A-1","A-2","B-1","B-2","B-3","B-4","B-5","B-6"].map(n=>'<option'+(n===(ls("trx-rel-mednum")||"A-2")?' selected':'')+'>'+n+'</option>').join("")+'</select></label>'
-      + '<label>Laudos de RM da medição<br><input id="rl-medqt" type="number" style="width:110px" value="'+D.total+'"></label>'
+      + '<label>Laudos de RM acumulados (total do relatório)<br><input id="rl-medqt" type="number" style="width:110px" value="'+D.total+'"></label>'
       + '<button type="button" id="rl-medgravar">Registrar a medição na planilha de cobrança</button><span class="meta" id="rl-medmsg"></span></div>'
-      + '<p class="meta" style="margin:8px 0 0">Use depois de enviar o fechamento ao hospital: grava os laudos e a data do relatório na linha da medição, e a cobrança passa a acompanhar a nota e o pagamento. O campo vem com o total do arquivo: da segunda medição em diante, desconte o que já foi faturado nas anteriores.</p>'
+      + '<p class="meta" style="margin:8px 0 0">Use depois de enviar o fechamento ao hospital: grava os laudos e a data do relatório na linha da medição, e a cobrança passa a acompanhar a nota e o pagamento. O campo vem com o total acumulado do arquivo e deve ficar assim: o desconto do que já está nas medições anteriores é feito sozinho na gravação, e a planilha recebe só os laudos do período.</p>'
         : '<p class="meta" style="margin:8px 0 0">A planilha de cobrança hoje só existe para a RM do HRVJ. A medição de '+esc(md)+' do '+esc(sig)+' ainda não tem onde ser registrada: o fechamento sai em PDF e o controle fica com o financeiro.</p>')
       + '</div>'
       + '<div class="pr-sec">Entregas já emitidas</div>'
@@ -2824,10 +2824,10 @@ const lRel = (function(){
       }catch(e){ g.textContent = String((e&&e.message)||e); } });
     if($("#rl-medgravar")) $("#rl-medgravar").addEventListener("click", async ()=>{ const m=$("#rl-medmsg");
       const numero=$("#rl-mednum").value, qt=parseInt($("#rl-medqt").value,10)||0, em=$("#rl-emissao").value||hoje();
-      if(!confirm("Gravar "+qt+" laudos de RM na medição "+numero+", com relatório enviado em "+em+"?")) return;
+      if(!confirm("Registrar a medição "+numero+" a partir de "+qt+" laudos de RM acumulados, com relatório enviado em "+em+"? A planilha recebe só os laudos do período: o acumulado menos o que já está nas medições anteriores.")) return;
       ls("trx-rel-mednum",numero); m.textContent="Gravando…";
-      try{ const j = await posta({action:"medicaoGravar", m:{numero:numero, laudos:qt, enviadoEm:em}});
-        m.textContent = "Gravado na medição "+j.numero+": "+j.laudos+" laudos"+(j.antes&&String(j.antes)!==String(j.laudos)?" (antes estava "+j.antes+")":"")+".";
+      try{ const j = await posta({action:"medicaoGravar", m:{numero:numero, laudos:qt, enviadoEm:em, acumulado:true}});
+        m.textContent = "Gravado na medição "+j.numero+": "+j.laudos+" laudos do período"+(j.anteriores?" ("+j.acumulado+" acumulados menos "+j.anteriores+" de medições anteriores)":"")+(j.antes&&String(j.antes)!==String(j.laudos)?" (antes estava "+j.antes+")":"")+".";
       }catch(e){ m.textContent = String((e&&e.message)||e); } });
     $("#rl-prod").addEventListener("click", ()=>mandarProducao(msg));
   }
