@@ -34,8 +34,8 @@ Três abas da Pipeline Licitações alimentam a aba, e a régua mora na planilha
 
 O score é a média ponderada de quatro eixos (esforço, prazo, margem e cobertura de escala). **Eixo sem dado no período sai da conta e o peso dele é redistribuído entre os eixos medidos**, então a aba já serve antes de a escala estar preenchida. Mudar um coeficiente ou um peso na `Producao_Params` muda a página na rodada seguinte; mudança de régua passa pelo Marcos.
 
-## Menu de sete abas (27/11/2026)
-Roteiro (primeira, em destaque), Início, Listas, Resultados, Produção, Relatórios e Kit. A aba Listas reúne Clínicas, Licitações, Quadro público e Prioridades, com um seletor no alto. O ISGH não tem aba: entra na esteira como qualquer cliente, com a marca ISGH no texto, e o dossiê abre pelo endereço `#isgh`. O jurídico virou o índice de documentos, dentro do Roteiro e no endereço `#fiscal`.
+## Menu de seis abas (27/11/2026)
+Roteiro (primeira, em destaque), Comunicação e documentos (a antiga Início, endereço `#inicio`), Listas e resultados, Produção, Relatórios e Kit. A página Comunicação e documentos junta o Mural, os Objetivos da semana, o Urgente agora, a equipe, a Minha fila, os documentos em vencimento e a base de documentos com link para o Drive. No Roteiro, a faixa do setor público fica dentro do item Quadro público. A aba Listas e resultados reúne Clínicas, Licitações, Quadro público, Prioridades e Resultados e fluxo, com um seletor no alto. O ISGH não tem aba: entra na esteira como qualquer cliente, com a marca ISGH no texto, e o dossiê abre pelo endereço `#isgh`. O jurídico virou o índice de documentos, dentro do Roteiro e no endereço `#fiscal`.
 
 ## Fluxo: o Kanban da Central (27/11/2026)
 A Central mede o fluxo das frentes e mostra o trabalho em quadro. Faturamento, Relatórios, Produção e Kit ficam fora, por decisão do Marcos.

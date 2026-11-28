@@ -544,9 +544,8 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     </div>
     <nav class="tabs" aria-label="Frentes">
       <a href="#roteiro" data-tab="roteiro" class="dest" title="O roteiro inteiro, da pescaria do decisor ao cliente em produção">Roteiro<span class="n" id="n-roteiro"></span></a>
-      <a href="#inicio" data-tab="inicio">Início<span class="n" id="n-inicio"></span></a>
-      <a href="#clinicas" data-tab="listas" title="Clínicas, licitações, quadro público e prioridades, com busca e filtro">Listas</a>
-      <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
+      <a href="#inicio" data-tab="inicio" title="Mural, objetivos, urgências, fila de cada um, documentos em vencimento e a base de documentos">Comunicação e documentos<span class="n" id="n-inicio"></span></a>
+      <a href="#clinicas" data-tab="listas" title="Clínicas, licitações, quadro público e prioridades, com busca e filtro, mais os resultados e os números do fluxo">Listas e resultados</a>
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
       <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
       <a href="#kit" data-tab="kit" title="Modelos no padrão gráfico da TRX">Kit<span class="n" id="n-kit"></span></a>
@@ -562,6 +561,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     <a href="#licitacoes" data-l="licitacoes">Licitações<span class="n" id="n-licitacoes"></span></a>
     <a href="#quadro" data-l="quadro">Quadro público<span class="n" id="n-quadro"></span></a>
     <a href="#prioridades" data-l="prioridades">Prioridades<span class="n" id="n-prioridades"></span></a>
+    <a href="#resultados" data-l="resultados">Resultados e fluxo<span class="n" id="n-resultados"></span></a>
   </div>
   <section class="pane" id="pane-inicio" hidden>
     <div class="ini-hero" id="ini-hero"></div>
@@ -578,6 +578,8 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       </div>
     </div>
     <div id="hoje" class="hoje-band" hidden></div>
+    <div class="avisos docs-al" id="docs-al" hidden></div>
+    <div id="ini-docs"></div>
   </section>
   <section class="pane" id="pane-prioridades" hidden>
     <div class="agenda">
@@ -729,7 +731,6 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <h2>Índice de documentos</h2>
       <span class="meta">Tudo o que a empresa tem de documento, certidão, cadastro e contrato, com o caminho até o original no Drive. <a href="#roteiro">Voltar ao Roteiro</a></span>
     </div>
-    <div class="avisos docs-al" id="docs-al" hidden></div>
     <div class="kpis" id="k-fiscal"></div>
     <div id="fis-corpo"></div>
   </section>
@@ -768,7 +769,7 @@ mark.isgh,.u-of.isgh,.hj-of.isgh{background:var(--grad);color:#f8fafc;border:0;b
 .rt-cel .rt-nota{font-size:12px;color:var(--muted)} .rt-cel .rt-nota b{color:var(--ink)} .rt-cel .rt-nada{color:var(--muted);font-size:12px}
 .rt-cel .rt-mais{font-size:12px;color:var(--turq)}
 .rt-col .vira details{margin-bottom:4px} .rt-col .vira summary{cursor:pointer;font-weight:600}
-.rt-jur{grid-column:1/-1} .rt-jur summary{cursor:pointer;font-family:var(--f-display);font-weight:600;color:var(--turq)}
+.rt-pub{grid-column:1/-1} .rt-jur{grid-column:1/-1} .rt-jur summary{cursor:pointer;font-family:var(--f-display);font-weight:600;color:var(--turq)}
 .rt-it.warn{border-left:3px solid var(--warn)} .rt-it.bad{border-left:3px solid var(--bad)}
 .rt-it .kb-pe{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
 .rt-it .kb-resp{font-size:11px;color:var(--muted)}
@@ -1737,7 +1738,7 @@ const lRot = (function(){
       const chave=new Set(toks(c.n+" "+c.parte).concat(siglas(c.n+" "+c.parte)));
       const ja=fecho.find(x=>unic(x.nome).some(w=>chave.has(w)));
       if(ja){ ja.contrato=c; return; }
-      const x={src:"contratos",contrato:c,tipo:"Contrato",nome:c.n,fase:c.st+(c.acao?" · "+c.acao:""),resp:c.resp,href:"#fiscal",obj:[]}; fecho.push(x); todos.push(x);
+      const x={src:"contratos",contrato:c,tipo:"Contrato",nome:c.n,fase:c.st+(c.acao?" · "+c.acao:""),resp:c.resp,href:"#inicio",obj:[]}; fecho.push(x); todos.push(x);
     });
     const seg=new Date(HOJE); seg.setDate(seg.getDate()-((seg.getDay()+6)%7));
     const semD=s=>{ const m=/(\d{2})\/(\d{2})\/(\d{4})/.exec(s||""); return m?new Date(+m[3],+m[2]-1,+m[1]):null; };
@@ -1759,9 +1760,9 @@ const lRot = (function(){
     return {col7, soltos, OB, extra:(src,r)=>objHtml(porLinha[src+":"+r.l])};
   }
   /* ESTEIRA COMPLETA (27/11/2026, pedido do Marcos): a aba Roteiro vira a página de referência da Central.
-     Debaixo das sete colunas das particulares entram duas faixas alinhadas às mesmas colunas: o setor
-     público (licitações e quadro) e o jurídico (documentos, prazos e contratos). Cada célula mostra o
-     nome da etapa daquela faixa, a contagem e os três itens que mais pedem atenção. */
+     A faixa do setor público (licitações, credenciamentos e quadro) fica dentro do item Quadro público,
+     debaixo das duas colunas dele. Cada célula mostra a etapa, a contagem e os três itens que mais pedem
+     atenção. O jurídico saiu do Roteiro e mora na página Comunicação e documentos. */
   function faixas(){
     const ord={bad:0,warn:1,"":2}, MAXC=3;
     const cel=(titulo,n,corpo,link)=>'<div class="rt-cel"><h4><span>'+titulo+'</span>'+(n===null?'':'<b>'+n+'</b>')+'</h4>'+(corpo||'<div class="rt-nada">—</div>')+(link?'<a class="rt-mais" href="'+link[0]+'">'+link[1]+'</a>':'')+'</div>';
@@ -1778,34 +1779,11 @@ const lRot = (function(){
       cel("1. "+esc(nomeE(1)), liAt(1).length, '<div class="rt-nota"><b>'+filaLi+'</b> editais na fila de triagem · quadro público: <b>'+qdAnd+'</b> órgãos em contato e <b>'+(QD.length-qdAnd)+'</b> em aberto</div>'+mini("licitacoes",liAt(1)), ["#licitacoes","ver Licitações"]),
       cel("2. "+esc(nomeE(2)), liAt(2).length, mini("licitacoes",liAt(2))),
       cel("3. "+esc(nomeE(3)), liAt(3).length, mini("licitacoes",liAt(3))),
-      cel("Sem etapa no público", null, '<div class="rt-nota">No edital o preço entra na disputa, não numa proposta escrita.</div>'),
       cel("4. "+esc(nomeE(4)), liAt(4).length, mini("licitacoes",liAt(4))),
       cel("5. "+esc(nomeE(5)), liAt(5).length, mini("licitacoes",liAt(5))),
       cel("Em operação", liAt(6).length, mini("licitacoes",liAt(6)))
     ];
-    // faixa do jurídico: documentos sustentam a habilitação, prazos a disputa e contratos o fechamento
-    const FIS=D.fiscal||{}, DOCS=FIS.documentos||[], CON=(FIS.contratos||[]);
-    const av=DOCS.filter(d=>d.fase==="A vencer"), ve=DOCS.filter(d=>d.fase==="Vencido");
-    const dcard=d=>{ const dd=d.val?dias(d.val):null; return '<a class="rt-it '+(d.fase==="Vencido"?'bad':'warn')+'" href="#fiscal"><span class="t">'+esc(d.doc)+'</span><span class="s">'+(d.val?(dd!==null&&dd<0?'venceu há '+(-dd)+' d':'vence em '+dd+' d')+' · '+fData(d.val):'sem validade')+'</span></a>'; };
-    const docs=ve.concat(av.slice().sort((a,b)=>(a.val||"9")<(b.val||"9")?-1:1));
-    const hoje=(D.gerado||"").slice(0,10), lim=new Date(hoje+"T12:00:00"); lim.setDate(lim.getDate()+30); const limIso=lim.toISOString().slice(0,10);
-    const prazos=LI.filter(l=>l.prazo&&l.prazo.slice(0,10)>=hoje&&l.prazo.slice(0,10)<=limIso&&!FECHADAS.test(l.fase||"")&&eRaw(l.fase)<6).sort((a,b)=>a.prazo<b.prazo?-1:1);
-    const pcard=l=>'<a class="rt-it" href="'+editLink("licitacoes",l.l)+'" target="_blank" rel="noopener"><span class="t">'+esc(l.org||l.id)+'</span><span class="s">prazo '+fData(l.prazo,true)+' · '+esc(rotFase("licitacoes",l.fase))+'</span></a>';
-    const ccard=c=>'<a class="rt-it" href="#fiscal"><span class="t">'+tagIsgh(c.n,c.parte)+esc(c.n)+'</span><span class="s">'+esc([c.tp,c.st,c.acao].filter(Boolean).join(" · "))+(c.qdo||c.fim?' · '+fData(c.qdo||c.fim):'')+'</span>'+(c.resp?'<span class="kb-pe"><span class="kb-resp">'+esc(c.resp)+'</span></span>':'')+'</a>';
-    const lista=(arr,fn)=>arr.slice(0,MAXC).map(fn).join("")+(arr.length>MAXC?'<div class="meta">e mais '+(arr.length-MAXC)+'</div>':'');
-    const cliente=c=>!/alug/i.test(c.tp||""), ana=CON.filter(c=>cliente(c)&&/an[aá]lise/i.test(c.st||"")), ati=CON.filter(c=>cliente(c)&&c.st==="Ativo");
-    const outros=CON.filter(c=>!ana.includes(c)&&!ati.includes(c));
-    const jur=[
-      cel("Regras de mesa", null, '<div class="rt-nota">Preço só na etapa 4. Toda proposta sai com a TRX em cópia.</div>'),
-      cel("Documentos e certidões", docs.length, '<div class="rt-nota"><b>'+ve.length+'</b> vencido'+(ve.length===1?'':'s')+' · <b>'+av.length+'</b> a vencer em 30 dias · <b>'+(DOCS.length-docs.length)+'</b> em dia</div>'+lista(docs,dcard), ["#fiscal","abrir o índice"]),
-      cel("Prazos de edital em 30 dias", prazos.length, lista(prazos,pcard)),
-      cel("Minuta e proposta", null, '<div class="rt-nota">A proposta escrita sai pelo Kit, com a TRX em cópia.</div>'),
-      cel("Contratos em análise", ana.length, lista(ana,ccard)),
-      cel("Outros contratos", outros.length, lista(outros,ccard)),
-      cel("Contratos ativos", ati.length, lista(ati,ccard), ["#fiscal","abrir o índice"])
-    ];
-    return '<div class="rt-fx-t"><b>Setor público</b> · licitações, credenciamentos e quadro, na mesma esteira</div>'+pub.join("")
-          +'<div class="rt-fx-t"><b>Jurídico e documentos</b> · o que sustenta cada etapa</div>'+jur.join("");
+    return '<div class="rt-fx-t"><b>Setor público inteiro</b> · do edital na triagem ao contrato em operação, somando licitações, credenciamentos e quadro</div>'+pub.join("");
   }
   function render(){
     const R=RT[fr], p=pes.value, src=SRC[fr], C=coord();
@@ -1815,14 +1793,14 @@ const lRot = (function(){
     $("#rt-board").style.setProperty("--n", R.etapas.length + (fr==="particulares"?1:0));
     $("#rt-board").style.setProperty("--w", fr==="particulares" ? "150px" : "190px");
     $("#rt-res").innerHTML = resumoFluxo(src, base);
-    $("#rt-board").innerHTML = kbBoard(src, lista, {extra:C.extra, max:fr==="particulares"?5:8}) + (fr==="particulares" ? C.col7 + faixas() : "");
+    $("#rt-board").innerHTML = kbBoard(src, lista, {extra:C.extra, max:fr==="particulares"?5:8}) + (fr==="particulares" ? C.col7 : "");
     let ex='<div class="band"><h3>As quatro regras de mesa</h3><ul>'+RT.regras.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
     if(fr==="particulares") ex+='<div class="band"><h3>Cadência de 6 toques da etapa 1 (cerca de 21 dias)</h3><div class="tbl"><table><thead><tr><th>Toque</th><th>Dia</th><th>Canal</th><th>Objetivo</th></tr></thead><tbody>'+
       RT.particulares.cadencia.map(c=>'<tr><td class="mono">'+c.n+'</td><td class="mono">'+c.dia+'</td><td>'+esc(c.canal)+'</td><td>'+esc(c.obj)+'</td></tr>').join("")+'</tbody></table></div><p class="meta" style="margin:0">Se o decisor responder em qualquer toque, a cadência para e a Fase vira Decisor engajado.</p></div>';
     ex+='<div class="band"><h3>Quem faz o quê</h3><ul>'+Object.keys(RT.papeis).map(k=>'<li><b>'+esc(papel(k).replace(/^./,c=>c.toUpperCase()))+':</b> '+esc(RT.papeis[k])+'</li>').join("")+'</ul><p class="meta" style="margin:0">Depois da implantação vêm a gestão do contrato, o faturamento e a distribuição de valores, que entram numa fase futura da Central.</p></div>';
     if(fr==="particulares" && C.soltos.length) ex='<div class="band"><h3>Objetivos da semana sem cliente ligado</h3><ul>'+C.soltos.map(o=>'<li>'+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+(o.st!=="aberto"?' · '+esc(o.st):'')+'</li>').join("")+'</ul><p class="meta" style="margin:0">O objetivo aparece no cartão do cliente quando o texto cita o nome dele como está no quadro.</p></div>'+ex;
-    if(fr==="particulares") ex+='<details class="band rt-jur"><summary>Índice de documentos: tudo o que a empresa tem, com o caminho até o original no Drive</summary>'+lFis.html()+'</details>';
-    $("#rt-extra").innerHTML=ex; lFis.liga($("#rt-extra .rt-jur"));
+    if(fr==="quadro") ex='<div class="rt-board rt-pub" style="--n:6;--w:150px">'+faixas()+'</div>'+ex;
+    $("#rt-extra").innerHTML=ex;
   }
   $("#rt-fr").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; fr=b.dataset.v; $("#rt-fr").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); render(); });
   pes.addEventListener("input",render);
@@ -1842,7 +1820,7 @@ const lRot = (function(){
   const dm = iso => iso.slice(8,10)+"/"+iso.slice(5,7);
   const passo = m => { const a=[1,2,5,10,20,25,50,100,200,500,1000]; return a.find(x=>m/x<=4)||2000; };
   const nomeDe = (src,r) => src==="documentos" ? r.doc : kbTitulo(src,r);
-  const linkDe = (src,r) => src==="documentos" ? "#fiscal" : editLink(src,r.l);
+  const linkDe = (src,r) => src==="documentos" ? "#inicio" : editLink(src,r.l);
 
   // 1) dias na etapa de cada item em andamento, por etapa, com a faixa de atenção e de parado
   function gIdade(src, and, ets){
@@ -2096,8 +2074,7 @@ const lFis=(function(){
     const linhas=DOCS.map(d=>({n:d.doc, gr:d.cat||"Documento", val:d.val, st:d.st||"", cls:stCls(d.st), resp:d.resp, lk:d.lk, onde:d.onde, mot:d.mot}))
       .concat(CON.map(c=>({n:c.n, gr:"Contrato · "+(c.tp||"sem tipo"), val:c.fim, st:c.st||"", cls:"", resp:c.resp, lk:c.link, onde:c.nota, mot:""})))
       .sort((a,b)=>a.gr.localeCompare(b.gr,"pt")||a.n.localeCompare(b.n,"pt"));
-    let h='<div class="pr-sec">Índice de documentos da empresa</div>'
-      +'<p class="meta" style="margin:0">Aqui fica só o índice. O documento original, a edição e as planilhas ficam no Drive da TRX, e cada link abre apenas para quem tem acesso a ele.</p>'
+    let h='<p class="meta" style="margin:0">Aqui fica só o índice. O documento original, a edição e as planilhas ficam no Drive da TRX, e cada link abre apenas para quem tem acesso a ele.</p>'
       +'<div class="links idx-bt">'+bt(FIS.repositorio?'https://drive.google.com/drive/folders/'+FIS.repositorio:"","Repositório de documentos no Drive")+bt(FIS.indice?g(FIS.indice):"","Índice completo de arquivos")
         +bt(FO.id?g(FO.id)+'#gid='+FIS.docs_gid:"","Editar documentos e validades")+bt(FO.id?g(FO.id)+'#gid='+FO.gid:"","Editar contratos")+'</div>'
       +'<div class="filters"><label>Buscar no índice<input type="search" class="idx-q" placeholder="documento, contrato, grupo, responsável…"></label><span class="count idx-c"></span></div>';
@@ -2127,7 +2104,7 @@ const lFis=(function(){
       ac:[i.lk?[i.lk,"Abrir a planilha",1]:null,["#isgh","Ver o dossiê do ISGH"]]}));
   (D.documentos_alerta||[]).filter(x=>x.venc)
     .forEach(x=>it.push({d:x.val?dias(x.val):-1,dt:x.val||"",t:x.doc,of:"Documento",r:x.resp,x:["Documento vencido"+(x.val?" em "+fData(x.val):"")+". O Marcos regulariza; a Carla acompanha."],
-      ac:[["#fiscal","Ver em Fiscal e Jurídico"]]}));
+      ac:[["#inicio","Ver na base de documentos"]]}));
   // parado além da faixa (27/11/2026): só entra quando a faixa da etapa já é tempo real, não a provisória
   [["clinicas",CL,"clínica parada","clínicas paradas"],["licitacoes",LI,"processo parado","processos parados"]].forEach(([src,rows,um,varios])=>{
     const par=rows.filter(r=>nivel(src,r)==="bad" && faixaEt(src,etN(src,r.fase)).real).sort((a,b)=>(idade(b)||0)-(idade(a)||0));
@@ -2135,7 +2112,7 @@ const lFis=(function(){
     it.push({d:1,dt:"",rot:"até "+idade(par[0])+" d na etapa",t:par.length+" "+(par.length===1?um:varios)+" além da faixa da etapa",of:"Fluxo",r:"",
       x:["Passaram do tempo em que 85% dos itens da mesma etapa já saíram. Decida em cada um: empurrar, devolver para a fila ou encerrar."]
         .concat(par.slice(0,8).map(r=>kbTitulo(src,r)+" · "+rotFase(src,r.fase)+" · "+idade(r)+" dias"+(r.resp?" · "+papel(r.resp):""))).concat(par.length>8?["e mais "+(par.length-8)+"."]:[]),
-      ac:[["#"+src,"Ver na aba, ordenando por Na etapa"],["#resultados","Ver o fluxo"]]}); });
+      ac:[["#"+src,"Ver na lista, ordenando por Na etapa"],["#resultados","Ver o fluxo"]]}); });
   // documento vencido sempre no topo (Marcos, 17/11/2026); depois o resto pela data
   it.sort((a,b)=>((a.of==="Documento"?0:1)-(b.of==="Documento"?0:1))||((a.d??0)-(b.d??0)));
   const MAX=8;
@@ -2293,7 +2270,7 @@ const lFis=(function(){
     const mu=(D.mural||[]).length;
     let dia=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"}); dia=dia.charAt(0).toUpperCase()+dia.slice(1);
     const c=(href,n,t,al)=>'<a href="'+href+'"'+(al&&n?' class="al"':'')+'><b>'+n+'</b><span>'+t+'</span></a>';
-    el.innerHTML='<div class="ih-t"><span class="ih-ey">Central TRX · hoje</span><span class="ih-d">'+esc(dia)+'</span></div><div class="ih-n">'
+    el.innerHTML='<div class="ih-t"><span class="ih-ey">Comunicação e documentos · hoje</span><span class="ih-d">'+esc(dia)+'</span></div><div class="ih-n">'
       +c("#inicio",nUrg,"urgentes agora",true)
       +c("#prioridades",pzh,"prazos hoje e amanhã")
       +c("#inicio",nHoje,"na sua fila")
@@ -3370,12 +3347,12 @@ function show(tab){
   if(!TABS.includes(tab)) tab="inicio";
   // menu de 7 abas (27/11/2026): as quatro listas moram na aba Listas; o dossiê do ISGH e o índice de
   // documentos continuam abrindo pelo endereço (#isgh e #fiscal), sem lugar próprio no menu.
-  const LISTAS=["clinicas","licitacoes","quadro","prioridades"], noMenu = LISTAS.includes(tab) ? "listas" : (tab==="fiscal"||tab==="isgh") ? "roteiro" : tab;
+  const LISTAS=["clinicas","licitacoes","quadro","prioridades","resultados"], noMenu = LISTAS.includes(tab) ? "listas" : (tab==="fiscal"||tab==="isgh") ? "roteiro" : tab;
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; });
   document.querySelectorAll("nav.tabs a[data-tab]").forEach(a=>{ if(a.dataset.tab===noMenu) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   $("#listas-seg").hidden = !LISTAS.includes(tab);
   document.querySelectorAll("#listas-seg a").forEach(a=>a.setAttribute("aria-pressed", a.dataset.l===tab));
-  if(!rendered[tab]){ ({inicio:{render(){}},prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,relatorios:lRel,kit:lKit,fiscal:lFis})[tab].render(); rendered[tab]=true; }
+  if(!rendered[tab]){ ({inicio:{render(){ const d=$("#ini-docs"); if(d){ d.innerHTML='<div class="band ini-base"><h3>Base de documentos</h3>'+lFis.html()+'</div>'; lFis.liga(d); } }},prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,relatorios:lRel,kit:lKit,fiscal:lFis})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
