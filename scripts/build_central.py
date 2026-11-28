@@ -634,6 +634,17 @@ def producao_socios(path):
         elif n:
             desp_base[k] = n
     fixa_param = num(par.get("despesa_fixa_mes"))
+    # Aporte dos socios e gasto extra (Marcos, 28/11/2026). O aporte entra no caixa da empresa em
+    # partes iguais e NAO volta para o socio: o que volta e o resultado do balanco do mes, dividido
+    # pelo esforco. Balanco do mes = tudo que entrou (receita liquida e aportes) menos tudo que
+    # saiu (repasses, retencao, despesa fixa e gasto extra). Chaves "aporte_socios AAAA-MM" e
+    # "gasto_extra AAAA-MM" na Producao_Params, uma por mes. Sem as chaves, nada muda.
+    aporte_mes, extra_mes = {}, {}
+    for k, v in par.items():
+        m = re.match(r"^(aporte_socios|gasto_extra)\s+(\d{4}-\d{2})$", k)
+        n = num(v)
+        if m and n:
+            (aporte_mes if m.group(1) == "aporte_socios" else extra_mes)[m.group(2)] = n
 
     # Tetos (Marcos, 20/11/2026): o juridico leva pct_juridico da receita liquida de impostos ate
     # teto_juridico_mes; o desenvolvimento leva pct_desenvolvimento ate teto_desenvolvimento_mes,
@@ -857,7 +868,8 @@ def producao_socios(path):
         liq_tot = rec_tot * fator_per
         rt_ret = rec_tot * (1 - imposto_pct / 100.0) * rt_pct / 100.0
         desp, fixa_mes = despesas_do(per)
-        sobra = liq_tot - fixa_mes - rep_tot - adm_tot - rt_ret
+        aporte, extra = aporte_mes.get(per, 0.0), extra_mes.get(per, 0.0)
+        sobra = liq_tot + aporte - fixa_mes - extra - rep_tot - adm_tot - rt_ret
         n_soc = int(socios_sobra) if socios_sobra and socios_sobra > 0 else len(socios)
         ue_soc = sum(g["ue"] for g in socios)
         soc_saida = [x for x in saida if x["socio"]]
@@ -915,6 +927,7 @@ def producao_socios(path):
             x["cred"] = round(cred_parc, 2) if (cred_dono is x and cred_parc) else 0.0
             x["liq"] = round(x["rep"] + x["adm"] + q + x["cred"], 2)
         acerto = {"rec": round(rec_tot, 2), "liq": round(liq_tot, 2), "fixa": round(fixa_mes, 2),
+                  "aporte": round(aporte, 2), "extra": round(extra, 2),
                   "rep": round(rep_tot, 2), "adm": round(adm_tot, 2),
                   "adm_un": sum(x["admun"] or 0 for x in saida),
                   "valor_adm": valor_adm, "rt": round(rt_ret, 2), "rt_pct": rt_pct,
