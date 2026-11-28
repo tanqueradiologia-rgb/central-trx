@@ -17,13 +17,13 @@
   },
   "_fila": "Fases de fila: o item ainda não foi puxado. Não contam como trabalho em andamento nem ganham selo de dias parado.",
   "limites": {
-    "clinicas": null,
+    "clinicas": 0,
     "licitacoes": null,
     "quadro": null,
     "documentos": null,
     "fazendo_por_pessoa": 3
   },
-  "_limites": "Limite único por frente (teto de itens em andamento). Enquanto estiver null vale o teto provisório: o que estava em andamento na primeira foto da medição. O limite avisa, não trava.",
+  "_limites": "Limite único por frente (teto de itens em andamento). null = teto provisório, o que estava em andamento na primeira foto da medição. 0 = sem teto, por decisão do Marcos. Clínicas não têm teto (Marcos, 27/11/2026). O limite avisa, não trava.",
   "alerta_dias": {
     "padrao": {
       "atencao": 14,

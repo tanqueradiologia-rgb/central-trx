@@ -292,7 +292,10 @@ def metricas(linhas, estado, trans, fotos, cfg, roteiro, agora):
     limites = {}
     for f in FRENTES:
         fixo = (cfg.get("limites") or {}).get(f)
-        limites[f] = {"n": fixo, "prov": False} if fixo else {"n": base.get(f), "prov": True}
+        if fixo == 0 and fixo is not None and fixo is not False:
+            limites[f] = {"n": None, "prov": False}                 # 0 = sem teto, por decisão do Marcos
+        else:
+            limites[f] = {"n": fixo, "prov": False} if fixo else {"n": base.get(f), "prov": True}
     # previsão por simulação: quantas passagens de etapa nas próximas semanas
     pv = cfg.get("previsao") or {}
     prev = {}

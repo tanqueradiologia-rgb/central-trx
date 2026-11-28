@@ -235,6 +235,16 @@
         "resp": "Carla",
         "faz": "Ler o resumo, conferir o cadastro na plataforma hoje e levar ao Marcos a decisão de participar."
       },
+      "Em contato": {
+        "e": 1,
+        "resp": "Carla",
+        "faz": "Contato aberto com o órgão para entender o processo e confirmar o encaixe. Registrar com quem falou e o que falta para o Marcos decidir a participação."
+      },
+      "Contato feito": {
+        "e": 1,
+        "resp": "Carla",
+        "faz": "O órgão já respondeu. Levar ao Marcos o que foi apurado para a decisão de participar; se for participar, a Fase vira Lendo edital."
+      },
       "Lendo edital": {
         "e": 1,
         "resp": "Carla",
