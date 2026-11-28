@@ -684,6 +684,14 @@ def producao_socios(path):
         itens.sort(key=lambda x: -x["v"])
         total = fixa_param if (fixa_param and fixa_param > 0) else sum(d["v"] for d in itens)
         return itens, total
+    # Retencao pelo mes seguinte (Marcos, 28/11/2026): o que o fechamento desconta de despesa fixa
+    # fica no caixa e paga as contas do mes seguinte. Com despesa_retida = mes_seguinte, o valor
+    # descontado e o da tabela de despesas do mes seguinte (ex.: dezembro retem as de janeiro).
+    retem_seguinte = (txt(par.get("despesa_retida")) or "").strip().lower().replace(" ", "_").replace("ê", "e") == "mes_seguinte"
+
+    def mes_seguinte(per):
+        a, m = int(per[:4]), int(per[5:7])
+        return "%04d-%02d" % ((a + 1, 1) if m == 12 else (a, m + 1))
     rateio = (txt(par.get("rateio_sobra")) or "igual").lower()
     socios_sobra = num(par.get("socios_sobra"))
     # Remuneracao administrativa (Marcos, 16/11/2026): o trabalho de gestao e real e se paga em
@@ -867,7 +875,8 @@ def producao_socios(path):
         adm_tot = sum(x["adm"] for x in saida)
         liq_tot = rec_tot * fator_per
         rt_ret = rec_tot * (1 - imposto_pct / 100.0) * rt_pct / 100.0
-        desp, fixa_mes = despesas_do(per)
+        fixa_de = mes_seguinte(per) if (retem_seguinte and re.match(r"^\d{4}-\d{2}$", per)) else per
+        desp, fixa_mes = despesas_do(fixa_de)
         aporte, extra = aporte_mes.get(per, 0.0), extra_mes.get(per, 0.0)
         sobra = liq_tot + aporte - fixa_mes - extra - rep_tot - adm_tot - rt_ret
         n_soc = int(socios_sobra) if socios_sobra and socios_sobra > 0 else len(socios)
@@ -926,7 +935,7 @@ def producao_socios(path):
             x["quota"] = round(q, 2)
             x["cred"] = round(cred_parc, 2) if (cred_dono is x and cred_parc) else 0.0
             x["liq"] = round(x["rep"] + x["adm"] + q + x["cred"], 2)
-        acerto = {"rec": round(rec_tot, 2), "liq": round(liq_tot, 2), "fixa": round(fixa_mes, 2),
+        acerto = {"rec": round(rec_tot, 2), "liq": round(liq_tot, 2), "fixa": round(fixa_mes, 2), "fixa_de": fixa_de if fixa_de != per else None,
                   "aporte": round(aporte, 2), "extra": round(extra, 2),
                   "rep": round(rep_tot, 2), "adm": round(adm_tot, 2),
                   "adm_un": sum(x["admun"] or 0 for x in saida),
