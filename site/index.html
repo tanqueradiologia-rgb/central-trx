@@ -545,7 +545,6 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     <nav class="tabs" aria-label="Frentes">
       <a href="#roteiro" data-tab="roteiro" class="dest" title="O roteiro inteiro, da pescaria do decisor ao cliente em produção">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#inicio" data-tab="inicio" title="Mural, objetivos, urgências, fila de cada um, documentos em vencimento e a base de documentos">Comunicação e documentos<span class="n" id="n-inicio"></span></a>
-      <a href="#clinicas" data-tab="listas" title="Clínicas, licitações, quadro público e prioridades, com busca e filtro, mais os resultados e os números do fluxo">Listas e resultados</a>
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
       <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
       <a href="#kit" data-tab="kit" title="Modelos no padrão gráfico da TRX">Kit<span class="n" id="n-kit"></span></a>
@@ -557,6 +556,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 
 <main class="wrap">
   <div class="seg listas-seg" id="listas-seg" role="group" aria-label="Qual lista" hidden>
+    <a href="#roteiro" class="volta">← Roteiro</a>
     <a href="#clinicas" data-l="clinicas">Clínicas<span class="n" id="n-clinicas"></span></a>
     <a href="#licitacoes" data-l="licitacoes">Licitações<span class="n" id="n-licitacoes"></span></a>
     <a href="#quadro" data-l="quadro">Quadro público<span class="n" id="n-quadro"></span></a>
@@ -609,11 +609,11 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
   </section>
 
   <section class="pane" id="pane-clinicas" hidden>
+    <div class="chipsel" id="sel-clinicas" hidden></div>
     <div class="kpis" id="k-clinicas"></div>
     <div class="band"><h3>Funil por fase</h3><div class="bar" id="bar-clinicas"></div><div class="legend" id="leg-clinicas"></div></div>
     <div id="kbr-clinicas"></div>
     <div class="filters">
-      <div class="seg vis" id="vis-clinicas" role="group" aria-label="Visão"><button type="button" data-v="t" aria-pressed="true">Tabela</button><button type="button" data-v="q" aria-pressed="false">Quadro</button></div>
       <label>Buscar<input type="search" id="q-clinicas" placeholder="clínica, cidade, gancho…"></label>
       <label>UF<select id="uf-clinicas"><option value="">Todas</option></select></label>
       <label>Faixa<select id="fx-clinicas"><option value="">Todas</option><option>ATACAR AGORA</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option><option>SEM MEDICAO</option><option>FORA DO ICP</option></select></label>
@@ -630,11 +630,11 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
   </section>
 
   <section class="pane" id="pane-licitacoes" hidden>
+    <div class="chipsel" id="sel-licitacoes" hidden></div>
     <div class="kpis" id="k-licitacoes"></div>
     <div class="band"><h3>Prazos das abertas</h3><div class="bar" id="bar-licitacoes"></div><div class="legend" id="leg-licitacoes"></div></div>
     <div id="kbr-licitacoes"></div>
     <div class="filters">
-      <div class="seg vis" id="vis-licitacoes" role="group" aria-label="Visão"><button type="button" data-v="t" aria-pressed="true">Tabela</button><button type="button" data-v="q" aria-pressed="false">Quadro</button></div>
       <label>Buscar<input type="search" id="q-licitacoes" placeholder="órgão, cidade, objeto, edital…"></label>
       <label>UF<select id="uf-licitacoes"><option value="">Todas</option></select></label>
       <label>Modalidade<select id="mod-licitacoes"><option value="">Todas</option></select></label>
@@ -656,6 +656,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <div class="seg" id="rt-fr" role="group" aria-label="Frente"><button type="button" data-v="particulares" aria-pressed="true">Clínicas e hospitais particulares</button><button type="button" data-v="licitacoes" aria-pressed="false">Licitações</button><button type="button" data-v="quadro" aria-pressed="false">Quadro público</button></div>
       <div class="filters"><label>Fila de quem<select id="rt-pes"><option value="">Todos</option></select></label></div>
     </div>
+    <div class="rt-atalhos"><span class="meta">Detalhe do Roteiro:</span><a class="btn" href="#clinicas">Buscar em todas as linhas</a><a class="btn" href="#prioridades">Prioridades e agenda</a><a class="btn" href="#resultados">Resultados e fluxo</a></div>
     <p class="meta" id="rt-aviso"></p>
     <div id="rt-res"></div>
     <div class="rt-board" id="rt-board"></div>
@@ -680,6 +681,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     <div class="more" id="m-resultados"></div>
   </section>
   <section class="pane" id="pane-quadro" hidden>
+    <div class="chipsel" id="sel-quadro" hidden></div>
     <div class="kpis" id="k-quadro"></div>
     <div class="band"><h3>Municípios por UF</h3><div class="bar" id="bar-quadro"></div><div class="legend" id="leg-quadro"></div></div>
     <div class="filters">
@@ -763,6 +765,9 @@ nav.tabs a.dest[aria-current="page"]{border-color:transparent;color:var(--grad-i
 mark.isgh,.u-of.isgh,.hj-of.isgh{background:var(--grad);color:#f8fafc;border:0;border-radius:4px;padding:0 6px;font-size:11px;font-weight:700;letter-spacing:.03em;margin-right:6px}
 .listas-seg{align-self:flex-start;margin-top:16px} .listas-seg a{font-size:14px;color:var(--muted);padding:6px 14px;text-decoration:none} .listas-seg a[aria-pressed="true"]{background:var(--grad);color:#f8fafc} .listas-seg .n{font-size:11px;margin-left:5px;opacity:.8}
 .idx-bt{display:flex;flex-wrap:wrap;gap:8px}
+.rt-atalhos{display:flex;flex-wrap:wrap;gap:8px;align-items:center} .rt-atalhos .btn{text-decoration:none;font-size:13px;padding:5px 12px}
+.listas-seg a.volta{color:var(--turq);font-weight:600;border-right:1px solid var(--line)}
+a.kb-ver{font-size:12px;color:var(--turq);font-weight:600}
 .rt-fx-t{grid-column:1/-1;margin-top:10px;padding:6px 12px;border-left:4px solid var(--turq);background:var(--surface);border-radius:8px;font-size:13px;color:var(--muted)} .rt-fx-t b{color:var(--ink);font-family:var(--f-display);font-size:15px}
 .rt-cel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .rt-cel h4{margin:0;font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:6px} .rt-cel h4 b{font-variant-numeric:tabular-nums}
@@ -1119,7 +1124,7 @@ function kbBoard(src, rows, o){
     if(Object.keys(pes).length) h+='<div class="rt-fases pes">'+Object.keys(pes).sort((a,b)=>pes[b]-pes[a]).map(x=>'<span>'+esc(papel(x))+' '+pes[x]+'</span>').join("")+'</div>';
     if(fila.length){
       const prox=fila.slice().sort((a,b)=>((FX_ORD[a.fx]??5)-(FX_ORD[b.fx]??5)) || ((b.sc??-1)-(a.sc??-1))).slice(0,3);
-      h+='<div class="kb-fila"><b>'+fila.length+'</b> na fila para puxar. Próximos pela Dor: '+prox.map(r=>'<a href="'+editLink(src,r.l)+'" target="_blank" rel="noopener">'+esc(kbTitulo(src,r))+'</a>').join(", ")+'.</div>';
+      h+='<div class="kb-fila"><b>'+fila.length+'</b> na fila para puxar. Próximos pela Dor: '+prox.map(r=>'<a href="'+editLink(src,r.l)+'" target="_blank" rel="noopener">'+esc(kbTitulo(src,r))+'</a>').join(", ")+'. <a class="kb-ver" href="#'+src+'" data-src="'+src+'" data-n="'+E.n+'" data-f="1">Ver a fila inteira</a></div>';
     }
     h+=it.slice(0,MAX).map(r=>{ const i=rotInfo(src,r.fase), nv=nivel(src,r);
         const al = src==="clinicas" && r.resp && i && i.F.resp && !mesmoPapel(r.resp,i.F.resp);
@@ -1128,27 +1133,29 @@ function kbBoard(src, rows, o){
           +(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')
           +(al?'<span class="al">Na linha: '+esc(papel(r.resp))+' · roteiro: '+esc(papel(i.F.resp))+'</span>':'')+(o.extra?o.extra(src,r):'')+'</a>'; }).join("")
       || '<div class="ag-vazio">Ninguém nesta etapa.</div>';
-    if(it.length>MAX) h+='<div class="meta">e mais '+(it.length-MAX)+', na tabela</div>';
+    h+='<a class="kb-ver" href="#'+src+'" data-src="'+src+'" data-n="'+E.n+'">'+(it.length>MAX?'e mais '+(it.length-MAX)+'. Ver os '+it.length+' na lista':'Ver esta etapa na lista')+'</a>';
     const tt=((FX.tempos||{})[src]||{})[String(E.n)];
     return h+'<div class="vira">'+(E.objetivo?'<details><summary>O que se faz nesta etapa</summary>'+esc(E.objetivo)+'</details>':'')+'<b>Vira quando:</b> '+esc(E.fecha)+(tt&&tt.n?'<br><b>Tempo medido:</b> metade sai em até '+String(tt.p50).replace(".",",")+' d e 85% em até '+String(tt.p85).replace(".",",")+' d ('+tt.n+' passage'+(tt.n===1?'m':'ns')+')':'')+'<br><b>Faixa de dias:</b> atenção acima de '+f.at+', parado acima de '+f.pa+(f.real?' (tempo real de '+f.n+' passagens)':' (provisória)')+'</div></div>';
   }).join("");
 }
 // botão Tabela ou Quadro de uma aba: o quadro mostra as mesmas linhas da tabela, com os mesmos filtros
 function ligaQuadro(id, src, todas){
-  const seg=$("#vis-"+id), kb=$("#kb-"+id), res=$("#kbr-"+id), tbl=$("#t-"+id).closest(".tbl"), more=$("#m-"+id);
-  if(!seg||!kb) return {rows(){}};
-  let v="t", ult=[]; try{ v=localStorage.getItem("central-vis-"+id)||"t"; }catch(_){}
-  function pinta(){
-    seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===v));
-    tbl.hidden = v==="q"; more.hidden = v==="q"; kb.hidden = v!=="q";
-    if(res) res.innerHTML=resumoFluxo(src, todas);
-    if(v==="q" && RT){ kb.style.setProperty("--n", RT[FRT[src]].etapas.length);
-      const fora=ult.filter(r=>etN(src,r.fase)===0).length + (src==="licitacoes" ? ult.filter(r=>{ const e=etN(src,r.fase); return e>0 && e<3 && !naFila(src,r.fase) && !aberta(r); }).length : 0);
-      kb.innerHTML=kbBoard(src, ult)+(fora?'<p class="meta" style="grid-column:1/-1;margin:0">'+fora+(fora===1?' linha dos filtros fica fora do quadro por já estar em operação ou encerrada; ela continua na tabela.':' linhas dos filtros ficam fora do quadro por já estarem em operação ou encerradas; elas continuam na tabela.')+'</p>':''); }
-  }
-  seg.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; v=b.dataset.v; try{localStorage.setItem("central-vis-"+id,v);}catch(_){} pinta(); });
-  return {rows(r){ ult=r; pinta(); }};
+  // 27/11/2026: o quadro mora só no Roteiro; a lista é a tabela completa, com a faixa-resumo do fluxo no alto
+  const res=$("#kbr-"+id);
+  return {rows(){ if(res) res.innerHTML=resumoFluxo(src, todas); }};
 }
+// Do Roteiro para a lista: abre a tabela já filtrada na etapa (ou na fila da etapa) em que a pessoa clicou
+const LISTA_DE = {};
+function abrirLista(src, n, fila){
+  const L=LISTA_DE[src]; if(!L) return;
+  const R=RT&&RT[FRT[src]], E=R&&R.etapas.find(e=>e.n===n), sel=$("#sel-"+src);
+  L.st.extra={}; if(fila || src==="quadro"){ L.st.sort="sc"; L.st.dir="desc"; } else { L.st.sort="idd"; L.st.dir="desc"; }   // fila pela Dor, etapa pelo mais parado
+  L.setExtra("roteiro", r=>etN(src,r.fase)===n && (fila ? naFila(src,r.fase) : !naFila(src,r.fase)));
+  if(sel){ sel.hidden=false; sel.innerHTML='<span>Mostrando: <b>'+(fila?'fila da etapa ':'etapa ')+n+(E?'. '+esc(E.nome):'')+'</b></span><button type="button">✕ ver tudo</button> <a href="#roteiro">voltar ao Roteiro</a>';
+    sel.querySelector("button").onclick=()=>{ L.setExtra("roteiro",null); sel.hidden=true; }; }
+  location.hash="#"+src;
+}
+document.addEventListener("click",e=>{ const a=e.target.closest&&e.target.closest("a.kb-ver"); if(!a) return; e.preventDefault(); abrirLista(a.dataset.src, +a.dataset.n, a.dataset.f==="1"); });
 /* dica flutuante dos gráficos do fluxo */
 const dica=(function(){ const el=document.createElement("div"); el.className="fx-dica"; el.hidden=true; document.body.appendChild(el);
   document.addEventListener("mousemove",e=>{ const m=e.target.closest&&e.target.closest("[data-dica]"); if(!m){ el.hidden=true; return; }
@@ -1167,7 +1174,7 @@ fillSelect("uf-clinicas", CL.map(r=>r.uf)); fillSelect("resp-clinicas", CL.map(r
 function axis(lbl, v, sinal){ return '<div class="axis"><span class="lbl">'+lbl+'</span>'+(v==null?'<span class="meta">não medido</span>':'<span class="mono">'+Math.round(v)+' / 100</span><span class="meter"><span style="width:'+Math.max(0,Math.min(100,v))+'%"></span></span>')+(sinal?'<span class="meta">'+esc(sinal)+'</span>':'')+'</div>'; }
 function field(t, v){ return v ? '<div><h4>'+t+'</h4><p>'+esc(v)+'</p></div>' : ""; }
 const qCl = ligaQuadro("clinicas","clinicas",CL);
-const lCl = makeList({
+const lCl = LISTA_DE.clinicas = makeList({
   id:"clinicas", rows:CL, sort:"sc", dir:"desc", defDir:{sc:"desc",prox:"asc",idd:"desc"},
   sortKey:(r,k)=> k==="idd" ? (andando("clinicas",r)?idade(r):null) : r[k],
   onRows:rows=>qCl.rows(rows),
@@ -1207,7 +1214,7 @@ const lCl = makeList({
   ]);
   // KPIs e faixa que olham inativas desligam o filtro "só ativas" para mostrar o resultado
   document.querySelectorAll('#k-clinicas .kpi[data-key="s"],#leg-clinicas button').forEach(b=>b.addEventListener("click",()=>{ $("#ativas-clinicas").checked=false; lCl.render(); }));
-  $("#limpar-clinicas").addEventListener("click",()=>{ clearBand(); clearK(); });
+  $("#limpar-clinicas").addEventListener("click",()=>{ clearBand(); clearK(); $("#sel-clinicas").hidden=true; });
 })();
 
 /* ---------- LICITAÇÕES ---------- */
@@ -1217,7 +1224,7 @@ const aberta = r => !FECHADAS.test(r.fase) && !passou(r.prazo);
 $("#n-licitacoes").textContent = LI.filter(aberta).length;
 fillSelect("uf-licitacoes", LI.map(r=>r.uf)); fillSelect("mod-licitacoes", LI.map(r=>r.mod)); fillSelect("fase-licitacoes", LI.map(r=>r.fase), f=>rotFase("licitacoes",f));
 const qLi = ligaQuadro("licitacoes","licitacoes",LI);
-const lLi = makeList({
+const lLi = LISTA_DE.licitacoes = makeList({
   id:"licitacoes", rows:LI, sort:"prazo", dir:"asc", defDir:{val:"desc",prazo:"asc",idd:"desc"},
   onRows:rows=>qLi.rows(rows),
   sortKey:(r,k)=> k==="idd" ? (andando("licitacoes",r)?idade(r):null) : k==="prazo" ? (r.prazo? parseD(r.prazo).getTime() : null) : k==="enc" ? ({alta:0,media:1,baixa:2}[r.enc] ?? 3) : r[k],
@@ -1246,7 +1253,7 @@ const lLi = makeList({
     {key:"e",label:"Encaixe alto abertos",value:ab.filter(r=>r.enc==="alta").length,cls:"ok",test:r=>aberta(r)&&r.enc==="alta"},
     {key:"v",label:"Valor somado aberto",value:fMoeda(soma),cls:"",test:aberta}
   ]);
-  $("#limpar-licitacoes").addEventListener("click",()=>{ clearBand(); clearK(); });
+  $("#limpar-licitacoes").addEventListener("click",()=>{ clearBand(); clearK(); $("#sel-licitacoes").hidden=true; });
 })();
 
 /* ---------- QUADRO ---------- */
@@ -1254,7 +1261,7 @@ const QD = D.quadro;
 $("#n-quadro").textContent = QD.length;
 fillSelect("uf-quadro", QD.map(r=>r.uf)); fillSelect("sit-quadro", QD.map(r=>r.sit), f=>rotFase("quadro",f));
 const COR_SIT = {"Rascunho gerado":"var(--accent)","Sem e-mail (achar contato)":"var(--warn)","Aguardando envio":"var(--c-quente)","Enviado":"var(--ok)","Respondeu":"var(--ok)"};
-const lQd = makeList({
+const lQd = LISTA_DE.quadro = makeList({
   id:"quadro", rows:QD, sort:"sc", dir:"desc", defDir:{sc:"desc"},
   sortKey:(r,k)=> k==="enc" ? ({alta:0,media:1,baixa:2}[r.enc] ?? 3) : r[k],
   hay:r=>[r.c,r.uf,r.org,r.obj,r.sit,r.acao,r.notas,r.cargo].join(" "),
@@ -1284,7 +1291,7 @@ const lQd = makeList({
     {key:"a",label:"Encaixe alto",value:QD.filter(r=>r.enc==="alta").length,cls:"ok",test:r=>r.enc==="alta"},
     {key:"q",label:"Quentes",value:QD.filter(r=>r.fx==="QUENTE"||r.fx==="ATACAR AGORA").length,cls:"",test:r=>r.fx==="QUENTE"||r.fx==="ATACAR AGORA"}
   ]);
-  $("#limpar-quadro").addEventListener("click",()=>{ clearBand(); clearK(); });
+  $("#limpar-quadro").addEventListener("click",()=>{ clearBand(); clearK(); $("#sel-quadro").hidden=true; });
 })();
 
 /* ---------- PRIORIDADES: tudo junto, pela Dor ---------- */
@@ -3347,7 +3354,7 @@ function show(tab){
   if(!TABS.includes(tab)) tab="inicio";
   // menu de 7 abas (27/11/2026): as quatro listas moram na aba Listas; o dossiê do ISGH e o índice de
   // documentos continuam abrindo pelo endereço (#isgh e #fiscal), sem lugar próprio no menu.
-  const LISTAS=["clinicas","licitacoes","quadro","prioridades","resultados"], noMenu = LISTAS.includes(tab) ? "listas" : (tab==="fiscal"||tab==="isgh") ? "roteiro" : tab;
+  const LISTAS=["clinicas","licitacoes","quadro","prioridades","resultados"], noMenu = (LISTAS.includes(tab)||tab==="fiscal"||tab==="isgh") ? "roteiro" : tab;
   TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; });
   document.querySelectorAll("nav.tabs a[data-tab]").forEach(a=>{ if(a.dataset.tab===noMenu) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   $("#listas-seg").hidden = !LISTAS.includes(tab);
