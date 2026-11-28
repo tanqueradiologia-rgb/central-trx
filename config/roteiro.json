@@ -186,7 +186,7 @@
   },
   "licitacoes": {
     "titulo": "Licitações, credenciamentos e pregões",
-    "aviso": "No público o caminho é o edital: não há cadência nem conversa de preço antes da disputa. Mapa proposto pelo Claude a partir do que já funciona; ajuste com o Marcos.",
+    "aviso": "No público o caminho é o edital: não há cadência nem conversa de preço antes da disputa. Ajuste do mapa passa pelo Marcos.",
     "etapas": [
       {
         "n": 1,

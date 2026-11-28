@@ -783,11 +783,10 @@ a.kb-ver{font-size:12px;color:var(--turq);font-weight:600}
 .rt-col .kb-fila{font-size:12px;color:var(--muted);background:var(--surface2);border:1px dashed var(--line);border-radius:6px;padding:6px 8px}
 .rt-col .kb-fila b{color:var(--ink)} .rt-col .kb-fila a{color:var(--ink)}
 .rt-fases.pes span{background:var(--accent-soft)}
-.hoje-band .hj-kb{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;align-items:start}
+.hoje-band .hj-kb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;align-items:start}
 .hoje-band .hj-col{min-width:0;border-right:1px solid var(--line)} .hoje-band .hj-col:last-child{border-right:0}
 .hoje-band .hj-col h3{margin:0;padding:8px 12px;font-family:var(--f-display);font-size:13px;letter-spacing:.03em;text-transform:uppercase;color:var(--turq);display:flex;justify-content:space-between;gap:8px;background:var(--surface2);border-bottom:1px solid var(--line)}
 .hoje-band .hj-col h3 b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink)}
-.hoje-band .hj-col[data-col="claude"] h3,.hoje-band .hj-col[data-col="revisar"] h3{background:var(--accent-soft)}
 .hoje-band .hj-kb button.hj-l1{flex-wrap:wrap;padding:9px 12px;gap:4px 8px}
 .hoje-band .hj-kb button.hj-l1 b{flex:1 1 100%;order:-1;white-space:normal}
 .hoje-band .hj-kb button.hj-l1::after{margin-left:auto}
@@ -1061,7 +1060,7 @@ const PAL = ["var(--accent)","var(--c-quente)","var(--c-frio)","var(--ok)","var(
 /* ---------- FLUXO (27/11/2026): o Kanban da Central ----------
    A medição vem de scripts/fluxo.py: cada linha traz "ee" (entrada na etapa), "et" (entrada na fase)
    e "ef" (de onde veio a data). As regras moram em config/fluxo.json e chegam em D.fluxo.cfg:
-   fases de fila, limite único por frente, faixa de dias por etapa e a regra de revisão do Claude.
+   fases de fila, limite único por frente e faixa de dias por etapa.
    Nada aqui trava a equipe: o limite e a faixa só avisam. */
 const FX = D.fluxo || {}, FCFG = FX.cfg || {};
 (((D.fiscal||{}).documentos)||[]).forEach(d=>{ const st=(d.st||"").toUpperCase(); d.fase = (st==="VENCIDO"||d.mot) ? "Vencido" : st.indexOf("VENCE EM")===0 ? "A vencer" : "Em dia"; });
@@ -1408,27 +1407,23 @@ const lPr = makeList({
     const lim=Date.now()-15*864e5;
     return [...ks].map(k=>Object.assign({k},estado(pessoa,k))).filter(e=>e.st && qMs(e.q)>=lim).sort((a,b)=>qMs(b.q)-qMs(a.q));
   }
-  /* MINHA FILA EM QUADRO (27/11/2026). Quatro colunas: A fazer, Fazendo, Com o Claude e Para revisar.
+  /* MINHA FILA EM QUADRO (27/11/2026; 28/11: só A fazer e Fazendo, sem coluna do Claude).
      A coluna de cada tarefa sai das próprias observações da aba Tarefas_Status, em ordem:
        "fazendo" leva para Fazendo; "a fazer" devolve; "bloqueado: motivo" marca a trava e "liberado" tira;
-       "@claude pedido" leva para Com o Claude; a resposta com Autor Claude leva para Para revisar.
      Feito ou Ciente continua arquivando. Nada disso exige versão nova do app de Edição. */
   const marca = o => { const t=sa(o); return t.indexOf("fazendo")===0?"fazendo": t.indexOf("bloqueado")===0?"bloqueado": t.indexOf("liberado")===0?"liberado": t==="a fazer"?"afazer":""; };
   function onde(e){
-    let col="afazer", bloq="", claude=false, rev=false;
+    let col="afazer", bloq="";
     (e.obs||[]).forEach(o=>{ const m=marca(o.o);
-      if(sa(o.a)==="claude"){ if(claude){ claude=false; rev=true; } return; }
       if(m==="fazendo") col="fazendo"; else if(m==="afazer") col="afazer";
       else if(m==="bloqueado") bloq=String(o.o).replace(/^\s*bloqueado\s*:?\s*/i,"")||"sem motivo informado";
-      else if(m==="liberado") bloq="";
-      else if(/^@claude\b/i.test(String(o.o).trim())){ claude=true; rev=false; } });
-    return {col: claude?"claude":rev?"revisar":col, bloq};
+      else if(m==="liberado") bloq=""; });
+    return {col, bloq};
   }
   const ativo = (pessoa,k) => { const w=onde(estado(pessoa,k)); return w.col!=="afazer" || !!w.bloq; };
   const notas = obs => (obs||[]).filter(o=>{ const m=marca(o.o); return !m || m==="bloqueado"; });
-  const obsHtml = obs => { const v=notas(obs); return v.length?'<ul class="hj-obs">'+v.slice(-5).map(o=>'<li'+(sa(o.a)==="claude"?' class="cl"':'')+'><span class="meta">'+esc(o.q)+' · '+esc(o.a)+':</span> '+esc(o.o)+'</li>').join("")+'</ul>':''; };
-  const COLS=[["afazer","A fazer","Tem prazo nos próximos 7 dias e ninguém começou."],["fazendo","Fazendo","Alguém começou. O combinado é terminar antes de puxar outra."],
-              ["claude","Com o Claude","Pedido feito com @claude. Ele lê às 10h37, 13h37, 16h37, 19h37 e 22h37."],["revisar","Para revisar","O Claude devolveu. Uma pessoa confere e marca Feito."]];
+  const obsHtml = obs => { const v=notas(obs); return v.length?'<ul class="hj-obs">'+v.slice(-5).map(o=>'<li><span class="meta">'+esc(o.q)+' · '+esc(o.a)+':</span> '+esc(o.o)+'</li>').join("")+'</ul>':''; };
+  const COLS=[["afazer","A fazer","Tem prazo nos próximos 7 dias e ninguém começou."],["fazendo","Fazendo","Alguém começou. O combinado é terminar antes de puxar outra."]];
   const LIM=((FCFG.limites||{}).fazendo_por_pessoa)||3;
   function linha(it,n){
     const pz = it.dt ? fDias(dias(it.dt))+' <span class="d-mut">'+fData(it.dt)+'</span>' : '<span class="d-mut">sem data</span>';
@@ -1446,9 +1441,9 @@ const lPr = makeList({
       + (it.x?'<div class="hj-x">'+esc(it.x)+'</div>':'')
       + (ac?'<div class="hj-ac">'+ac+'</div>':'')
       + obsHtml(it.e.obs)
-      + '<form class="hj-mk" autocomplete="off"><input class="hj-o" maxlength="560" placeholder="Nota para a equipe, motivo da trava ou pedido ao Claude">'
+      + '<form class="hj-mk" autocomplete="off"><input class="hj-o" maxlength="560" placeholder="Nota para a equipe ou motivo da trava">'
       + '<span class="hj-bts">'+(c==="afazer"?b("fazendo","Começar"):c==="fazendo"?b("afazer","Devolver para A fazer",1):"")+b("feito","Feito")+b("ciente","Ciente",1)
-      + b("nota","Salvar nota",1)+(it.w.bloq?b("liberado","Destravar",1):b("bloqueado","Travou",1))+(c==="claude"?"":b("claude","Pedir ao Claude",1))+'</span><span class="hj-st meta"></span></form></div></li>';
+      + b("nota","Salvar nota",1)+(it.w.bloq?b("liberado","Destravar",1):b("bloqueado","Travou",1))+'</span><span class="hj-st meta"></span></form></div></li>';
   }
   const CK="central-mural-cred";   // mesma credencial do Mural: entrou num, vale no outro
   const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
@@ -1460,8 +1455,8 @@ const lPr = makeList({
     lista=fora.concat(af); nFaz=lista.filter(it=>it.w.col==="fazendo").length;
     const arq=arquivadas(atual), c=cred();
     const opts=pessoas.map(p=>'<option'+(p===atual?' selected':'')+'>'+esc(p)+'</option>').join("");
-    // a equipe inteira: o que está com o Claude, o que espera revisão e o que travou
-    let eqC=0, eqR=0, eqB=0; (D.tarefas_status||[]).forEach(e=>{ if(e.st) return; const w=onde(estado(e.p,e.k)); if(w.col==="claude") eqC++; if(w.col==="revisar") eqR++; if(w.bloq) eqB++; });
+    // a equipe inteira: o que travou
+    let eqB=0; (D.tarefas_status||[]).forEach(e=>{ if(e.st) return; if(onde(estado(e.p,e.k)).bloq) eqB++; });
     el.innerHTML='<div class="hj-top"><h2>Minha fila</h2><select id="hj-quem">'+opts+'</select>'
       +'<span class="hj-n">'+(lista.length?lista.length+(lista.length===1?' item':' itens'):'nada em aberto')+'</span>'
       +'<span class="hj-cred meta">'+(c?'marcando como <b>'+esc(c.apelido)+'</b> · <a href="#" id="hj-troca">trocar</a>'
@@ -1473,11 +1468,10 @@ const lPr = makeList({
           return '<div class="hj-col" data-col="'+k+'"><h3 title="'+esc(dicaTxt)+'"><span>'+nome+'</span>'+lim+'</h3>'
             +(cd.length?'<ul class="hj-lista">'+cd.join("")+'</ul>':(sd.length?'':'<div class="hj-vazio">'+(k==="afazer"?'Nada com prazo nos próximos 7 dias para '+esc(atual)+'.':'Nada aqui.')+'</div>'))
             +(sd.length?'<details class="hj-sd"><summary>Sem data · '+sd.length+'</summary><ul class="hj-lista">'+sd.join("")+'</ul></details>':'')+'</div>'; }).join("")+'</div>'
-      +((eqC||eqR||eqB)?'<p class="hj-eq meta">Na equipe inteira: <b>'+eqC+'</b> com o Claude · <b>'+eqR+'</b> para revisar · <b>'+eqB+'</b> travada'+(eqB===1?'':'s')+'.</p>':'')
+      +(eqB?'<p class="hj-eq meta">Na equipe inteira: <b>'+eqB+'</b> travada'+(eqB===1?'':'s')+'.</p>':'')
       +(arq.length?'<details class="hj-arq"><summary>Arquivadas nos últimos 15 dias · '+arq.length+'</summary><ul>'+arq.map(e=>
           '<li><span class="tag '+(e.st==="feito"?'ok':'ci')+'">'+(e.st==="feito"?'✓ Feito':'Ciente')+'</span> <b>'+esc(e.t||"tarefa")+'</b>'
-          +(e.of?' <span class="hj-of">'+esc(e.of)+'</span>':'')+' <span class="meta">· '+esc(e.a)+' em '+esc(e.q)+'</span>'+obsHtml(e.obs)+'</li>').join("")+'</ul></details>':'')
-      +((FCFG.revisao||[]).length?'<details class="hj-arq hj-regra"><summary>Regra de revisão do que passa pelo Claude</summary><ul>'+FCFG.revisao.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></details>':'');
+          +(e.of?' <span class="hj-of">'+esc(e.of)+'</span>':'')+' <span class="meta">· '+esc(e.a)+' em '+esc(e.q)+'</span>'+obsHtml(e.obs)+'</li>').join("")+'</ul></details>':'');
     el.hidden=false;
     $("#hj-quem").addEventListener("change",e=>{ atual=e.target.value; try{localStorage.setItem("central-quem",atual);}catch(_){} render(); });
     const tr=$("#hj-troca"); if(tr) tr.addEventListener("click",ev=>{ ev.preventDefault(); try{localStorage.removeItem(CK);}catch(_){} render(); window.dispatchEvent(new Event("central-cred")); });
@@ -1504,7 +1498,6 @@ const lPr = makeList({
     else if(acao==="afazer") o="a fazer";
     else if(acao==="bloqueado"){ if(!txt){ stEl.textContent="Escreva no campo o motivo da trava e clique em Travou."; return; } o="bloqueado: "+txt; }
     else if(acao==="liberado") o="liberado"+(txt?": "+txt:"");
-    else if(acao==="claude"){ if(!txt){ stEl.textContent="Escreva no campo o que o Claude deve fazer e clique em Pedir ao Claude."; return; } o=/^@claude\b/i.test(txt)?txt:"@claude "+txt; }
     else if(!txt){ stEl.textContent="Escreva a nota no campo."; return; }
     let c=cred();
     if(!c){ const ap=(($("#hj-ap")||{}).value||"").trim().toLowerCase(), pin=(($("#hj-pin")||{}).value||"").trim();
@@ -2126,51 +2119,16 @@ const lFis=(function(){
   // documento vencido sempre no topo (Marcos, 17/11/2026); depois o resto pela data
   it.sort((a,b)=>((a.of==="Documento"?0:1)-(b.of==="Documento"?0:1))||((a.d??0)-(b.d??0)));
   const MAX=8;
-  /* Pedir ao Claude (17/11/2026): o pedido vai para a aba Tarefas_Status como observação "@claude ..."
-     (Pessoa "Urgente", Chave por item); a tarefa "Pedidos @claude da Central" responde na mesma chave,
-     e a resposta aparece aqui embaixo do item. */
-  const ukey=x=>("urg|"+x.of+"|"+x.t).slice(0,80);
-  const TS=(D.tarefas_status||[]).filter(e=>e.p==="Urgente");
-  let LOCU=[]; try{ LOCU=JSON.parse(localStorage.getItem("central-urg-ped")||"[]").filter(e=>Date.now()-e.ts<3*864e5); }catch(_){}
-  function conversa(x){
-    const k=ukey(x), e=TS.find(e=>e.k===k), obs=(e?e.obs:[]).slice();
-    LOCU.filter(l=>l.k===k && !obs.some(o=>o.o===l.o)).forEach(l=>obs.push({q:l.q,a:l.a,o:l.o}));
-    if(!obs.length) return '';
-    return '<ul class="u-cv">'+obs.map(o=>'<li class="'+(/^claude/i.test(o.a||"")?'cl':'')+'"><span class="meta">'+esc(o.q)+' · '+esc(o.a)+'</span> '+esc(o.o)+'</li>').join("")+'</ul>';
-  }
-  const pedir=x=>'<form class="u-pd" data-k="'+esc(ukey(x))+'" autocomplete="off"><input maxlength="560" placeholder="Pedir ao Claude: o que você quer que eu resolva aqui?"><button type="submit">Pedir ao Claude</button><span class="meta u-st"></span></form>';
   const li=x=>'<li><details><summary><span class="u-d '+(x.rot?'venc':x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.rot?esc(x.rot):(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):''))+'</span>'
     +'<b>'+(x.of==="ISGH"?'':tagIsgh(x.t))+esc(x.t)+'</b><span class="u-of'+(x.of==="ISGH"?' isgh':'')+'">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</summary>'
     +'<div class="u-x">'+x.x.map(t=>'<p>'+esc(t)+'</p>').join("")+(x.r?'<p class="meta">Com: '+esc(x.r)+'</p>':'')
     +'<div class="u-ac">'+x.ac.filter(Boolean).map(a=>'<a href="'+esc(a[0])+'"'+(a[2]?' target="_blank" rel="noopener"':'')+'>'+esc(a[1])+'</a>').join("")+'</div>'
-    +conversa(x)+pedir(x)+'</div></details></li>';
+    +'</div></details></li>';
   el.innerHTML='<h3>Urgente agora · '+it.length+'</h3>'
     +(it.length?'<ul class="u-l">'+it.map(li).join("")+'</ul>'+(it.length>MAX?'<button type="button" class="mu-tudo" id="u-tudo">Ver os '+it.length+'</button>':'')
       :'<p class="meta">Nada vencendo hoje ou amanhã.</p>');
   el.hidden=false;
   const b=$("#u-tudo"); if(b) b.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); b.textContent=ab?"Mostrar só os "+MAX+" primeiros":"Ver os "+it.length; });
-  const CK="central-mural-cred";
-  el.querySelectorAll(".u-pd").forEach(f=>f.addEventListener("submit",async ev=>{
-    ev.preventDefault();
-    const st=f.querySelector(".u-st"), bt=f.querySelector("button"), inp=f.querySelector("input");
-    const txt=inp.value.trim(); if(!txt){ st.textContent="Escreva o pedido."; return; }
-    let c=null; try{ c=JSON.parse(localStorage.getItem(CK)||"null"); }catch(_){}
-    if(!c){ st.textContent="Entre primeiro com apelido e PIN no Mural ou na Minha fila."; return; }
-    const x=it.find(i=>ukey(i)===f.dataset.k); if(!x) return;
-    bt.disabled=true; st.textContent="Enviando…";
-    try{
-      const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:"tarefaMarcar",cred:c,
-        t:{pessoa:"Urgente",chave:f.dataset.k,titulo:x.t,origem:x.of,status:"",obs:"@claude "+txt}})});
-      const j=await r.json(); if(!j.ok) throw new Error(j.erro||"Não deu para enviar.");
-      LOCU.push({k:f.dataset.k,q:j.quando,a:j.autor,o:"@claude "+txt,ts:Date.now()});
-      try{ localStorage.setItem("central-urg-ped",JSON.stringify(LOCU)); }catch(_){}
-      inp.value=""; st.textContent="Pedido enviado. O Claude responde aqui na próxima rodada (10h37, 13h37, 16h37, 19h37 ou 22h37).";
-      const cv=document.createElement("ul"); cv.className="u-cv"; cv.innerHTML='<li><span class="meta">'+esc(j.quando)+' · '+esc(j.autor)+'</span> @claude '+esc(txt)+'</li>';
-      f.parentNode.insertBefore(cv,f);
-    }catch(err){ const m=String((err&&err.message)||err);
-      st.textContent=m.indexOf("LOGIN")>=0?"Apelido ou PIN não conferem.":"Não deu: "+m;
-    }finally{ bt.disabled=false; }
-  }));
 })();
 
 /* ---------- EQUIPE E CONTATOS (17/11/2026): aba Equipe da Pipeline TRX, sem PIN ----------

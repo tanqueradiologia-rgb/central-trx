@@ -53,11 +53,5 @@
     "horizonte_semanas": 4,
     "simulacoes": 10000
   },
-  "_coordenacao": "A coordenação por cliente é a sétima coluna do roteiro das particulares (Marcos, 27/11/2026): junta clínica e processo Em operação e contrato Ativo; aluguel fica de fora.",
-  "revisao": [
-    "Todo cartão que passou pelo Claude volta para a coluna Para revisar com três linhas: Feito, Falta e Precisa de você.",
-    "Uma pessoa confere e marca Feito. O Claude não fecha o próprio cartão.",
-    "O que envia mensagem para fora da empresa, mexe em valor, contrato ou dado de paciente, ou apaga alguma coisa só é executado depois do Feito de uma pessoa: até lá o Claude entrega o rascunho.",
-    "Tudo o que o Claude faz fica registrado na aba Tarefas_Status, com data e hora."
-  ]
+  "_coordenacao": "A coordenação por cliente é a sétima coluna do roteiro das particulares (Marcos, 27/11/2026): junta clínica e processo Em operação e contrato Ativo; aluguel fica de fora."
 }

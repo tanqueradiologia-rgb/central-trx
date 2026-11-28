@@ -47,7 +47,7 @@ A Central mede o fluxo das frentes e mostra o trabalho em quadro. Faturamento, R
 
 | Onde | O que mostra |
 |---|---|
-| Início, Minha fila | quadro com A fazer, Fazendo, Com o Claude e Para revisar; trava com motivo; no máximo 3 em Fazendo por pessoa (avisa, não trava) |
+| Início, Minha fila | quadro com A fazer e Fazendo; trava com motivo; no máximo 3 em Fazendo por pessoa (avisa, não trava) |
 | Listas de Clínicas e Licitações | coluna "Na etapa" com os dias na etapa; faixa-resumo com em andamento, fila, parados e carga por pessoa |
 | Roteiro (primeira aba, em destaque) | o quadro das particulares com as seis etapas e a sétima coluna, Coordenação por cliente, que fecha o processo com os clientes em produção; os Objetivos da semana aparecem no cartão do cliente que citam; debaixo das sete colunas, duas faixas alinhadas às mesmas colunas: Setor público (licitações e quadro) e Jurídico e documentos (documentos de habilitação, prazos de edital e contratos); a aba Fiscal inteira abre recolhida no fim da página; quadros de Licitações e Quadro público ao lado |
 | Resultados | bloco de fluxo: em andamento contra o teto, dias na etapa de cada item, passagens por semana, tempo por etapa e previsão por simulação |
@@ -64,9 +64,9 @@ A Central mede o fluxo das frentes e mostra o trabalho em quadro. Faturamento, R
 
 Não edite essas abas à mão. Apagar a `Fluxo_Estado` faz a medição recomeçar, semeada pelo Historico.
 
-**Regras.** `config/fluxo.json` guarda as fases de fila, o limite único por frente, a faixa de dias por etapa, e a regra de revisão do Claude. Enquanto o limite de uma frente está `null`, vale o teto provisório: o que estava em andamento na primeira foto. A faixa de dias é provisória até a etapa ter 8 passagens medidas; daí em diante é o percentil 70 (atenção) e o percentil 85 (parado) do tempo real. A previsão por simulação aparece com 8 semanas de passagens. Mudança de limite ou de faixa passa pelo Marcos.
+**Regras.** `config/fluxo.json` guarda as fases de fila, o limite único por frente, e a faixa de dias por etapa. Enquanto o limite de uma frente está `null`, vale o teto provisório: o que estava em andamento na primeira foto. A faixa de dias é provisória até a etapa ter 8 passagens medidas; daí em diante é o percentil 70 (atenção) e o percentil 85 (parado) do tempo real. A previsão por simulação aparece com 8 semanas de passagens. Mudança de limite ou de faixa passa pelo Marcos.
 
-**Minha fila sem versão nova do app.** A coluna de cada tarefa sai das observações da aba Tarefas_Status: `fazendo`, `a fazer`, `bloqueado: motivo`, `liberado` e `@claude pedido`. A resposta com Autor Claude leva o cartão para Para revisar. O app de Edição v18 já grava tudo isso.
+**Minha fila sem versão nova do app.** A coluna de cada tarefa sai das observações da aba Tarefas_Status: `fazendo`, `a fazer`, `bloqueado: motivo` e `liberado`. O app de Edição v18 já grava tudo isso.
 
 ## Segredos necessários (Settings → Secrets and variables → Actions)
 - `GOOGLE_SA_JSON`: conteúdo do arquivo JSON da chave da conta de serviço. As planilhas precisam estar compartilhadas com o e-mail dessa conta, como leitor.
