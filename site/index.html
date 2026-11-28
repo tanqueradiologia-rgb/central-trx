@@ -544,7 +544,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     </div>
     <nav class="tabs" aria-label="Frentes">
       <a href="#roteiro" data-tab="roteiro" class="dest" title="O roteiro inteiro, da pescaria do decisor ao cliente em produção">Roteiro<span class="n" id="n-roteiro"></span></a>
-      <a href="#inicio" data-tab="inicio" title="Urgências, fila de cada um, equipe, documentos em vencimento e o índice de documentos">Comunicação e documentos<span class="n" id="n-inicio"></span></a>
+      <a href="#inicio" data-tab="inicio" title="Falar com a equipe por e-mail ou WhatsApp, a fila de cada um, documentos em vencimento e o índice de documentos">Comunicação e documentos<span class="n" id="n-inicio"></span></a>
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
       <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
       <a href="#kit" data-tab="kit" title="Modelos no padrão gráfico da TRX">Kit<span class="n" id="n-kit"></span></a>
@@ -565,14 +565,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
   </div>
   <section class="pane" id="pane-inicio" hidden>
     <div class="ini-hero" id="ini-hero"></div>
-    <div class="ini-grid">
-      <div class="ini-col">
-        <div id="urg" class="avisos urg" hidden></div>
-      </div>
-      <div class="ini-col">
-        <div id="equipe" class="avisos eqp" hidden></div>
-      </div>
-    </div>
+    <div id="equipe" class="avisos eqp" hidden></div>
     <div id="hoje" class="hoje-band" hidden></div>
     <div class="avisos docs-al" id="docs-al" hidden></div>
     <div id="ini-docs"></div>
@@ -901,6 +894,9 @@ header.top a:focus-visible,header.top button:focus-visible{outline-color:#fff}
 .gate h2{color:var(--tit)}
 .gate button{background:var(--grad)}
 footer{border-top:3px solid var(--ciano);padding-top:12px}
+/* Comunicação e documentos (28/11/2026): equipe em largura cheia, contatos em colunas */
+.eqp .eq-l{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));column-gap:28px}
+.eqp .eq-mail{max-width:760px}
 </style>
 <div class="gate" id="gate" hidden>
   <form id="gateForm" autocomplete="off">
@@ -2133,42 +2129,8 @@ const lFis=(function(){
   return {render, html:()=>monta().h, liga};
 })();
 
-/* ---------- URGENTE AGORA (17/11/2026): o que vence hoje ou amanhã ou já venceu, de todos os assuntos ---------- */
-(function(){
-  const el=$("#urg"); if(!el) return;
-  const it=[];
-  // Cada item abre aqui mesmo, com o texto, o dono e o que fazer; ir para a aba de origem é um botão, não o clique da linha.
-  PR.filter(p=>p.prazo&&p.dt&&!passou(p.dt)&&dias(p.dt)!==null&&dias(p.dt)<=1)
-    .forEach(p=>it.push({d:dias(p.dt),dt:p.dt,t:p.n,of:p.tp,r:p.resp,x:[p.sub,p.fase?"Fase: "+p.fase:"",p.acao?"Próxima ação: "+p.acao:""].filter(Boolean),
-      ac:[p.link?[p.link,"Abrir a linha na planilha",1]:null,["#licitacoes","Ver em Licitações"]]}));
-  (D.destaque_isgh||[]).filter(i=>i.dt&&dias(i.dt)!==null&&dias(i.dt)<=1)
-    .forEach(i=>it.push({d:dias(i.dt),dt:i.dt,t:i.t,of:"ISGH",r:i.resp,x:[i.x].filter(Boolean),
-      ac:[i.lk?[i.lk,"Abrir a planilha",1]:null,["#isgh","Ver o dossiê do ISGH"]]}));
-  (D.documentos_alerta||[]).filter(x=>x.venc)
-    .forEach(x=>it.push({d:x.val?dias(x.val):-1,dt:x.val||"",t:x.doc,of:"Documento",r:x.resp,x:["Documento vencido"+(x.val?" em "+fData(x.val):"")+". O Marcos regulariza; a Carla acompanha."],
-      ac:[["#inicio","Ver na base de documentos"]]}));
-  // parado além da faixa (27/11/2026): só entra quando a faixa da etapa já é tempo real, não a provisória
-  [["clinicas",CL,"clínica parada","clínicas paradas"],["licitacoes",LI,"processo parado","processos parados"]].forEach(([src,rows,um,varios])=>{
-    const par=rows.filter(r=>nivel(src,r)==="bad" && faixaEt(src,etN(src,r.fase)).real).sort((a,b)=>(idade(b)||0)-(idade(a)||0));
-    if(!par.length) return;
-    it.push({d:1,dt:"",rot:"até "+idade(par[0])+" d na etapa",t:par.length+" "+(par.length===1?um:varios)+" além da faixa da etapa",of:"Fluxo",r:"",
-      x:["Passaram do tempo em que 85% dos itens da mesma etapa já saíram. Decida em cada um: empurrar, devolver para a fila ou encerrar."]
-        .concat(par.slice(0,8).map(r=>kbTitulo(src,r)+" · "+rotFase(src,r.fase)+" · "+idade(r)+" dias"+(r.resp?" · "+papel(r.resp):""))).concat(par.length>8?["e mais "+(par.length-8)+"."]:[]),
-      ac:[["#"+src,"Ver na lista, ordenando por Na etapa"],["#resultados","Ver o fluxo"]]}); });
-  // documento vencido sempre no topo (Marcos, 17/11/2026); depois o resto pela data
-  it.sort((a,b)=>((a.of==="Documento"?0:1)-(b.of==="Documento"?0:1))||((a.d??0)-(b.d??0)));
-  const MAX=8;
-  const li=x=>'<li><details><summary><span class="u-d '+(x.rot?'venc':x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.rot?esc(x.rot):(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):''))+'</span>'
-    +'<b>'+(x.of==="ISGH"?'':tagIsgh(x.t))+esc(x.t)+'</b><span class="u-of'+(x.of==="ISGH"?' isgh':'')+'">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</summary>'
-    +'<div class="u-x">'+x.x.map(t=>'<p>'+esc(t)+'</p>').join("")+(x.r?'<p class="meta">Com: '+esc(x.r)+'</p>':'')
-    +'<div class="u-ac">'+x.ac.filter(Boolean).map(a=>'<a href="'+esc(a[0])+'"'+(a[2]?' target="_blank" rel="noopener"':'')+'>'+esc(a[1])+'</a>').join("")+'</div>'
-    +'</div></details></li>';
-  el.innerHTML='<h3>Urgente agora · '+it.length+'</h3>'
-    +(it.length?'<ul class="u-l">'+it.map(li).join("")+'</ul>'+(it.length>MAX?'<button type="button" class="mu-tudo" id="u-tudo">Ver os '+it.length+'</button>':'')
-      :'<p class="meta">Nada vencendo hoje ou amanhã.</p>');
-  el.hidden=false;
-  const b=$("#u-tudo"); if(b) b.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); b.textContent=ab?"Mostrar só os "+MAX+" primeiros":"Ver os "+it.length; });
-})();
+/* Urgente agora: aposentado em 28/11/2026. Dava peso de urgência a itens que valem tanto quanto os outros do Roteiro;
+   prazo aparece no cartão e na Minha fila, documento vencido aparece no bloco de documentos. */
 
 /* ---------- EQUIPE E CONTATOS (17/11/2026): aba Equipe da Pipeline TRX, sem PIN ----------
    E-mail pela própria Central: marca as pessoas, escreve e envia. Sai da conta da TRX pelo app
@@ -2223,12 +2185,10 @@ const lFis=(function(){
   const el=$("#ini-hero"); if(!el) return;
   function pinta(){
     const nHoje=document.querySelectorAll("#hoje .hj-lista>li").length;
-    const nUrg=document.querySelectorAll("#urg li").length;
     const pzh=PR.filter(p=>p.prazo&&p.dt&&!passou(p.dt)&&dias(p.dt)!==null&&dias(p.dt)<=1).length;
     let dia=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"}); dia=dia.charAt(0).toUpperCase()+dia.slice(1);
     const c=(href,n,t,al)=>'<a href="'+href+'"'+(al&&n?' class="al"':'')+'><b>'+n+'</b><span>'+t+'</span></a>';
     el.innerHTML='<div class="ih-t"><span class="ih-ey">Comunicação e documentos · hoje</span><span class="ih-d">'+esc(dia)+'</span></div><div class="ih-n">'
-      +c("#inicio",nUrg,"urgentes agora",true)
       +c("#prioridades",pzh,"prazos hoje e amanhã")
       +c("#inicio",nHoje,"na sua fila")+'</div>';
     $("#n-inicio").textContent=nHoje||"";
