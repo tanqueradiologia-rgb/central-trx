@@ -1,6 +1,7 @@
 pipeline.json
 /fluxo.json
 /historico.json
+documentos_links.json
 Pipeline_Licitacoes.xlsx
 mods.env
 __pycache__/

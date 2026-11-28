@@ -12,7 +12,7 @@ Pipeline_Licitacoes.xlsx: arquivo baixado do Drive (base64 já decodificado).
 A página só mostra dados. Telefone, WhatsApp e e-mail não entram: o contato
 continua na planilha, que é a fonte da verdade.
 """
-import argparse, datetime as dt, html, json, re, sys, unicodedata
+import argparse, datetime as dt, html, json, os, re, sys, unicodedata
 
 TZ = dt.timezone(dt.timedelta(hours=-3))
 PIPELINE_ID = "1rdhgZ_ps8Ih-wwj1dF4WuQhVsz_CnCLJI8JJwTyK9u0"
@@ -307,6 +307,9 @@ def documentos_alerta(path):
     return out
 
 
+URL_DRIVE = re.compile(r"https://(?:drive|docs)\.google\.com/[^\s\")]+")
+REPOSITORIO_ID = "1VelHKM8l5-ftaFMOD0uKRLHD7L_2eIJh"          # pasta 📂 REPOSITORIO TRX
+INDICE_ID = "1-z4WskI6ng7sblnvfR6udFIb961ifV6b0BJwwDa4X-s"    # planilha 00_INDICE_REPOSITORIO_TRX
 CONTRATOS_GID = 830923920      # aba Contratos da planilha Documentos TRX (12/11/2026)
 
 
@@ -321,15 +324,27 @@ def documentos_todos(path):
     if not rows:
         return []
     H = [str(h).strip() for h in rows[0]]
+    links = {}
+    try:
+        lv = json.load(open(os.path.join(os.path.dirname(os.path.abspath(path)), "documentos_links.json"), encoding="utf-8"))
+        for i, r in enumerate(lv.get("values", []), start=1):
+            links[i] = str(r[0]) if r else ""
+    except Exception:
+        pass
     out = []
     for n, r in enumerate(rows[1:], start=2):
         d = dict(zip(H, r + [""] * (len(H) - len(r))))
         doc = txt(d.get("Documento"), 140)
         if not doc:
             continue
-        out.append({"l": n, "doc": doc, "cat": txt(d.get("Categoria"), 60), "val": data_iso(d.get("Validade")),
+        # original no Drive: primeiro a cópia do repositório (coluna S), depois o endereço citado na coluna K
+        onde = str(d.get("Arquivo no Drive") or "")
+        m = URL_DRIVE.search(links.get(n, "")) or URL_DRIVE.search(onde)
+        out.append({"l": n, "doc": doc, "cat": txt(d.get("Categoria"), 60) or txt(d.get("Nivel"), 60),
+                    "val": data_iso(d.get("Validade")),
                     "st": txt(d.get("Status"), 40), "resp": txt(d.get("Responsavel")),
-                    "sit": txt(d.get("Situacao"), 80), "mot": txt(d.get("Desatualizado (motivo)"), 160)})
+                    "sit": txt(d.get("Situacao"), 80), "mot": txt(d.get("Desatualizado (motivo)"), 160),
+                    "lk": m.group(0) if m else "", "onde": txt(URL_DRIVE.sub("", onde).replace("()", ""), 110)})
     out.sort(key=lambda x: (x["val"] or "9999", x["doc"]))
     return out
 
@@ -1070,7 +1085,8 @@ def main():
         "objetivos": objetivos(a.objetivos) if a.objetivos else [],
         "fiscal": {"contratos": contratos(a.contratos) if a.contratos else [],
                     "documentos": documentos_todos(a.documentos) if a.documentos else [],
-                    "contratos_fonte": {"id": DOCS_SHEET, "gid": CONTRATOS_GID}},
+                    "contratos_fonte": {"id": DOCS_SHEET, "gid": CONTRATOS_GID},
+                    "repositorio": REPOSITORIO_ID, "indice": INDICE_ID, "docs_gid": DOCS_GID},
         "documentos_fonte": {"id": DOCS_SHEET, "gid": DOCS_GID},
     }
     dados["fluxo"] = fluxo(a.fluxo, dados, a.tarefas)

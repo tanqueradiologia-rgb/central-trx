@@ -34,6 +34,9 @@ Três abas da Pipeline Licitações alimentam a aba, e a régua mora na planilha
 
 O score é a média ponderada de quatro eixos (esforço, prazo, margem e cobertura de escala). **Eixo sem dado no período sai da conta e o peso dele é redistribuído entre os eixos medidos**, então a aba já serve antes de a escala estar preenchida. Mudar um coeficiente ou um peso na `Producao_Params` muda a página na rodada seguinte; mudança de régua passa pelo Marcos.
 
+## Menu de sete abas (27/11/2026)
+Roteiro (primeira, em destaque), Início, Listas, Resultados, Produção, Relatórios e Kit. A aba Listas reúne Clínicas, Licitações, Quadro público e Prioridades, com um seletor no alto. O ISGH não tem aba: entra na esteira como qualquer cliente, com a marca ISGH no texto, e o dossiê abre pelo endereço `#isgh`. O jurídico virou o índice de documentos, dentro do Roteiro e no endereço `#fiscal`.
+
 ## Fluxo: o Kanban da Central (27/11/2026)
 A Central mede o fluxo das frentes e mostra o trabalho em quadro. Faturamento, Relatórios, Produção e Kit ficam fora, por decisão do Marcos.
 
@@ -43,7 +46,7 @@ A Central mede o fluxo das frentes e mostra o trabalho em quadro. Faturamento, R
 | Clínicas e Licitações | botão Tabela ou Quadro; coluna "Na etapa" com os dias na etapa; faixa-resumo com em andamento, teto, fila, parados e carga por pessoa |
 | Roteiro (primeira aba, em destaque) | o quadro das particulares com as seis etapas e a sétima coluna, Coordenação por cliente, que fecha o processo com os clientes em produção; os Objetivos da semana aparecem no cartão do cliente que citam; debaixo das sete colunas, duas faixas alinhadas às mesmas colunas: Setor público (licitações e quadro) e Jurídico e documentos (documentos de habilitação, prazos de edital e contratos); a aba Fiscal inteira abre recolhida no fim da página; quadros de Licitações e Quadro público ao lado |
 | Resultados | bloco de fluxo: em andamento contra o teto, dias na etapa de cada item, passagens por semana, tempo por etapa e previsão por simulação |
-| Fiscal | ciclo dos documentos: A vencer, Vencido em regularização e Em dia |
+| Índice de documentos (endereço #fiscal, sem aba no menu) | só o índice de documentos, certidões, cadastros e contratos, com validade e link para o original no Drive; o link abre apenas para quem tem acesso ao Drive da TRX |
 | Urgente agora | uma linha por frente com o que passou da faixa de parado, só quando a faixa já é tempo real |
 
 **Como a medição funciona.** `scripts/fluxo.py` roda a cada rodada, depois de baixar as planilhas. Ele compara a Fase de cada linha com a da rodada anterior e registra a passagem. A hora exata vem da aba Historico quando a mudança foi feita pelo app de Edição; mudança feita direto na planilha entra com a hora da rodada. O estado mora em três abas da Pipeline Licitações, criadas na primeira rodada:

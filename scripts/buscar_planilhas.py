@@ -38,6 +38,16 @@ if "--so-licitacoes" in sys.argv:
         dv = sheets.spreadsheets().values().get(spreadsheetId=DOCS_SHEET, range="Documentos!A1:T").execute()
         json.dump(dv, open("documentos.json", "w", encoding="utf-8"), ensure_ascii=False)
         print(f"OK: documentos {len(dv.get('values', []))} linhas")
+        # Índice de documentos (27/11/2026): o endereço da cópia no repositório mora na fórmula HYPERLINK
+        # da coluna S; o valor mostrado é só "abrir copia". Lê a coluna como fórmula para a Central
+        # levar direto ao original no Drive. Quem não tem acesso ao Drive da TRX não abre o link.
+        try:
+            lk = sheets.spreadsheets().values().get(spreadsheetId=DOCS_SHEET, range="Documentos!S1:S400",
+                                                    valueRenderOption="FORMULA").execute()
+            json.dump(lk, open("documentos_links.json", "w", encoding="utf-8"), ensure_ascii=False)
+        except Exception as e:
+            json.dump({"values": []}, open("documentos_links.json", "w", encoding="utf-8"))
+            print(f"::warning::Nao consegui ler os links da coluna S de Documentos: {e}")
     except Exception as e:
         json.dump({"values": []}, open("documentos.json", "w", encoding="utf-8"))
         print(f"::warning::Nao consegui ler a planilha Documentos TRX: {e}")

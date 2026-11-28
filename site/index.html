@@ -545,22 +545,24 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     <nav class="tabs" aria-label="Frentes">
       <a href="#roteiro" data-tab="roteiro" class="dest" title="O roteiro inteiro, da pescaria do decisor ao cliente em produção">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#inicio" data-tab="inicio">Início<span class="n" id="n-inicio"></span></a>
-      <a href="#prioridades" data-tab="prioridades">Prioridades<span class="n" id="n-prioridades"></span></a>
-      <a href="#clinicas" data-tab="clinicas" title="Clínicas particulares">Clínicas<span class="n" id="n-clinicas"></span></a>
-      <a href="#licitacoes" data-tab="licitacoes" title="Licitações e prazos">Licitações<span class="n" id="n-licitacoes"></span></a>
-      <a href="#quadro" data-tab="quadro" title="Quadro nacional">Quadro<span class="n" id="n-quadro"></span></a>
-      <a href="#isgh" data-tab="isgh">ISGH<span class="n" id="n-isgh"></span></a>
+      <a href="#clinicas" data-tab="listas" title="Clínicas, licitações, quadro público e prioridades, com busca e filtro">Listas</a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
       <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
       <a href="#kit" data-tab="kit" title="Modelos no padrão gráfico da TRX">Kit<span class="n" id="n-kit"></span></a>
-      <a href="#fiscal" data-tab="fiscal" title="Fiscal e Jurídico">Fiscal<span class="n" id="n-fiscal"></span></a>
+      <span hidden><span id="n-isgh"></span><span id="n-fiscal"></span></span>
     </nav>
     <div id="saude" class="saude" hidden></div>
   </div>
 </header>
 
 <main class="wrap">
+  <div class="seg listas-seg" id="listas-seg" role="group" aria-label="Qual lista" hidden>
+    <a href="#clinicas" data-l="clinicas">Clínicas<span class="n" id="n-clinicas"></span></a>
+    <a href="#licitacoes" data-l="licitacoes">Licitações<span class="n" id="n-licitacoes"></span></a>
+    <a href="#quadro" data-l="quadro">Quadro público<span class="n" id="n-quadro"></span></a>
+    <a href="#prioridades" data-l="prioridades">Prioridades<span class="n" id="n-prioridades"></span></a>
+  </div>
   <section class="pane" id="pane-inicio" hidden>
     <div class="ini-hero" id="ini-hero"></div>
     <div class="ini-com">
@@ -724,8 +726,8 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 
   <section class="pane" id="pane-fiscal" hidden>
     <div class="pr-top">
-      <h2>Fiscal e Jurídico</h2>
-      <span class="meta">Área do Henrique (financeiro e contratos) e da Ana (jurídico e documentos). As fontes são a aba Contratos e a aba Documentos da planilha Documentos TRX; para corrigir, edite a planilha.</span>
+      <h2>Índice de documentos</h2>
+      <span class="meta">Tudo o que a empresa tem de documento, certidão, cadastro e contrato, com o caminho até o original no Drive. <a href="#roteiro">Voltar ao Roteiro</a></span>
     </div>
     <div class="avisos docs-al" id="docs-al" hidden></div>
     <div class="kpis" id="k-fiscal"></div>
@@ -757,6 +759,9 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 nav.tabs a.dest{font-weight:700;color:var(--ink);border:2px solid var(--turq);padding:4px 14px;margin-right:6px}
 nav.tabs a.dest[aria-current="page"]{border-color:transparent;color:var(--grad-ink);box-shadow:0 2px 10px rgba(3,128,167,.35)}
 .rt-col.fecho{background:var(--accent-soft);border-top-color:var(--ok)}
+mark.isgh,.u-of.isgh,.hj-of.isgh{background:var(--grad);color:#f8fafc;border:0;border-radius:4px;padding:0 6px;font-size:11px;font-weight:700;letter-spacing:.03em;margin-right:6px}
+.listas-seg{align-self:flex-start;margin-top:16px} .listas-seg a{font-size:14px;color:var(--muted);padding:6px 14px;text-decoration:none} .listas-seg a[aria-pressed="true"]{background:var(--grad);color:#f8fafc} .listas-seg .n{font-size:11px;margin-left:5px;opacity:.8}
+.idx-bt{display:flex;flex-wrap:wrap;gap:8px}
 .rt-fx-t{grid-column:1/-1;margin-top:10px;padding:6px 12px;border-left:4px solid var(--turq);background:var(--surface);border-radius:8px;font-size:13px;color:var(--muted)} .rt-fx-t b{color:var(--ink);font-family:var(--f-display);font-size:15px}
 .rt-cel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .rt-cel h4{margin:0;font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:6px} .rt-cel h4 b{font-variant-numeric:tabular-nums}
@@ -1086,6 +1091,9 @@ function resumoFluxo(src, rows){
     +(tr?'<span><b>'+tr+'</b> com trava</span>':'')
     +'<span class="fx-pes">'+Object.keys(pes).sort((a,b)=>pes[b]-pes[a]).map(k=>esc(papel(k))+' '+pes[k]).join(' · ')+'</span></div>';
 }
+// ISGH (27/11/2026): sem aba própria. Entra na esteira como qualquer cliente e ganha destaque no texto.
+const ehIsgh = t => /\bisgh\b|\bhrvj\b|\bhri\b|\bhuc\b|vale do jaguaribe|itapipoca/i.test(String(t||""));
+const tagIsgh = (...t) => t.some(ehIsgh) ? '<mark class="isgh">ISGH</mark>' : '';
 function kbTitulo(src,r){ return src==="quadro" ? r.c+" · "+r.uf : src==="licitacoes" ? (r.org||r.id) : r.n; }
 function kbSub(src,r){
   const lugar=[r.c,r.uf].filter(Boolean).join(" · ");
@@ -1114,7 +1122,7 @@ function kbBoard(src, rows, o){
     }
     h+=it.slice(0,MAX).map(r=>{ const i=rotInfo(src,r.fase), nv=nivel(src,r);
         const al = src==="clinicas" && r.resp && i && i.F.resp && !mesmoPapel(r.resp,i.F.resp);
-        return '<a class="rt-it '+nv+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener" title="'+esc(i?i.F.faz:"")+'"><span class="t">'+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span>'
+        return '<a class="rt-it '+nv+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener" title="'+esc(i?i.F.faz:"")+'"><span class="t">'+tagIsgh(kbTitulo(src,r),r.org,r.obj)+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span>'
           +'<span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'
           +(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')
           +(al?'<span class="al">Na linha: '+esc(papel(r.resp))+' · roteiro: '+esc(papel(i.F.resp))+'</span>':'')+(o.extra?o.extra(src,r):'')+'</a>'; }).join("")
@@ -1422,7 +1430,7 @@ const lPr = makeList({
            if(it.lk) ac += '<a href="'+esc(it.lk)+'" target="_blank" rel="noopener">Detalhe ↗</a>';
            ac += '<a href="#isgh">Ver o dossiê do ISGH</a>'; }
     const nObs=notas(it.e.obs).length, c=it.w.col, b=(a,t,sec)=>'<button type="button" data-a="'+a+'"'+(sec?' class="sec"':'')+'>'+t+'</button>';
-    return '<li data-n="'+n+'"'+(it.w.bloq?' class="bloq"':'')+'><button type="button" class="hj-l1" aria-expanded="false"><span class="hj-pz">'+pz+'</span><b>'+esc(it.t)+'</b><span class="hj-of">'+esc(it.of)+'</span>'
+    return '<li data-n="'+n+'"'+(it.w.bloq?' class="bloq"':'')+'><button type="button" class="hj-l1" aria-expanded="false"><span class="hj-pz">'+pz+'</span><b>'+(it.of==="ISGH"?'':tagIsgh(it.t))+esc(it.t)+'</b><span class="hj-of'+(it.of==="ISGH"?' isgh':'')+'">'+esc(it.of)+'</span>'
       +(it.w.bloq?'<span class="hj-bl" title="'+esc(it.w.bloq)+'">travada</span>':'')+(nObs?'<span class="hj-nobs">'+nObs+(nObs===1?' nota':' notas')+'</span>':'')+'</button>'
       + '<div class="hj-corpo">'
       + (it.w.bloq?'<div class="hj-x d-bad">Travada: '+esc(it.w.bloq)+'</div>':'')
@@ -1743,7 +1751,7 @@ const lRot = (function(){
     const objHtml=l=>(l||[]).map(o=>'<span class="kb-obj'+(o.st==="feito"?' ok':'')+'">Objetivo da semana'+(o.st==="feito"?' (feito)':'')+': '+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+'</span>').join("");
     const col7='<div class="rt-col fecho"><h3><span>7. Coordenação por cliente</span><b title="Clientes em produção">'+fecho.length+'</b></h3>'
       +'<div class="dono">Dono: gestor do contrato<span class="pz-tag com">fechamento do processo</span></div>'
-      +(fecho.map(x=>'<a class="rt-it" href="'+x.href+'"'+(x.src==="contratos"?'':' target="_blank" rel="noopener"')+'><span class="t">'+esc(x.nome)+'</span>'
+      +(fecho.map(x=>'<a class="rt-it" href="'+x.href+'"'+(x.src==="contratos"?'':' target="_blank" rel="noopener"')+'><span class="t">'+tagIsgh(x.nome,x.contrato&&x.contrato.parte,x.contrato&&x.contrato.n)+esc(x.nome)+'</span>'
         +'<span class="s">'+esc(x.tipo)+' · '+esc(x.fase)+(x.contrato&&x.src!=="contratos"?' · contrato '+esc(x.contrato.st.toLowerCase()):'')+'</span>'
         +(x.resp?'<span class="kb-pe"><span class="kb-resp">'+esc(papel(x.resp))+'</span></span>':'')+objHtml(x.obj)+'</a>').join("")
         || '<div class="ag-vazio">Nenhum cliente em produção ainda.</div>')
@@ -1758,7 +1766,7 @@ const lRot = (function(){
     const ord={bad:0,warn:1,"":2}, MAXC=3;
     const cel=(titulo,n,corpo,link)=>'<div class="rt-cel"><h4><span>'+titulo+'</span>'+(n===null?'':'<b>'+n+'</b>')+'</h4>'+(corpo||'<div class="rt-nada">—</div>')+(link?'<a class="rt-mais" href="'+link[0]+'">'+link[1]+'</a>':'')+'</div>';
     const mini=(src,rows)=>rows.slice().sort((a,b)=>(ord[nivel(src,a)]-ord[nivel(src,b)])||((idade(b)??-1)-(idade(a)??-1))).slice(0,MAXC)
-      .map(r=>'<a class="rt-it '+nivel(src,r)+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener"><span class="t">'+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span><span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'+(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')+'</a>').join("")
+      .map(r=>'<a class="rt-it '+nivel(src,r)+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener"><span class="t">'+tagIsgh(kbTitulo(src,r),r.org,r.obj)+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span><span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'+(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')+'</a>').join("")
       +(rows.length>MAXC?'<div class="meta">e mais '+(rows.length-MAXC)+'</div>':'');
     // faixa do setor público: etapa do roteiro de licitações -> coluna da esteira
     const eRaw=f=>{ const F=RT.licitacoes.fases[f]; return F?F.e:0; };
@@ -1783,18 +1791,18 @@ const lRot = (function(){
     const hoje=(D.gerado||"").slice(0,10), lim=new Date(hoje+"T12:00:00"); lim.setDate(lim.getDate()+30); const limIso=lim.toISOString().slice(0,10);
     const prazos=LI.filter(l=>l.prazo&&l.prazo.slice(0,10)>=hoje&&l.prazo.slice(0,10)<=limIso&&!FECHADAS.test(l.fase||"")&&eRaw(l.fase)<6).sort((a,b)=>a.prazo<b.prazo?-1:1);
     const pcard=l=>'<a class="rt-it" href="'+editLink("licitacoes",l.l)+'" target="_blank" rel="noopener"><span class="t">'+esc(l.org||l.id)+'</span><span class="s">prazo '+fData(l.prazo,true)+' · '+esc(rotFase("licitacoes",l.fase))+'</span></a>';
-    const ccard=c=>'<a class="rt-it" href="#fiscal"><span class="t">'+esc(c.n)+'</span><span class="s">'+esc([c.tp,c.st,c.acao].filter(Boolean).join(" · "))+(c.qdo||c.fim?' · '+fData(c.qdo||c.fim):'')+'</span>'+(c.resp?'<span class="kb-pe"><span class="kb-resp">'+esc(c.resp)+'</span></span>':'')+'</a>';
+    const ccard=c=>'<a class="rt-it" href="#fiscal"><span class="t">'+tagIsgh(c.n,c.parte)+esc(c.n)+'</span><span class="s">'+esc([c.tp,c.st,c.acao].filter(Boolean).join(" · "))+(c.qdo||c.fim?' · '+fData(c.qdo||c.fim):'')+'</span>'+(c.resp?'<span class="kb-pe"><span class="kb-resp">'+esc(c.resp)+'</span></span>':'')+'</a>';
     const lista=(arr,fn)=>arr.slice(0,MAXC).map(fn).join("")+(arr.length>MAXC?'<div class="meta">e mais '+(arr.length-MAXC)+'</div>':'');
     const cliente=c=>!/alug/i.test(c.tp||""), ana=CON.filter(c=>cliente(c)&&/an[aá]lise/i.test(c.st||"")), ati=CON.filter(c=>cliente(c)&&c.st==="Ativo");
     const outros=CON.filter(c=>!ana.includes(c)&&!ati.includes(c));
     const jur=[
       cel("Regras de mesa", null, '<div class="rt-nota">Preço só na etapa 4. Toda proposta sai com a TRX em cópia.</div>'),
-      cel("Documentos de habilitação", docs.length, '<div class="rt-nota"><b>'+ve.length+'</b> vencido'+(ve.length===1?'':'s')+' · <b>'+av.length+'</b> a vencer em 30 dias · <b>'+(DOCS.length-docs.length)+'</b> em dia</div>'+lista(docs,dcard), ["#fiscal","ver todos"]),
+      cel("Documentos e certidões", docs.length, '<div class="rt-nota"><b>'+ve.length+'</b> vencido'+(ve.length===1?'':'s')+' · <b>'+av.length+'</b> a vencer em 30 dias · <b>'+(DOCS.length-docs.length)+'</b> em dia</div>'+lista(docs,dcard), ["#fiscal","abrir o índice"]),
       cel("Prazos de edital em 30 dias", prazos.length, lista(prazos,pcard)),
       cel("Minuta e proposta", null, '<div class="rt-nota">A proposta escrita sai pelo Kit, com a TRX em cópia.</div>'),
       cel("Contratos em análise", ana.length, lista(ana,ccard)),
       cel("Outros contratos", outros.length, lista(outros,ccard)),
-      cel("Contratos ativos", ati.length, lista(ati,ccard), ["#fiscal","ver contratos"])
+      cel("Contratos ativos", ati.length, lista(ati,ccard), ["#fiscal","abrir o índice"])
     ];
     return '<div class="rt-fx-t"><b>Setor público</b> · licitações, credenciamentos e quadro, na mesma esteira</div>'+pub.join("")
           +'<div class="rt-fx-t"><b>Jurídico e documentos</b> · o que sustenta cada etapa</div>'+jur.join("");
@@ -1813,8 +1821,8 @@ const lRot = (function(){
       RT.particulares.cadencia.map(c=>'<tr><td class="mono">'+c.n+'</td><td class="mono">'+c.dia+'</td><td>'+esc(c.canal)+'</td><td>'+esc(c.obj)+'</td></tr>').join("")+'</tbody></table></div><p class="meta" style="margin:0">Se o decisor responder em qualquer toque, a cadência para e a Fase vira Decisor engajado.</p></div>';
     ex+='<div class="band"><h3>Quem faz o quê</h3><ul>'+Object.keys(RT.papeis).map(k=>'<li><b>'+esc(papel(k).replace(/^./,c=>c.toUpperCase()))+':</b> '+esc(RT.papeis[k])+'</li>').join("")+'</ul><p class="meta" style="margin:0">Depois da implantação vêm a gestão do contrato, o faturamento e a distribuição de valores, que entram numa fase futura da Central.</p></div>';
     if(fr==="particulares" && C.soltos.length) ex='<div class="band"><h3>Objetivos da semana sem cliente ligado</h3><ul>'+C.soltos.map(o=>'<li>'+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+(o.st!=="aberto"?' · '+esc(o.st):'')+'</li>').join("")+'</ul><p class="meta" style="margin:0">O objetivo aparece no cartão do cliente quando o texto cita o nome dele como está no quadro.</p></div>'+ex;
-    if(fr==="particulares") ex+='<details class="band rt-jur"><summary>Jurídico completo: contratos, prazos e todos os documentos</summary>'+lFis.html()+'</details>';
-    $("#rt-extra").innerHTML=ex;
+    if(fr==="particulares") ex+='<details class="band rt-jur"><summary>Índice de documentos: tudo o que a empresa tem, com o caminho até o original no Drive</summary>'+lFis.html()+'</details>';
+    $("#rt-extra").innerHTML=ex; lFis.liga($("#rt-extra .rt-jur"));
   }
   $("#rt-fr").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; fr=b.dataset.v; $("#rt-fr").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); render(); });
   pes.addEventListener("input",render);
@@ -2075,49 +2083,35 @@ const lFis=(function(){
   const corpo=document.getElementById("fis-corpo");
   $("#n-fiscal").textContent = CON.length || "";
   function stCls(st){ st=(st||"").toUpperCase(); if(st==="VENCIDO") return "d-bad"; if(st.indexOf("VENCE EM")===0) return "d-warn"; return ""; }
+  /* ÍNDICE DE DOCUMENTOS (27/11/2026, pedido do Marcos): o conteúdo mora no Drive. A Central guarda só o
+     índice de tudo o que a empresa tem (documentos, certidões, cadastros e contratos), com a validade e
+     o caminho até o original. O link só abre para quem tem acesso ao Drive da TRX. */
   function monta(){
+    const venc=DOCS.filter(d=>d.fase==="Vencido").length, breve=DOCS.filter(d=>d.fase==="A vencer").length;
     const ativos=CON.filter(c=>c.st==="Ativo").length, analise=CON.filter(c=>/an[aá]lise/i.test(c.st)).length;
-    const venc=DOCS.filter(d=>(d.st||"").toUpperCase()==="VENCIDO").length;
-    const breve=DOCS.filter(d=>(d.st||"").toUpperCase().indexOf("VENCE EM")===0).length;
-    // prazos jurídicos: licitações ativas com prazo nos próximos 30 dias
-    const hoje=(D.gerado||"").slice(0,10), lim=new Date(hoje+"T12:00:00"); lim.setDate(lim.getDate()+30);
-    const limIso=lim.toISOString().slice(0,10);
-    const prazos=(D.licitacoes||[]).filter(l=>l.prazo&&l.prazo.slice(0,10)>=hoje&&l.prazo.slice(0,10)<=limIso&&!/Descartado|Perdido|Em operacao/.test(l.fase||"")).sort((a,b)=>a.prazo<b.prazo?-1:1);
-    const kp=[
-      ["Contratos ativos",ativos,""],["Propostas em análise",analise,""],
-      ["Documentos vencidos",venc,venc?"bad":"ok"],["Vencem em breve",breve,breve?"warn":"ok"],
-      ["Prazos em 30 dias",prazos.length,""]
-    ].map(([k,v,cls])=>'<div class="kpi '+cls+'" style="cursor:default"><span class="v">'+v+'</span><span class="k">'+k+'</span></div>').join("");
-    const abaUrl=FO.id?'https://docs.google.com/spreadsheets/d/'+FO.id+'/edit#gid='+FO.gid:"";
-    let h='<div class="pr-sec">Contratos e propostas'+(abaUrl?' · <a href="'+abaUrl+'" target="_blank" rel="noopener">editar na planilha ↗</a>':'')+'</div>';
-    h+=CON.length?'<div class="tbl"><table><thead><tr><th>Contrato</th><th class="hide-sm">Tipo</th><th class="hide-sm">Empresa</th><th>Status</th><th>Responsável</th><th>Próxima ação</th><th>Quando ou fim</th></tr></thead><tbody>'
-      +CON.map(c=>'<tr><td><b>'+esc(c.n)+'</b><div class="meta">'+esc(c.parte)+(c.obj?' · '+esc(c.obj):'')+(c.nota?'<br>'+esc(c.nota):'')+'</div></td>'
-        +'<td class="hide-sm">'+esc(c.tp||"—")+'</td><td class="hide-sm">'+esc(c.emp||"—")+'</td><td>'+esc(c.st||"—")+'</td><td>'+esc(c.resp||"—")+'</td>'
-        +'<td>'+esc(c.acao||"—")+(c.link?' <a href="'+esc(c.link)+'" target="_blank" rel="noopener">↗</a>':'')+'</td>'
-        +'<td class="mono">'+esc(c.qdo||c.fim||"—")+'</td></tr>').join("")
-      +'</tbody></table></div>':'<p class="vazio">Nenhum contrato lançado ainda. A fonte é a aba Contratos da planilha Documentos TRX.</p>';
-    h+='<div class="pr-sec">Prazos jurídicos dos próximos 30 dias</div>';
-    h+=prazos.length?'<div class="tbl"><table><thead><tr><th>Prazo</th><th>Órgão</th><th class="hide-sm">Modalidade</th><th>Fase</th><th>Responsável</th></tr></thead><tbody>'
-      +prazos.map(l=>'<tr><td class="mono">'+esc((l.prazo||"").slice(0,10))+'</td><td><b>'+esc(l.org||l.id||"")+'</b>'+(l.obj?'<div class="meta">'+esc(l.obj)+'</div>':'')+'</td><td class="hide-sm">'+esc(l.tp||l.mod||"—")+'</td><td>'+esc(l.fase||"—")+'</td><td>'+esc(l.resp||"—")+'</td></tr>').join("")
-      +'</tbody></table></div>':'<p class="vazio">Nenhum prazo de licitação nos próximos 30 dias.</p>';
-    // quadro do ciclo do documento (27/11/2026): a vencer, vencido em regularização e em dia
-    const dk=(fase)=>DOCS.filter(d=>d.fase===fase).sort((a,b)=>(a.val||"9999")<(b.val||"9999")?-1:1);
-    const dcard=d=>{ const dd=d.val?dias(d.val):null;
-      return '<div class="rt-it '+nivel("documentos",d)+'"><span class="t">'+esc(d.doc)+'</span><span class="s">'+(d.val?'validade '+fData(d.val)+(dd!==null?(dd<0?' · venceu há '+(-dd)+' d':' · vence em '+dd+' d'):''):'sem validade')+'</span>'
-        +'<span class="kb-pe">'+selo("documentos",d)+'<span class="kb-resp">'+(d.fase==="Vencido"?'Marcos regulariza; '+esc(d.resp||"Carla")+' acompanha':esc(d.resp||"sem dono"))+'</span></span>'+(d.mot?'<span class="al">'+esc(d.mot)+'</span>':'')+'</div>'; };
-    const av=dk("A vencer"), ve=dk("Vencido"), ok=dk("Em dia"), prox=ok.filter(d=>d.val)[0];
-    h+='<div class="pr-sec">Ciclo dos documentos</div>'+resumoFluxo("documentos",DOCS)
-      +'<div class="dk-kb"><div class="rt-col" style="border-top-color:var(--warn)"><h3><span>A vencer em 30 dias</span><b>'+av.length+'</b></h3><div class="dono">Dono: '+esc("Carla, até o vencimento")+'</div>'+(av.map(dcard).join("")||'<div class="ag-vazio">Nada a vencer.</div>')+'<div class="vira"><b>Vira quando:</b> a certidão nova entra na planilha Documentos TRX.</div></div>'
-      +'<div class="rt-col" style="border-top-color:var(--bad)"><h3><span>Vencido, em regularização</span><b>'+ve.length+'</b></h3><div class="dono">Dono: Marcos e automação</div>'+(ve.map(dcard).join("")||'<div class="ag-vazio">Nenhum vencido.</div>')+'<div class="vira"><b>Vira quando:</b> o documento regularizado volta a ficar em dia. A meta é zero vencido no mês.</div></div>'
-      +'<div class="rt-col" style="border-top-color:var(--ok)"><h3><span>Em dia</span><b>'+ok.length+'</b></h3><div class="dono">'+(prox?'Próximo a entrar na fila: '+esc(prox.doc)+', em '+fData(prox.val):'Sem validade próxima')+'</div><div class="vira">O documento entra sozinho em A vencer quando faltam 30 dias, e a lista completa está na tabela abaixo.</div></div></div>';
-    h+='<div class="pr-sec">Documentos da empresa e validades</div>';
-    h+=DOCS.length?'<div class="tbl"><table><thead><tr><th>Documento</th><th>Validade</th><th>Status</th><th class="hide-sm">Situação</th><th>Responsável</th></tr></thead><tbody>'
-      +DOCS.map(d=>'<tr><td><b>'+esc(d.doc)+'</b>'+(d.mot?'<div class="meta d-bad">'+esc(d.mot)+'</div>':'')+'</td><td class="mono">'+esc(d.val||"—")+'</td><td class="'+stCls(d.st)+'">'+esc(d.st||"—")+'</td><td class="hide-sm">'+esc(d.sit||"—")+'</td><td>'+esc(d.resp||"—")+'</td></tr>').join("")
-      +'</tbody></table></div>':'<p class="vazio">A lista de documentos chega na próxima rodada da Central.</p>';
+    const kp=[["Documentos no índice",DOCS.length,""],["Contratos no índice",CON.length,""],["Vencidos",venc,venc?"bad":"ok"],["Vencem em 30 dias",breve,breve?"warn":"ok"],["Contratos ativos",ativos,""],["Em análise",analise,""]]
+      .map(([k,v,cls])=>'<div class="kpi '+cls+'" style="cursor:default"><span class="v">'+v+'</span><span class="k">'+k+'</span></div>').join("");
+    const g=id=>'https://docs.google.com/spreadsheets/d/'+id+'/edit';
+    const bt=(u,t)=>u?'<a class="btn" href="'+u+'" target="_blank" rel="noopener">'+t+' ↗</a>':'';
+    const linhas=DOCS.map(d=>({n:d.doc, gr:d.cat||"Documento", val:d.val, st:d.st||"", cls:stCls(d.st), resp:d.resp, lk:d.lk, onde:d.onde, mot:d.mot}))
+      .concat(CON.map(c=>({n:c.n, gr:"Contrato · "+(c.tp||"sem tipo"), val:c.fim, st:c.st||"", cls:"", resp:c.resp, lk:c.link, onde:c.nota, mot:""})))
+      .sort((a,b)=>a.gr.localeCompare(b.gr,"pt")||a.n.localeCompare(b.n,"pt"));
+    let h='<div class="pr-sec">Índice de documentos da empresa</div>'
+      +'<p class="meta" style="margin:0">Aqui fica só o índice. O documento original, a edição e as planilhas ficam no Drive da TRX, e cada link abre apenas para quem tem acesso a ele.</p>'
+      +'<div class="links idx-bt">'+bt(FIS.repositorio?'https://drive.google.com/drive/folders/'+FIS.repositorio:"","Repositório de documentos no Drive")+bt(FIS.indice?g(FIS.indice):"","Índice completo de arquivos")
+        +bt(FO.id?g(FO.id)+'#gid='+FIS.docs_gid:"","Editar documentos e validades")+bt(FO.id?g(FO.id)+'#gid='+FO.gid:"","Editar contratos")+'</div>'
+      +'<div class="filters"><label>Buscar no índice<input type="search" class="idx-q" placeholder="documento, contrato, grupo, responsável…"></label><span class="count idx-c"></span></div>';
+    h+=linhas.length?'<div class="tbl"><table class="idx-t"><thead><tr><th>Documento</th><th class="hide-sm">Grupo</th><th>Validade</th><th>Situação</th><th class="hide-sm">Responsável</th><th>Original no Drive</th></tr></thead><tbody>'
+      +linhas.map(x=>'<tr data-b="'+esc(norm([x.n,x.gr,x.st,x.resp].join(" ")))+'"><td><b>'+esc(x.n)+'</b>'+(x.mot?'<div class="meta d-bad">'+esc(x.mot)+'</div>':'')+'</td><td class="hide-sm">'+esc(x.gr)+'</td><td class="mono">'+(x.val?fData(x.val):"—")+'</td><td class="'+x.cls+'">'+esc(x.st||"—")+'</td><td class="hide-sm">'+esc(x.resp||"—")+'</td>'
+        +'<td>'+(x.lk?'<a href="'+esc(x.lk)+'" target="_blank" rel="noopener">abrir o original ↗</a>':(x.onde?'<span class="meta">'+esc(x.onde)+'</span>':'<span class="d-mut">sem arquivo no índice</span>'))+'</td></tr>').join("")
+      +'</tbody></table></div>':'<p class="vazio">O índice chega na próxima rodada da Central.</p>';
     return {h:h, kp:kp};
   }
-  function render(){ const x=monta(); $("#k-fiscal").innerHTML=x.kp; corpo.innerHTML=x.h; }
-  return {render, html:()=>monta().h};
+  function liga(raiz){ if(!raiz) return; const q=raiz.querySelector(".idx-q"), c=raiz.querySelector(".idx-c"), trs=[...raiz.querySelectorAll(".idx-t tbody tr")]; if(!q) return;
+    const f=()=>{ const v=norm(q.value.trim()); let n=0; trs.forEach(tr=>{ const ok=!v||tr.dataset.b.indexOf(v)>=0; tr.hidden=!ok; if(ok) n++; }); c.textContent=n+" de "+trs.length; };
+    q.addEventListener("input",f); f(); }
+  function render(){ const x=monta(); $("#k-fiscal").innerHTML=x.kp; corpo.innerHTML=x.h; liga(corpo); }
+  return {render, html:()=>monta().h, liga};
 })();
 
 /* ---------- URGENTE AGORA (17/11/2026): o que vence hoje ou amanhã ou já venceu, de todos os assuntos ---------- */
@@ -2159,7 +2153,7 @@ const lFis=(function(){
   }
   const pedir=x=>'<form class="u-pd" data-k="'+esc(ukey(x))+'" autocomplete="off"><input maxlength="560" placeholder="Pedir ao Claude: o que você quer que eu resolva aqui?"><button type="submit">Pedir ao Claude</button><span class="meta u-st"></span></form>';
   const li=x=>'<li><details><summary><span class="u-d '+(x.rot?'venc':x.d<0?'venc':x.d===0?'hoje':'amanha')+'">'+(x.rot?esc(x.rot):(x.d<0?'vencido':x.d===0?'hoje':'amanhã')+(x.dt?' · '+fData(x.dt):''))+'</span>'
-    +'<b>'+esc(x.t)+'</b><span class="u-of">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</summary>'
+    +'<b>'+(x.of==="ISGH"?'':tagIsgh(x.t))+esc(x.t)+'</b><span class="u-of'+(x.of==="ISGH"?' isgh':'')+'">'+esc(x.of)+'</span>'+(x.r?'<span class="meta">'+esc(x.r)+'</span>':'')+'</summary>'
     +'<div class="u-x">'+x.x.map(t=>'<p>'+esc(t)+'</p>').join("")+(x.r?'<p class="meta">Com: '+esc(x.r)+'</p>':'')
     +'<div class="u-ac">'+x.ac.filter(Boolean).map(a=>'<a href="'+esc(a[0])+'"'+(a[2]?' target="_blank" rel="noopener"':'')+'>'+esc(a[1])+'</a>').join("")+'</div>'
     +conversa(x)+pedir(x)+'</div></details></li>';
@@ -3374,13 +3368,19 @@ const TABS=["inicio","prioridades","clinicas","licitacoes","isgh","quadro","rote
 const rendered={};
 function show(tab){
   if(!TABS.includes(tab)) tab="inicio";
-  TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; const a=document.querySelector('nav.tabs a[data-tab="'+t+'"]'); if(t===tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  // menu de 7 abas (27/11/2026): as quatro listas moram na aba Listas; o dossiê do ISGH e o índice de
+  // documentos continuam abrindo pelo endereço (#isgh e #fiscal), sem lugar próprio no menu.
+  const LISTAS=["clinicas","licitacoes","quadro","prioridades"], noMenu = LISTAS.includes(tab) ? "listas" : (tab==="fiscal"||tab==="isgh") ? "roteiro" : tab;
+  TABS.forEach(t=>{ $("#pane-"+t).hidden = t!==tab; });
+  document.querySelectorAll("nav.tabs a[data-tab]").forEach(a=>{ if(a.dataset.tab===noMenu) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  $("#listas-seg").hidden = !LISTAS.includes(tab);
+  document.querySelectorAll("#listas-seg a").forEach(a=>a.setAttribute("aria-pressed", a.dataset.l===tab));
   if(!rendered[tab]){ ({inicio:{render(){}},prioridades:lPr,clinicas:lCl,licitacoes:lLi,isgh:lIsgh,quadro:lQd,roteiro:lRot,resultados:lRes,producao:lProd,relatorios:lRel,kit:lKit,fiscal:lFis})[tab].render(); rendered[tab]=true; }
   try{ localStorage.setItem("central-aba",tab); }catch(e){}
 }
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
 let inicial = location.hash.slice(1);
-if(!TABS.includes(inicial)){ try{ inicial = localStorage.getItem("central-aba") || "inicio"; }catch(e){ inicial="inicio"; } }
+if(!TABS.includes(inicial)){ try{ inicial = localStorage.getItem("central-aba") || "roteiro"; }catch(e){ inicial="roteiro"; } }
 show(inicial);
 })();
 </script>
