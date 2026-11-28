@@ -544,7 +544,7 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
     </div>
     <nav class="tabs" aria-label="Frentes">
       <a href="#roteiro" data-tab="roteiro" class="dest" title="O roteiro inteiro, da pescaria do decisor ao cliente em produção">Roteiro<span class="n" id="n-roteiro"></span></a>
-      <a href="#inicio" data-tab="inicio" title="Mural, objetivos, urgências, fila de cada um, documentos em vencimento e a base de documentos">Comunicação e documentos<span class="n" id="n-inicio"></span></a>
+      <a href="#inicio" data-tab="inicio" title="Urgências, fila de cada um, equipe, documentos em vencimento e o índice de documentos">Comunicação e documentos<span class="n" id="n-inicio"></span></a>
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
       <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
       <a href="#kit" data-tab="kit" title="Modelos no padrão gráfico da TRX">Kit<span class="n" id="n-kit"></span></a>
@@ -565,10 +565,6 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
   </div>
   <section class="pane" id="pane-inicio" hidden>
     <div class="ini-hero" id="ini-hero"></div>
-    <div class="ini-com">
-      <div id="mural" class="avisos mural-band" hidden></div>
-      <div id="obj" class="avisos obj"></div>
-    </div>
     <div class="ini-grid">
       <div class="ini-col">
         <div id="urg" class="avisos urg" hidden></div>
@@ -1423,7 +1419,7 @@ const lPr = makeList({
    escolhe é a própria pessoa, e a escolha fica guardada neste aparelho.
    16/11/2026 (pedido do Marcos): cada tarefa tem Feito, Ciente e Observação. A marcação vai
    para a aba Tarefas_Status da Pipeline TRX pelo app de Edição (doPost, apelido + PIN, os
-   mesmos do Mural). Feito ou Ciente tira a tarefa da fila daquela pessoa e ela vai para
+   mesmos em toda a Central). Feito ou Ciente tira a tarefa da fila daquela pessoa e ela vai para
    "Arquivadas"; observação sozinha fica embaixo da tarefa, visível para todos.
    Até a rodada seguinte trazer a marcação da planilha, ela vale por este navegador. */
 (function(){
@@ -1434,6 +1430,7 @@ const lPr = makeList({
   const donos = s => String(s||"").replace(/\([^)]*\)/g," ").split(/,| e |;|\/|&/i)
       .map(x=>x.trim()).filter(Boolean).map(x=>PESSOA[sa(x)]||x);
   const nomes=new Map();
+  (D.tarefas_status||[]).forEach(e=>{ if(sa(e.of)==="avulsa" && !e.st && e.p) nomes.set(sa(e.p),e.p); });
   PR.forEach(p=>donos(p.resp).forEach(d=>nomes.set(sa(d),d)));
   IG.forEach(i=>donos(i.resp).forEach(d=>nomes.set(sa(d),d)));
   const pessoas=[...nomes.values()].sort((a,b)=>a.localeCompare(b,"pt"));
@@ -1472,7 +1469,8 @@ const lPr = makeList({
       out.push({of:p.tp, t:p.n, x:p.acao, dt:p.dt, p, longe:d===null||d>7}); });
     out.forEach(it=>{ it.k=chave(it); });
     const vis=out.filter(it=>!it.longe || ativo(pessoa,it.k)), tem=new Set(vis.map(it=>it.k));
-    (D.tarefas_status||[]).forEach(e=>{ if(sa(e.p)===k && !e.st && !tem.has(e.k) && ativo(pessoa,e.k)){ tem.add(e.k); vis.push({of:e.of, t:e.t||"tarefa", x:"", dt:"", k:e.k, orf:true}); } });
+    // Origem "Avulsa" (28/11/2026): tarefa passada a alguém sem linha em planilha; fica na fila até Feito ou Ciente.
+    (D.tarefas_status||[]).forEach(e=>{ if(sa(e.p)===k && !e.st && !tem.has(e.k) && (ativo(pessoa,e.k) || sa(e.of)==="avulsa")){ tem.add(e.k); vis.push({of:e.of, t:e.t||"tarefa", x:"", dt:"", k:e.k, orf:true, av:sa(e.of)==="avulsa"}); } });
     out.length=0; vis.forEach(it=>out.push(it));
     out.sort((a,b)=>{ const A=a.dt||"9999-99-99", B=b.dt||"9999-99-99"; return A<B?-1:A>B?1:0; });
     return out;
@@ -1523,7 +1521,7 @@ const lPr = makeList({
       + '<span class="hj-bts">'+(c==="afazer"?b("fazendo","Começar"):c==="fazendo"?b("afazer","Devolver para A fazer",1):"")+b("feito","Feito")+b("ciente","Ciente",1)
       + b("nota","Salvar nota",1)+(it.w.bloq?b("liberado","Destravar",1):b("bloqueado","Travou",1))+'</span><span class="hj-st meta"></span></form></div></li>';
   }
-  const CK="central-mural-cred";   // mesma credencial do Mural: entrou num, vale no outro
+  const CK="central-mural-cred";   // credencial única da Central (o nome da chave vem do antigo Mural)
   const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
   let atual=null, lista=[], nFaz=0;
   function render(){
@@ -1541,7 +1539,7 @@ const lPr = makeList({
         :'para marcar: <input id="hj-ap" placeholder="apelido" size="9" autocapitalize="none"> <input id="hj-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">')+'</span></div>'
       +'<div class="hj-kb">'+COLS.map(([k,nome,dicaTxt])=>{
           const it=lista.map((x,n)=>[x,n]).filter(([x])=>x.w.col===k);
-          const cd=it.filter(([x])=>x.dt||k!=="afazer").map(([x,n])=>linha(x,n)), sd=k==="afazer"?it.filter(([x])=>!x.dt).map(([x,n])=>linha(x,n)):[];
+          const cd=it.filter(([x])=>x.dt||x.av||k!=="afazer").map(([x,n])=>linha(x,n)), sd=k==="afazer"?it.filter(([x])=>!x.dt&&!x.av).map(([x,n])=>linha(x,n)):[];
           const lim = k==="fazendo" ? '<b class="'+(nFaz>LIM?'d-bad':'')+'" title="Combinado: no máximo '+LIM+' em andamento por pessoa">'+it.length+' de '+LIM+'</b>' : '<b>'+it.length+'</b>';
           return '<div class="hj-col" data-col="'+k+'"><h3 title="'+esc(dicaTxt)+'"><span>'+nome+'</span>'+lim+'</h3>'
             +(cd.length?'<ul class="hj-lista">'+cd.join("")+'</ul>':(sd.length?'':'<div class="hj-vazio">'+(k==="afazer"?'Nada com prazo nos próximos 7 dias para '+esc(atual)+'.':'Nada aqui.')+'</div>'))
@@ -1673,50 +1671,8 @@ const lPr = makeList({
          :'<span class="tag d">DESATUALIZADO</span>')+
         (x.resp?' <span class="meta">· '+esc(x.resp)+'</span>':'')+'</li>').join("")+'</ul>'+(DA.length>5?'<button type="button" class="mu-tudo" id="da-tudo">Ver as '+DA.length+'</button>':'');
       const b=$("#da-tudo"); if(b) b.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); b.textContent=ab?"Mostrar só as cinco primeiras":"Ver as "+DA.length; }); } }catch(e){}
-  // Mural da equipe (15/11/2026): recados da aba Mural da Pipeline TRX, visíveis em todas as áreas.
-  // Posição: topo da página, logo após o Hoje e antes da Prioridade máxima (Marcos, 15/11/2026).
-  // Publicação ali mesmo (15/11/2026 à noite): o formulário posta no app de Edição (doPost JSON),
-  // identificado pelos mesmos apelido+PIN do app, guardados neste navegador após o primeiro post.
-  try{ const MU=D.mural||[]; const el=$("#mural");
-    const li=x=>'<li><span class="meta">'+esc(x.q)+' · '+esc(x.a)+(x.menc?' · para '+esc(x.menc):'')+'</span> · '+esc(x.m)+'</li>';
-    el.innerHTML='<h3>Mural da equipe</h3>'
-      +'<form id="mu-form" autocomplete="off">'
-      +'<textarea id="mu-msg" maxlength="1000" rows="1" placeholder="Escreva um recado para a equipe… @apelido marca alguém"></textarea>'
-      +'<div class="mu-linha"><span id="mu-quem"></span><button type="submit" id="mu-bt">Publicar</button><span id="mu-st" class="meta"></span></div>'
-      +'</form><ul id="mu-lista">'+MU.map(li).join("")+'</ul>'+(MU.length>4?'<button type="button" class="mu-tudo" id="mu-tudo">Ver os '+MU.length+' recados</button>':'');
-    el.hidden=false;
-    const tb=$("#mu-tudo"); if(tb) tb.addEventListener("click",()=>{ const ab=el.classList.toggle("tudo"); tb.textContent=ab?"Mostrar só os recentes":"Ver os "+MU.length+" recados"; });
-    const CK="central-mural-cred";
-    const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
-    function renderQuem(){ const c=cred(), q=$("#mu-quem");
-      q.innerHTML=c?('como <b>'+esc(c.apelido)+'</b> · <a href="#" id="mu-troca">trocar</a>')
-        :'<input id="mu-ap" placeholder="apelido" size="9" autocapitalize="none"> <input id="mu-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">';
-      const t=$("#mu-troca"); if(t) t.addEventListener("click",ev=>{ ev.preventDefault(); try{localStorage.removeItem(CK);}catch(_){} renderQuem(); }); }
-    renderQuem(); window.addEventListener("central-cred",renderQuem);
-    $("#mu-form").addEventListener("submit", async ev=>{
-      ev.preventDefault();
-      const msg=$("#mu-msg").value.trim(); if(!msg) return;
-      let c=cred();
-      if(!c){ const ap=($("#mu-ap").value||"").trim().toLowerCase(), pin=($("#mu-pin").value||"").trim();
-        if(!ap||!pin){ $("#mu-st").textContent="Diga apelido e PIN (os mesmos do app de Edição)."; return; }
-        c={apelido:ap, pin:pin}; }
-      const bt=$("#mu-bt"); bt.disabled=true; $("#mu-st").textContent="Publicando…";
-      try{
-        const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:"muralPostar",cred:c,msg:msg})});
-        const j=await r.json();
-        if(!j.ok) throw new Error(j.erro||"Não deu para publicar.");
-        const novo=!cred(); try{localStorage.setItem(CK,JSON.stringify(c));}catch(_){}
-        if(novo) window.dispatchEvent(new Event("central-cred"));
-        $("#mu-msg").value=""; $("#mu-st").textContent="Publicado.";
-        $("#mu-lista").innerHTML=(j.mural||[]).slice(0,30).map(x=>li({q:x.quando,a:x.autor,m:x.msg,menc:x.menc})).join("");
-        renderQuem(); setTimeout(()=>{ if($("#mu-st").textContent==="Publicado.") $("#mu-st").textContent=""; },4000);
-      }catch(err){
-        const m=String((err&&err.message)||err);
-        $("#mu-st").textContent=m.indexOf("LOGIN")>=0?"Apelido ou PIN não conferem.":("Não deu: "+m);
-        if(m.indexOf("LOGIN")>=0){ try{localStorage.removeItem(CK);}catch(_){} renderQuem(); }
-      } finally { bt.disabled=false; }
-    });
-  }catch(e){}
+  // Mural da equipe: aposentado em 28/11/2026. Recado sobre um item vai na nota do próprio item, na Minha fila;
+  // a aba Mural da Pipeline TRX fica como histórico.
   // avisos da verificação automática, cada um numa linha (os prazos já aparecem na agenda)
   try{ const S=window.SAUDE; if(S){ const al=(S.alertas||[]).filter(a=>!/vencem em até 7 dias/.test(a)), av=S.avisos||[];
     if(al.length||av.length){ const el=$("#avisos"); el.hidden=false;
@@ -1820,7 +1776,7 @@ const lRot = (function(){
     });
     const seg=new Date(HOJE); seg.setDate(seg.getDate()-((seg.getDay()+6)%7));
     const semD=s=>{ const m=/(\d{2})\/(\d{2})\/(\d{4})/.exec(s||""); return m?new Date(+m[3],+m[2]-1,+m[1]):null; };
-    const OB=(D.objetivos||[]).filter(o=>{ const d=semD(o.sem); return d && (d.getTime()===seg.getTime() || (d<seg && o.st==="aberto")); });
+    const OB=[];   // Objetivos da semana aposentados em 28/11/2026: os cartões não levam mais a etiqueta
     const soltos=[], porLinha={};
     OB.forEach(o=>{ const t=" "+norm(o.t).replace(/[^a-z0-9 ]/g," ")+" "; let achou=false;
       todos.forEach(x=>{ const nm=norm(x.nome).replace(/[^a-z0-9 ]/g," ").trim();
@@ -2259,56 +2215,8 @@ const lFis=(function(){
   });
 })();
 
-/* ---------- OBJETIVOS DA SEMANA (17/11/2026): aba Objetivos da Pipeline TRX, app de Edição v15 ---------- */
-(function(){
-  const el=$("#obj"); if(!el) return;
-  const CK="central-mural-cred";
-  const cred=()=>{ try{ return JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){ return null; } };
-  const seg=d=>{ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; };
-  const br=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();
-  const SEG=seg(new Date()), SEX=new Date(SEG); SEX.setDate(SEX.getDate()+4);
-  const semD=s=>{ const m=/(\d{2})\/(\d{2})\/(\d{4})/.exec(s||""); return m?new Date(+m[3],+m[2]-1,+m[1]):null; };
-  let OB=D.objetivos||[];
-  const nomes=(D.equipe||[]).map(p=>p.n);
-  function vis(){ return OB.filter(o=>{ const d=semD(o.sem); if(!d) return false; if(d.getTime()===SEG.getTime()) return true; return d<SEG && o.st==="aberto"; }); }
-  function render(msg){
-    const L=vis(), c=cred();
-    window.OBJ_SEMANA={t:L.length,f:L.filter(o=>o.st==="feito").length}; window.dispatchEvent(new Event("central-obj"));
-    el.innerHTML='<h3>Objetivos da semana · '+String(SEG.getDate()).padStart(2,"0")+' a '+br(SEX).slice(0,5)+'</h3>'
-      +(L.length?'<ul class="ob-l">'+L.map(o=>{ const ant=semD(o.sem)<SEG;
-        return '<li class="st-'+esc(o.st.replace(" ","-"))+'" data-l="'+o.l+'"><span class="ob-ck" aria-hidden="true"></span><span class="ob-t"><b>'+esc(o.t)+'</b>'
-          +'<span class="meta">'+esc(o.dono||"sem dono")+(ant?' · <span class="d-warn">vem da semana de '+esc(o.sem.slice(0,5))+'</span>':'')+(o.st==="feito"?' · feito':o.st==="nao deu"?' · não deu':'')+(o.obs?' · '+esc(o.obs):'')+'</span></span>'
-          +(o.st==="aberto"?'<span class="ob-ac"><button type="button" data-st="feito">Feito</button><button type="button" data-st="nao deu">Não deu</button></span>'
-            :'<span class="ob-ac"><button type="button" data-st="aberto">Reabrir</button></span>')+'</li>'; }).join("")+'</ul>'
-        :'<p class="meta">Nenhum objetivo para esta semana ainda.</p>')
-      +'<form class="ob-f" autocomplete="off"><input id="ob-t" maxlength="300" placeholder="Novo objetivo da semana">'
-      +'<select id="ob-d"><option value="">Dono</option>'+nomes.map(n=>'<option>'+esc(n)+'</option>').join("")+'</select>'
-      +(c?'':'<input id="ob-ap" placeholder="apelido" size="8" autocapitalize="none"><input id="ob-pin" placeholder="PIN" size="5" type="password" inputmode="numeric">')
-      +'<button type="submit">Adicionar</button></form><p class="meta ob-st">'+esc(msg||"")+'</p>';
-    el.querySelector(".ob-f").addEventListener("submit",ev=>{ ev.preventDefault(); const t=$("#ob-t").value.trim(); if(!t) return; enviar("objetivoNovo",{objetivo:t,dono:$("#ob-d").value}); });
-    el.querySelectorAll(".ob-ac button").forEach(b=>b.addEventListener("click",()=>{ const l=+b.closest("li").dataset.l, o=OB.find(x=>x.l===l); if(!o) return;
-      let obs=""; if(b.dataset.st==="nao deu"){ obs=(prompt("O que travou? (opcional)")||"").trim(); }
-      enviar("objetivoMarcar",{linha:l,objetivo:o.t,status:b.dataset.st,obs:obs}); }));
-  }
-  async function enviar(action,o){
-    let c=cred();
-    if(!c){ const ap=(($("#ob-ap")||{}).value||"").trim().toLowerCase(), pin=(($("#ob-pin")||{}).value||"").trim();
-      if(!ap||!pin){ el.querySelector(".ob-st").textContent="Preencha apelido e PIN (os mesmos do app de Edição)."; return; }
-      c={apelido:ap,pin:pin}; }
-    el.querySelector(".ob-st").textContent="Salvando…";
-    try{
-      const r=await fetch(EDIT_URL,{method:"POST",body:JSON.stringify({action:action,cred:c,o:o})});
-      const j=await r.json(); if(!j.ok) throw new Error(j.erro||"Não deu para salvar.");
-      const novo=!cred(); try{ localStorage.setItem(CK,JSON.stringify(c)); }catch(_){}
-      OB=(j.objetivos||[]).map(x=>({l:x.l,sem:x.sem,t:x.t,dono:x.dono,st:String(x.st||"aberto").toLowerCase(),a:x.a,q:x.q,obs:x.obs}));
-      render("Salvo."); if(novo) window.dispatchEvent(new Event("central-cred"));
-    }catch(err){ const m=String((err&&err.message)||err);
-      if(m.indexOf("LOGIN")>=0){ try{localStorage.removeItem(CK);}catch(_){} render("Apelido ou PIN não conferem."); }
-      else el.querySelector(".ob-st").textContent=/desconhecida/.test(m)?"O app de Edição ainda está na versão antiga; falta implantar a v15.":"Não deu: "+m; }
-  }
-  window.addEventListener("central-cred",()=>{ if(!el.contains(document.activeElement)) render(); });
-  render();
-})();
+/* Objetivos da semana: aposentados em 28/11/2026. Cada item já tem dono, etapa e próxima ação no Roteiro;
+   a aba Objetivos da Pipeline TRX fica como histórico. */
 
 /* ---------- painel de abertura da aba Início (layout v2, 17/11/2026) ---------- */
 (function(){
@@ -2317,21 +2225,16 @@ const lFis=(function(){
     const nHoje=document.querySelectorAll("#hoje .hj-lista>li").length;
     const nUrg=document.querySelectorAll("#urg li").length;
     const pzh=PR.filter(p=>p.prazo&&p.dt&&!passou(p.dt)&&dias(p.dt)!==null&&dias(p.dt)<=1).length;
-    const ob=window.OBJ_SEMANA||{t:0,f:0};
-    const mu=(D.mural||[]).length;
     let dia=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"}); dia=dia.charAt(0).toUpperCase()+dia.slice(1);
     const c=(href,n,t,al)=>'<a href="'+href+'"'+(al&&n?' class="al"':'')+'><b>'+n+'</b><span>'+t+'</span></a>';
     el.innerHTML='<div class="ih-t"><span class="ih-ey">Comunicação e documentos · hoje</span><span class="ih-d">'+esc(dia)+'</span></div><div class="ih-n">'
       +c("#inicio",nUrg,"urgentes agora",true)
       +c("#prioridades",pzh,"prazos hoje e amanhã")
-      +c("#inicio",nHoje,"na sua fila")
-      +'<a href="#inicio"><b>'+ob.f+'<small>/'+ob.t+'</small></b><span>objetivos da semana</span></a>'
-      +c("#inicio",mu,"recados no mural")+'</div>';
+      +c("#inicio",nHoje,"na sua fila")+'</div>';
     $("#n-inicio").textContent=nHoje||"";
   }
   pinta();
   const h=$("#hoje"); if(h) new MutationObserver(pinta).observe(h,{childList:true});
-  window.addEventListener("central-obj",pinta);
 })();
 
 /* ---------- RELATÓRIOS (17/11/2026): a Carla sobe a planilha e a Central monta o relatório ----------
@@ -2539,7 +2442,7 @@ const lRel = (function(){
     Object.keys(D.dias||{}).forEach(d=>{ const k=dIso(d); if(k && k<lim) n += D.dias[d]; });
     return {n:n, quando:"", desde:ontem};
   }
-  // credencial do app de Edição: a mesma do Mural; pede uma vez e guarda
+  // credencial do app de Edição: a mesma da Minha fila; pede uma vez e guarda
   function credRel(){
     let c = null; try{ c = JSON.parse(localStorage.getItem(CK)||"null"); }catch(e){}
     if(c) return c;

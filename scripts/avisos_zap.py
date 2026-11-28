@@ -8,7 +8,8 @@ no WhatsApp, pelo numero da TRX (Cloud API da Meta), um aviso por item NOVO:
 - documento VENCIDO: avisa a Carla (com a marca de que o Marcos regulariza)
   e o Marcos (REGULARIZAR AGORA);
 - documento que entrou na faixa VENCE EM 15 DIAS: avisa a Carla;
-- documento marcado DESATUALIZADO (coluna T): avisa a Carla.
+- documento marcado DESATUALIZADO (coluna T): avisa a Carla;
+- nota de tarefa da Minha fila com @apelido: avisa a pessoa marcada.
 
 Caminho de envio principal: AiSensy (segredo ZAP_AISENSY_KEY; coexistencia no
 numero da TRX, inscricao de 15/11). Exige no painel AiSensy o template
@@ -20,6 +21,7 @@ que sai da Central sai do estado.
 """
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -59,11 +61,17 @@ def monta_avisos(central):
             chave = f"doc-desat:{doc}"
             avisos.append((chave, "carla",
                            f"Central TRX: {doc} DESATUALIZADO. {str(d['mot'])[:140]}"))
-    for m in central.get("mural", []):
-        for ap in [a.strip().lower() for a in (m.get("menc") or "").split(",") if a.strip()]:
-            chave = f"mural:{m.get('q','')}:{m.get('a','')}:{ap}"
-            avisos.append((chave, ap,
-                           f"Mural da Central: {m.get('a','')} marcou voce: {str(m.get('m',''))[:180]}"))
+    # Mural aposentado em 28/11/2026: a marcacao @apelido passa a valer na nota da tarefa
+    # (aba Tarefas_Status). Tarefa ja arquivada (Feito ou Ciente) nao avisa mais.
+    for t in central.get("tarefas_status", []):
+        if t.get("st"):
+            continue
+        for o in t.get("obs", []):
+            texto = str(o.get("o", ""))
+            for ap in sorted({a.lower() for a in re.findall(r"@([A-Za-z0-9_]{2,30})", texto)} - {"claude"}):
+                chave = f"nota:{t.get('k','')}:{o.get('q','')}:{o.get('a','')}:{ap}"
+                avisos.append((chave, ap,
+                               f"Central TRX: {o.get('a','')} marcou voce em \"{str(t.get('t',''))[:80]}\": {texto[:150]}"))
     return avisos
 
 
