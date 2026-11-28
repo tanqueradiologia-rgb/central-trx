@@ -2358,6 +2358,27 @@ const lRel = (function(){
      de entregas, preço e fechamento próprios. */
   const modDe = (m, desc) => { const md = modSigla(m); return (md==="TC" && sem(desc).indexOf("coronar")>=0) ? "ACOR" : md; };
   const colDe = (linhas,n) => { const k = Object.keys(linhas[0]||{}).find(x=>sem(x)===sem(n)); return k||n; };
+  /* 28/11/2026 (regra do Marcos): exame refinalizado conta UMA vez. Quando o mesmo número de acesso
+     aparece finalizado mais de uma vez no mesmo hospital com a mesma descrição de exame, fica só a
+     primeira finalização. Descrições diferentes no mesmo acesso (segmentos de angiotomografia, as
+     duas metades do abdome total) continuam contando cada uma. Sem coluna de acesso, nada muda. */
+  function semRepetido(linhas){
+    const cAc = Object.keys(linhas[0]||{}).find(x=>sem(x).indexOf("acesso")>=0);
+    if(!cAc) return {linhas:linhas, tirou:0};
+    const cFim = colDe(linhas,"Finalizados em"), cInst = colDe(linhas,"Instituição"), cDesc = colDe(linhas,"Descrição do exame");
+    const quando = r => { const f=String(r[cFim]||"").trim(); return ordem(f)+f.slice(10); };
+    const melhor = {};
+    linhas.forEach((r,i)=>{
+      const ac = String(r[cAc]||"").trim(); if(!ac || !String(r[cFim]||"").trim()) return;
+      const k = sem(r[cInst])+"|"+ac+"|"+sem(r[cDesc]);
+      if(!(k in melhor) || quando(r) < quando(linhas[melhor[k]])) melhor[k] = i;
+    });
+    const fica = linhas.filter((r,i)=>{
+      const ac = String(r[cAc]||"").trim(); if(!ac || !String(r[cFim]||"").trim()) return true;
+      return melhor[sem(r[cInst])+"|"+ac+"|"+sem(r[cDesc])] === i;
+    });
+    return {linhas:fica, tirou:linhas.length-fica.length};
+  }
   /* Quantos exames finalizados o arquivo tem de cada hospital e modalidade, do maior para o menor. */
   function inventario(linhas){
     const cFim = colDe(linhas,"Finalizados em"), cMod = colDe(linhas,"Modalidade"), cInst = colDe(linhas,"Instituição"), cDesc = colDe(linhas,"Descrição do exame");
@@ -2775,11 +2796,13 @@ const lRel = (function(){
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(new Uint8Array(buf), {type:"array"});
       const sh = wb.Sheets[wb.SheetNames[0]];
-      const linhas = XLSX.utils.sheet_to_json(sh, {defval:"", raw:false});
-      if(!linhas.length) throw new Error("A planilha veio vazia.");
+      const bruto = XLSX.utils.sheet_to_json(sh, {defval:"", raw:false});
+      if(!bruto.length) throw new Error("A planilha veio vazia.");
+      const lim = semRepetido(bruto), linhas = lim.linhas;
       LINHAS = linhas; GRUPOS = inventario(linhas); SEL = GRUPOS[0];
       D = analisar(LINHAS, SEL);
       tela();
+      if(lim.tirou){ const m=$("#rl-msg"); if(m) m.textContent = lim.tirou===1 ? "1 exame finalizado duas vezes no arquivo foi contado uma vez só." : lim.tirou+" finalizações repetidas no arquivo foram contadas uma vez só."; }
     }catch(e){
       if(st) st.textContent = String((e&&e.message)||e);
       else alert(String((e&&e.message)||e));
