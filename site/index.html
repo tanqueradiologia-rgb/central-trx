@@ -757,6 +757,13 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 nav.tabs a.dest{font-weight:700;color:var(--ink);border:2px solid var(--turq);padding:4px 14px;margin-right:6px}
 nav.tabs a.dest[aria-current="page"]{border-color:transparent;color:var(--grad-ink);box-shadow:0 2px 10px rgba(3,128,167,.35)}
 .rt-col.fecho{background:var(--accent-soft);border-top-color:var(--ok)}
+.rt-fx-t{grid-column:1/-1;margin-top:10px;padding:6px 12px;border-left:4px solid var(--turq);background:var(--surface);border-radius:8px;font-size:13px;color:var(--muted)} .rt-fx-t b{color:var(--ink);font-family:var(--f-display);font-size:15px}
+.rt-cel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.rt-cel h4{margin:0;font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:6px} .rt-cel h4 b{font-variant-numeric:tabular-nums}
+.rt-cel .rt-nota{font-size:12px;color:var(--muted)} .rt-cel .rt-nota b{color:var(--ink)} .rt-cel .rt-nada{color:var(--muted);font-size:12px}
+.rt-cel .rt-mais{font-size:12px;color:var(--turq)}
+.rt-col .vira details{margin-bottom:4px} .rt-col .vira summary{cursor:pointer;font-weight:600}
+.rt-jur{grid-column:1/-1} .rt-jur summary{cursor:pointer;font-family:var(--f-display);font-weight:600;color:var(--turq)}
 .rt-it.warn{border-left:3px solid var(--warn)} .rt-it.bad{border-left:3px solid var(--bad)}
 .rt-it .kb-pe{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
 .rt-it .kb-resp{font-size:11px;color:var(--muted)}
@@ -1113,7 +1120,8 @@ function kbBoard(src, rows, o){
           +(al?'<span class="al">Na linha: '+esc(papel(r.resp))+' · roteiro: '+esc(papel(i.F.resp))+'</span>':'')+(o.extra?o.extra(src,r):'')+'</a>'; }).join("")
       || '<div class="ag-vazio">Ninguém nesta etapa.</div>';
     if(it.length>MAX) h+='<div class="meta">e mais '+(it.length-MAX)+', na tabela</div>';
-    return h+'<div class="vira"><b>Vira quando:</b> '+esc(E.fecha)+'<br><b>Faixa de dias:</b> atenção acima de '+f.at+', parado acima de '+f.pa+(f.real?' (tempo real de '+f.n+' passagens)':' (provisória)')+'</div></div>';
+    const tt=((FX.tempos||{})[src]||{})[String(E.n)];
+    return h+'<div class="vira">'+(E.objetivo?'<details><summary>O que se faz nesta etapa</summary>'+esc(E.objetivo)+'</details>':'')+'<b>Vira quando:</b> '+esc(E.fecha)+(tt&&tt.n?'<br><b>Tempo medido:</b> metade sai em até '+String(tt.p50).replace(".",",")+' d e 85% em até '+String(tt.p85).replace(".",",")+' d ('+tt.n+' passage'+(tt.n===1?'m':'ns')+')':'')+'<br><b>Faixa de dias:</b> atenção acima de '+f.at+', parado acima de '+f.pa+(f.real?' (tempo real de '+f.n+' passagens)':' (provisória)')+'</div></div>';
   }).join("");
 }
 // botão Tabela ou Quadro de uma aba: o quadro mostra as mesmas linhas da tabela, com os mesmos filtros
@@ -1742,6 +1750,55 @@ const lRot = (function(){
       +'<div class="vira"><b>O que é:</b> o cliente saiu do funil e está em produção. Aqui entram clínica e processo Em operação e contrato Ativo. Daqui em diante o trabalho é manter: gestão do contrato, relatório e faturamento.</div></div>';
     return {col7, soltos, OB, extra:(src,r)=>objHtml(porLinha[src+":"+r.l])};
   }
+  /* ESTEIRA COMPLETA (27/11/2026, pedido do Marcos): a aba Roteiro vira a página de referência da Central.
+     Debaixo das sete colunas das particulares entram duas faixas alinhadas às mesmas colunas: o setor
+     público (licitações e quadro) e o jurídico (documentos, prazos e contratos). Cada célula mostra o
+     nome da etapa daquela faixa, a contagem e os três itens que mais pedem atenção. */
+  function faixas(){
+    const ord={bad:0,warn:1,"":2}, MAXC=3;
+    const cel=(titulo,n,corpo,link)=>'<div class="rt-cel"><h4><span>'+titulo+'</span>'+(n===null?'':'<b>'+n+'</b>')+'</h4>'+(corpo||'<div class="rt-nada">—</div>')+(link?'<a class="rt-mais" href="'+link[0]+'">'+link[1]+'</a>':'')+'</div>';
+    const mini=(src,rows)=>rows.slice().sort((a,b)=>(ord[nivel(src,a)]-ord[nivel(src,b)])||((idade(b)??-1)-(idade(a)??-1))).slice(0,MAXC)
+      .map(r=>'<a class="rt-it '+nivel(src,r)+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener"><span class="t">'+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span><span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'+(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')+'</a>').join("")
+      +(rows.length>MAXC?'<div class="meta">e mais '+(rows.length-MAXC)+'</div>':'');
+    // faixa do setor público: etapa do roteiro de licitações -> coluna da esteira
+    const eRaw=f=>{ const F=RT.licitacoes.fases[f]; return F?F.e:0; };
+    const liAt=n=>LI.filter(r=>eRaw(r.fase)===n && !naFila("licitacoes",r.fase) && (n>=3 || aberta(r)));
+    const filaLi=LI.filter(r=>naFila("licitacoes",r.fase) && aberta(r)).length;
+    const qdAnd=QD.filter(r=>andando("quadro",r)).length;
+    const E=RT.licitacoes.etapas, nomeE=n=>(E.find(e=>e.n===n)||{}).nome||"";
+    const pub=[
+      cel("1. "+esc(nomeE(1)), liAt(1).length, '<div class="rt-nota"><b>'+filaLi+'</b> editais na fila de triagem · quadro público: <b>'+qdAnd+'</b> órgãos em contato e <b>'+(QD.length-qdAnd)+'</b> em aberto</div>'+mini("licitacoes",liAt(1)), ["#licitacoes","ver Licitações"]),
+      cel("2. "+esc(nomeE(2)), liAt(2).length, mini("licitacoes",liAt(2))),
+      cel("3. "+esc(nomeE(3)), liAt(3).length, mini("licitacoes",liAt(3))),
+      cel("Sem etapa no público", null, '<div class="rt-nota">No edital o preço entra na disputa, não numa proposta escrita.</div>'),
+      cel("4. "+esc(nomeE(4)), liAt(4).length, mini("licitacoes",liAt(4))),
+      cel("5. "+esc(nomeE(5)), liAt(5).length, mini("licitacoes",liAt(5))),
+      cel("Em operação", liAt(6).length, mini("licitacoes",liAt(6)))
+    ];
+    // faixa do jurídico: documentos sustentam a habilitação, prazos a disputa e contratos o fechamento
+    const FIS=D.fiscal||{}, DOCS=FIS.documentos||[], CON=(FIS.contratos||[]);
+    const av=DOCS.filter(d=>d.fase==="A vencer"), ve=DOCS.filter(d=>d.fase==="Vencido");
+    const dcard=d=>{ const dd=d.val?dias(d.val):null; return '<a class="rt-it '+(d.fase==="Vencido"?'bad':'warn')+'" href="#fiscal"><span class="t">'+esc(d.doc)+'</span><span class="s">'+(d.val?(dd!==null&&dd<0?'venceu há '+(-dd)+' d':'vence em '+dd+' d')+' · '+fData(d.val):'sem validade')+'</span></a>'; };
+    const docs=ve.concat(av.slice().sort((a,b)=>(a.val||"9")<(b.val||"9")?-1:1));
+    const hoje=(D.gerado||"").slice(0,10), lim=new Date(hoje+"T12:00:00"); lim.setDate(lim.getDate()+30); const limIso=lim.toISOString().slice(0,10);
+    const prazos=LI.filter(l=>l.prazo&&l.prazo.slice(0,10)>=hoje&&l.prazo.slice(0,10)<=limIso&&!FECHADAS.test(l.fase||"")&&eRaw(l.fase)<6).sort((a,b)=>a.prazo<b.prazo?-1:1);
+    const pcard=l=>'<a class="rt-it" href="'+editLink("licitacoes",l.l)+'" target="_blank" rel="noopener"><span class="t">'+esc(l.org||l.id)+'</span><span class="s">prazo '+fData(l.prazo,true)+' · '+esc(rotFase("licitacoes",l.fase))+'</span></a>';
+    const ccard=c=>'<a class="rt-it" href="#fiscal"><span class="t">'+esc(c.n)+'</span><span class="s">'+esc([c.tp,c.st,c.acao].filter(Boolean).join(" · "))+(c.qdo||c.fim?' · '+fData(c.qdo||c.fim):'')+'</span>'+(c.resp?'<span class="kb-pe"><span class="kb-resp">'+esc(c.resp)+'</span></span>':'')+'</a>';
+    const lista=(arr,fn)=>arr.slice(0,MAXC).map(fn).join("")+(arr.length>MAXC?'<div class="meta">e mais '+(arr.length-MAXC)+'</div>':'');
+    const cliente=c=>!/alug/i.test(c.tp||""), ana=CON.filter(c=>cliente(c)&&/an[aá]lise/i.test(c.st||"")), ati=CON.filter(c=>cliente(c)&&c.st==="Ativo");
+    const outros=CON.filter(c=>!ana.includes(c)&&!ati.includes(c));
+    const jur=[
+      cel("Regras de mesa", null, '<div class="rt-nota">Preço só na etapa 4. Toda proposta sai com a TRX em cópia.</div>'),
+      cel("Documentos de habilitação", docs.length, '<div class="rt-nota"><b>'+ve.length+'</b> vencido'+(ve.length===1?'':'s')+' · <b>'+av.length+'</b> a vencer em 30 dias · <b>'+(DOCS.length-docs.length)+'</b> em dia</div>'+lista(docs,dcard), ["#fiscal","ver todos"]),
+      cel("Prazos de edital em 30 dias", prazos.length, lista(prazos,pcard)),
+      cel("Minuta e proposta", null, '<div class="rt-nota">A proposta escrita sai pelo Kit, com a TRX em cópia.</div>'),
+      cel("Contratos em análise", ana.length, lista(ana,ccard)),
+      cel("Outros contratos", outros.length, lista(outros,ccard)),
+      cel("Contratos ativos", ati.length, lista(ati,ccard), ["#fiscal","ver contratos"])
+    ];
+    return '<div class="rt-fx-t"><b>Setor público</b> · licitações, credenciamentos e quadro, na mesma esteira</div>'+pub.join("")
+          +'<div class="rt-fx-t"><b>Jurídico e documentos</b> · o que sustenta cada etapa</div>'+jur.join("");
+  }
   function render(){
     const R=RT[fr], p=pes.value, src=SRC[fr], C=coord();
     $("#rt-aviso").textContent = (R.aviso? R.aviso+" " : "") + "O roteiro orienta; quem decide é a equipe. Clique num cartão para editar a linha.";
@@ -1750,12 +1807,13 @@ const lRot = (function(){
     $("#rt-board").style.setProperty("--n", R.etapas.length + (fr==="particulares"?1:0));
     $("#rt-board").style.setProperty("--w", fr==="particulares" ? "150px" : "190px");
     $("#rt-res").innerHTML = resumoFluxo(src, base);
-    $("#rt-board").innerHTML = kbBoard(src, lista, {extra:C.extra}) + (fr==="particulares" ? C.col7 : "");
+    $("#rt-board").innerHTML = kbBoard(src, lista, {extra:C.extra, max:fr==="particulares"?5:8}) + (fr==="particulares" ? C.col7 + faixas() : "");
     let ex='<div class="band"><h3>As quatro regras de mesa</h3><ul>'+RT.regras.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
     if(fr==="particulares") ex+='<div class="band"><h3>Cadência de 6 toques da etapa 1 (cerca de 21 dias)</h3><div class="tbl"><table><thead><tr><th>Toque</th><th>Dia</th><th>Canal</th><th>Objetivo</th></tr></thead><tbody>'+
       RT.particulares.cadencia.map(c=>'<tr><td class="mono">'+c.n+'</td><td class="mono">'+c.dia+'</td><td>'+esc(c.canal)+'</td><td>'+esc(c.obj)+'</td></tr>').join("")+'</tbody></table></div><p class="meta" style="margin:0">Se o decisor responder em qualquer toque, a cadência para e a Fase vira Decisor engajado.</p></div>';
     ex+='<div class="band"><h3>Quem faz o quê</h3><ul>'+Object.keys(RT.papeis).map(k=>'<li><b>'+esc(papel(k).replace(/^./,c=>c.toUpperCase()))+':</b> '+esc(RT.papeis[k])+'</li>').join("")+'</ul><p class="meta" style="margin:0">Depois da implantação vêm a gestão do contrato, o faturamento e a distribuição de valores, que entram numa fase futura da Central.</p></div>';
     if(fr==="particulares" && C.soltos.length) ex='<div class="band"><h3>Objetivos da semana sem cliente ligado</h3><ul>'+C.soltos.map(o=>'<li>'+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+(o.st!=="aberto"?' · '+esc(o.st):'')+'</li>').join("")+'</ul><p class="meta" style="margin:0">O objetivo aparece no cartão do cliente quando o texto cita o nome dele como está no quadro.</p></div>'+ex;
+    if(fr==="particulares") ex+='<details class="band rt-jur"><summary>Jurídico completo: contratos, prazos e todos os documentos</summary>'+lFis.html()+'</details>';
     $("#rt-extra").innerHTML=ex;
   }
   $("#rt-fr").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; fr=b.dataset.v; $("#rt-fr").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); render(); });
@@ -2017,7 +2075,7 @@ const lFis=(function(){
   const corpo=document.getElementById("fis-corpo");
   $("#n-fiscal").textContent = CON.length || "";
   function stCls(st){ st=(st||"").toUpperCase(); if(st==="VENCIDO") return "d-bad"; if(st.indexOf("VENCE EM")===0) return "d-warn"; return ""; }
-  function render(){
+  function monta(){
     const ativos=CON.filter(c=>c.st==="Ativo").length, analise=CON.filter(c=>/an[aá]lise/i.test(c.st)).length;
     const venc=DOCS.filter(d=>(d.st||"").toUpperCase()==="VENCIDO").length;
     const breve=DOCS.filter(d=>(d.st||"").toUpperCase().indexOf("VENCE EM")===0).length;
@@ -2025,7 +2083,7 @@ const lFis=(function(){
     const hoje=(D.gerado||"").slice(0,10), lim=new Date(hoje+"T12:00:00"); lim.setDate(lim.getDate()+30);
     const limIso=lim.toISOString().slice(0,10);
     const prazos=(D.licitacoes||[]).filter(l=>l.prazo&&l.prazo.slice(0,10)>=hoje&&l.prazo.slice(0,10)<=limIso&&!/Descartado|Perdido|Em operacao/.test(l.fase||"")).sort((a,b)=>a.prazo<b.prazo?-1:1);
-    $("#k-fiscal").innerHTML=[
+    const kp=[
       ["Contratos ativos",ativos,""],["Propostas em análise",analise,""],
       ["Documentos vencidos",venc,venc?"bad":"ok"],["Vencem em breve",breve,breve?"warn":"ok"],
       ["Prazos em 30 dias",prazos.length,""]
@@ -2056,9 +2114,10 @@ const lFis=(function(){
     h+=DOCS.length?'<div class="tbl"><table><thead><tr><th>Documento</th><th>Validade</th><th>Status</th><th class="hide-sm">Situação</th><th>Responsável</th></tr></thead><tbody>'
       +DOCS.map(d=>'<tr><td><b>'+esc(d.doc)+'</b>'+(d.mot?'<div class="meta d-bad">'+esc(d.mot)+'</div>':'')+'</td><td class="mono">'+esc(d.val||"—")+'</td><td class="'+stCls(d.st)+'">'+esc(d.st||"—")+'</td><td class="hide-sm">'+esc(d.sit||"—")+'</td><td>'+esc(d.resp||"—")+'</td></tr>').join("")
       +'</tbody></table></div>':'<p class="vazio">A lista de documentos chega na próxima rodada da Central.</p>';
-    corpo.innerHTML=h;
+    return {h:h, kp:kp};
   }
-  return {render};
+  function render(){ const x=monta(); $("#k-fiscal").innerHTML=x.kp; corpo.innerHTML=x.h; }
+  return {render, html:()=>monta().h};
 })();
 
 /* ---------- URGENTE AGORA (17/11/2026): o que vence hoje ou amanhã ou já venceu, de todos os assuntos ---------- */
