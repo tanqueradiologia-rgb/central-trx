@@ -53,29 +53,7 @@
     "horizonte_semanas": 4,
     "simulacoes": 10000
   },
-  "coordenacao": {
-    "colunas": [
-      "Prospecção",
-      "Proposta e contrato",
-      "Implantação",
-      "Produção estável"
-    ],
-    "clinicas": {
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 1,
-      "6": 2,
-      "7": 3
-    },
-    "licitacoes": {
-      "3": 0,
-      "4": 1,
-      "5": 2,
-      "6": 3
-    }
-  },
-  "_coordenacao": "Quadro de coordenação por cliente: em qual coluna cai cada etapa do roteiro. Contrato com Status Ativo na aba Contratos entra em Produção estável e Em análise em Proposta e contrato; aluguel fica de fora.",
+  "_coordenacao": "A coordenação por cliente é a sétima coluna do roteiro das particulares (Marcos, 27/11/2026): junta clínica e processo Em operação e contrato Ativo; aluguel fica de fora.",
   "revisao": [
     "Todo cartão que passou pelo Claude volta para a coluna Para revisar com três linhas: Feito, Falta e Precisa de você.",
     "Uma pessoa confere e marca Feito. O Claude não fecha o próprio cartão.",

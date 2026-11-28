@@ -256,7 +256,7 @@ tr.det td{background:var(--surface2);padding:14px 16px 18px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
 .seg button{font:inherit;font-size:14px;border:0;background:none;color:var(--muted);padding:6px 14px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
-.rt-board{display:grid;grid-template-columns:repeat(var(--n,5),minmax(190px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px;align-items:start}
+.rt-board{display:grid;grid-template-columns:repeat(var(--n,5),minmax(var(--w,190px),1fr));gap:8px;overflow-x:auto;padding-bottom:6px;align-items:start}
 .rt-col{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--e1);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .rt-col h3{margin:0;font-family:var(--f-display);font-size:16px;display:flex;justify-content:space-between;gap:8px}
 .rt-col h3 b{font-variant-numeric:tabular-nums}
@@ -543,13 +543,13 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
       <button class="tema" id="sair" type="button" hidden title="Apaga a senha guardada neste aparelho">Sair</button></div>
     </div>
     <nav class="tabs" aria-label="Frentes">
+      <a href="#roteiro" data-tab="roteiro" class="dest" title="O roteiro inteiro, da pescaria do decisor ao cliente em produção">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#inicio" data-tab="inicio">Início<span class="n" id="n-inicio"></span></a>
       <a href="#prioridades" data-tab="prioridades">Prioridades<span class="n" id="n-prioridades"></span></a>
       <a href="#clinicas" data-tab="clinicas" title="Clínicas particulares">Clínicas<span class="n" id="n-clinicas"></span></a>
       <a href="#licitacoes" data-tab="licitacoes" title="Licitações e prazos">Licitações<span class="n" id="n-licitacoes"></span></a>
       <a href="#quadro" data-tab="quadro" title="Quadro nacional">Quadro<span class="n" id="n-quadro"></span></a>
       <a href="#isgh" data-tab="isgh">ISGH<span class="n" id="n-isgh"></span></a>
-      <a href="#roteiro" data-tab="roteiro">Roteiro<span class="n" id="n-roteiro"></span></a>
       <a href="#resultados" data-tab="resultados">Resultados<span class="n" id="n-resultados"></span></a>
       <a href="#producao" data-tab="producao" title="Produção dos sócios">Produção<span class="n" id="n-producao"></span></a>
       <a href="#relatorios" data-tab="relatorios" title="Relatórios para o cliente">Relatórios<span class="n" id="n-relatorios"></span></a>
@@ -649,10 +649,11 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 
   <section class="pane" id="pane-roteiro" hidden>
     <div class="rt-top">
-      <div class="seg" id="rt-fr" role="group" aria-label="Frente"><button type="button" data-v="coord" aria-pressed="true">Coordenação por cliente</button><button type="button" data-v="particulares" aria-pressed="false">Clínicas e hospitais particulares</button><button type="button" data-v="licitacoes" aria-pressed="false">Licitações</button><button type="button" data-v="quadro" aria-pressed="false">Quadro público</button></div>
+      <div class="seg" id="rt-fr" role="group" aria-label="Frente"><button type="button" data-v="particulares" aria-pressed="true">Clínicas e hospitais particulares</button><button type="button" data-v="licitacoes" aria-pressed="false">Licitações</button><button type="button" data-v="quadro" aria-pressed="false">Quadro público</button></div>
       <div class="filters"><label>Fila de quem<select id="rt-pes"><option value="">Todos</option></select></label></div>
     </div>
     <p class="meta" id="rt-aviso"></p>
+    <div id="rt-res"></div>
     <div class="rt-board" id="rt-board"></div>
     <div class="rt-extra" id="rt-extra"></div>
   </section>
@@ -753,6 +754,9 @@ tr.row[aria-expanded="true"] td{background:var(--accent-soft)}
 .fx-res b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px}
 .fx-res .fx-n.bad b{color:var(--bad)} .fx-res .fx-pes{color:var(--muted);margin-left:auto}
 .seg.vis{align-self:flex-end}
+nav.tabs a.dest{font-weight:700;color:var(--ink);border:2px solid var(--turq);padding:4px 14px;margin-right:6px}
+nav.tabs a.dest[aria-current="page"]{border-color:transparent;color:var(--grad-ink);box-shadow:0 2px 10px rgba(3,128,167,.35)}
+.rt-col.fecho{background:var(--accent-soft);border-top-color:var(--ok)}
 .rt-it.warn{border-left:3px solid var(--warn)} .rt-it.bad{border-left:3px solid var(--bad)}
 .rt-it .kb-pe{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
 .rt-it .kb-resp{font-size:11px;color:var(--muted)}
@@ -1106,7 +1110,7 @@ function kbBoard(src, rows, o){
         return '<a class="rt-it '+nv+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener" title="'+esc(i?i.F.faz:"")+'"><span class="t">'+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span>'
           +'<span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'
           +(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')
-          +(al?'<span class="al">Na linha: '+esc(papel(r.resp))+' · roteiro: '+esc(papel(i.F.resp))+'</span>':'')+'</a>'; }).join("")
+          +(al?'<span class="al">Na linha: '+esc(papel(r.resp))+' · roteiro: '+esc(papel(i.F.resp))+'</span>':'')+(o.extra?o.extra(src,r):'')+'</a>'; }).join("")
       || '<div class="ag-vazio">Ninguém nesta etapa.</div>';
     if(it.length>MAX) h+='<div class="meta">e mais '+(it.length-MAX)+', na tabela</div>';
     return h+'<div class="vira"><b>Vira quando:</b> '+esc(E.fecha)+'<br><b>Faixa de dias:</b> atenção acima de '+f.at+', parado acima de '+f.pa+(f.real?' (tempo real de '+f.n+' passagens)':' (provisória)')+'</div></div>';
@@ -1690,7 +1694,7 @@ const lIsgh = (function(){
 /* ---------- ROTEIRO: o funil em etapas, com o dono de cada uma ---------- */
 const lRot = (function(){
   if(!RT){ $("#rt-aviso").textContent="O roteiro não carregou. Recarregue a página."; return {render(){}}; }
-  let fr="coord";
+  let fr="particulares";
   const SRC={particulares:"clinicas", licitacoes:"licitacoes", quadro:"quadro"};
   const pes=$("#rt-pes"); Object.keys(RT.papeis).forEach(k=>{ const o=document.createElement("option"); o.value=k; o.textContent=papel(k).replace(/^./,c=>c.toUpperCase()); pes.appendChild(o); });
   /* Quadro de coordenação por cliente (27/11/2026): um cartão por cliente que já saiu da prospecção fria,
@@ -1699,60 +1703,60 @@ const lRot = (function(){
   const STOP=new Set(["clinica","clinicas","hospital","instituto","centro","secretaria","municipal","saude","prefeitura","regional","diagnostico","imagem","medicina","servicos","contrato","proposta","estado","fundo","santa","nossa","senhora","radiologia","laudos","telelaudo","exames","medica","medico","associacao","fundacao","universitario","servico"]);
   const toks = t => norm(t).replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w=>w.length>=5 && !STOP.has(w));
   const siglas = t => (String(t||"").match(/\b[A-Z]{3,6}\b/g)||[]).map(x=>x.toLowerCase());
+  /* 27/11/2026 (pedido do Marcos): a coordenação por cliente deixou de ser um quadro à parte e virou a
+     sétima coluna do roteiro das particulares, porque ela é o fechamento do processo inteiro. A coluna
+     junta todo cliente em produção (clínica ou processo Em operação e contrato Ativo), e os Objetivos da
+     semana que citam um cliente aparecem no cartão dele, em qualquer coluna. */
   function coord(){
-    const C=FCFG.coordenacao||{}, cols=(C.colunas||["Prospecção","Proposta e contrato","Implantação","Produção estável"]).map(n=>({n,it:[]}));
     const eRaw=(src,fase)=>{ const R=RT[FRT[src]], F=R&&R.fases[fase]; return F?F.e:0; };
-    const poe=(src,r,tipo)=>{ const c=(C[src]||{})[String(eRaw(src,r.fase))]; if(c===undefined) return;
-      if(src==="licitacoes" && eRaw(src,r.fase)<=5 && FECHADAS.test(r.fase)) return;
-      cols[c].it.push({src,r,tipo,nome:kbTitulo(src,r),fase:rotFase(src,r.fase),resp:r.resp,href:editLink(src,r.l),obj:[]}); };
-    CL.forEach(r=>poe("clinicas",r,"Clínica")); LI.forEach(r=>poe("licitacoes",r,r.aba==="CREDENCIAMENTO"?"Credenciamento":"Pregão"));
+    const vivos=[], fecho=[];
+    CL.forEach(r=>{ const e=eRaw("clinicas",r.fase); if(e>=2) (e>=7?fecho:vivos).push({src:"clinicas",r,tipo:"Clínica",nome:r.n,fase:rotFase("clinicas",r.fase),resp:r.resp,href:editLink("clinicas",r.l),obj:[]}); });
+    LI.forEach(r=>{ const e=eRaw("licitacoes",r.fase); if(e>=3) (e>=6?fecho:vivos).push({src:"licitacoes",r,tipo:r.aba==="CREDENCIAMENTO"?"Credenciamento":"Pregão",nome:r.org||r.id,fase:rotFase("licitacoes",r.fase),resp:r.resp,href:editLink("licitacoes",r.l),obj:[]}); });
+    const todos=vivos.concat(fecho);
     // palavra que aparece no nome de mais de um cliente não identifica ninguém: só vale a que é de um só
-    const freq={}; cols.forEach(c=>c.it.forEach(x=>new Set(toks(x.nome).concat(siglas(x.nome))).forEach(w=>{ freq[w]=(freq[w]||0)+1; })));
+    const freq={}; todos.forEach(x=>new Set(toks(x.nome).concat(siglas(x.nome))).forEach(w=>{ freq[w]=(freq[w]||0)+1; }));
     const unic = t => toks(t).concat(siglas(t)).filter(w=>(freq[w]||0)<=1);
     ((D.fiscal||{}).contratos||[]).forEach(c=>{
-      if(/alug/i.test(c.tp||"")) return;
-      const col = c.st==="Ativo" ? 3 : /an[aá]lise/i.test(c.st||"") ? 1 : -1; if(col<0) return;
+      if(/alug/i.test(c.tp||"") || c.st!=="Ativo") return;
       const chave=new Set(toks(c.n+" "+c.parte).concat(siglas(c.n+" "+c.parte)));
-      const ja=cols[col].it.find(x=>unic(x.nome).some(w=>chave.has(w)));
+      const ja=fecho.find(x=>unic(x.nome).some(w=>chave.has(w)));
       if(ja){ ja.contrato=c; return; }
-      cols[col].it.push({src:"contratos",contrato:c,tipo:"Contrato",nome:c.n,fase:c.st+(c.acao?" · "+c.acao:""),resp:c.resp,href:"#fiscal",obj:[]});
+      const x={src:"contratos",contrato:c,tipo:"Contrato",nome:c.n,fase:c.st+(c.acao?" · "+c.acao:""),resp:c.resp,href:"#fiscal",obj:[]}; fecho.push(x); todos.push(x);
     });
-    // objetivos da semana (os da semana corrente e os abertos das anteriores) ligados pelo nome do cliente
     const seg=new Date(HOJE); seg.setDate(seg.getDate()-((seg.getDay()+6)%7));
     const semD=s=>{ const m=/(\d{2})\/(\d{2})\/(\d{4})/.exec(s||""); return m?new Date(+m[3],+m[2]-1,+m[1]):null; };
     const OB=(D.objetivos||[]).filter(o=>{ const d=semD(o.sem); return d && (d.getTime()===seg.getTime() || (d<seg && o.st==="aberto")); });
-    const soltos=[];
+    const soltos=[], porLinha={};
     OB.forEach(o=>{ const t=" "+norm(o.t).replace(/[^a-z0-9 ]/g," ")+" "; let achou=false;
-      cols.forEach(c=>c.it.forEach(x=>{ const nm=norm(x.nome).replace(/[^a-z0-9 ]/g," ").trim();
+      todos.forEach(x=>{ const nm=norm(x.nome).replace(/[^a-z0-9 ]/g," ").trim();
         const ks=unic(x.nome).concat(x.contrato?siglas(x.contrato.n):[]);
-        if((nm.length>=5 && t.indexOf(" "+nm+" ")>=0) || ks.some(w=>t.indexOf(" "+w+" ")>=0)){ x.obj.push(o); achou=true; } }));
+        if((nm.length>=5 && t.indexOf(" "+nm+" ")>=0) || ks.some(w=>t.indexOf(" "+w+" ")>=0)){ x.obj.push(o); achou=true; if(x.r) (porLinha[x.src+":"+x.r.l]=porLinha[x.src+":"+x.r.l]||[]).push(o); } });
       if(!achou) soltos.push(o); });
-    const brd=$("#rt-board"); brd.style.setProperty("--n", cols.length);
-    brd.innerHTML=cols.map((c,ci)=>'<div class="rt-col" style="border-top-color:'+corEt([2,4,6,5][ci]||1)+'"><h3><span>'+esc(c.n)+'</span><b>'+c.it.length+'</b></h3>'
-      +(c.it.map(x=>'<a class="rt-it '+(x.r?nivel(x.src,x.r):"")+'" href="'+x.href+'"'+(x.src==="contratos"?'':' target="_blank" rel="noopener"')+'><span class="t">'+esc(x.nome)+'</span>'
+    const objHtml=l=>(l||[]).map(o=>'<span class="kb-obj'+(o.st==="feito"?' ok':'')+'">Objetivo da semana'+(o.st==="feito"?' (feito)':'')+': '+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+'</span>').join("");
+    const col7='<div class="rt-col fecho"><h3><span>7. Coordenação por cliente</span><b title="Clientes em produção">'+fecho.length+'</b></h3>'
+      +'<div class="dono">Dono: gestor do contrato<span class="pz-tag com">fechamento do processo</span></div>'
+      +(fecho.map(x=>'<a class="rt-it" href="'+x.href+'"'+(x.src==="contratos"?'':' target="_blank" rel="noopener"')+'><span class="t">'+esc(x.nome)+'</span>'
         +'<span class="s">'+esc(x.tipo)+' · '+esc(x.fase)+(x.contrato&&x.src!=="contratos"?' · contrato '+esc(x.contrato.st.toLowerCase()):'')+'</span>'
-        +'<span class="kb-pe">'+(x.r?selo(x.src,x.r):'')+(x.resp?'<span class="kb-resp">'+esc(papel(x.resp))+'</span>':'')+'</span>'
-        +(x.r&&x.r.bloq?'<span class="al">Trava: '+esc(x.r.bloq)+'</span>':'')
-        +x.obj.map(o=>'<span class="kb-obj'+(o.st==="feito"?' ok':'')+'">Objetivo da semana'+(o.st==="feito"?' (feito)':'')+': '+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+'</span>').join("")+'</a>').join("")
-        || '<div class="ag-vazio">Nenhum cliente aqui.</div>')+'</div>').join("");
-    $("#rt-aviso").textContent="Um cartão por cliente, da primeira reunião ao laudo em produção. Mostra em que área da empresa cada cliente está, há quantos dias e qual objetivo da semana empurra o cartão.";
-    $("#rt-extra").innerHTML='<div class="band"><h3>Objetivos da semana sem cliente ligado</h3>'+(soltos.length?'<ul>'+soltos.map(o=>'<li>'+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+(o.st!=="aberto"?' · '+esc(o.st):'')+'</li>').join("")+'</ul><p class="meta" style="margin:0">O objetivo se liga ao cartão quando o texto cita o nome do cliente como ele aparece no quadro.</p>':'<p class="meta" style="margin:0">Todos os objetivos da semana estão ligados a um cliente do quadro'+(OB.length?'':' (nenhum objetivo lançado nesta semana)')+'.</p>')+'</div>'
-      +'<div class="band"><h3>De onde vem cada coluna</h3><ul><li><b>Prospecção:</b> clínica a partir da reunião de diagnóstico e edital em disputa.</li><li><b>Proposta e contrato:</b> proposta escrita, negociação, processo habilitado ou ganho e contrato em análise.</li><li><b>Implantação:</b> contrato fechado até o primeiro laudo em produção.</li><li><b>Produção estável:</b> cliente em operação e contrato ativo.</li></ul></div>';
+        +(x.resp?'<span class="kb-pe"><span class="kb-resp">'+esc(papel(x.resp))+'</span></span>':'')+objHtml(x.obj)+'</a>').join("")
+        || '<div class="ag-vazio">Nenhum cliente em produção ainda.</div>')
+      +'<div class="vira"><b>O que é:</b> o cliente saiu do funil e está em produção. Aqui entram clínica e processo Em operação e contrato Ativo. Daqui em diante o trabalho é manter: gestão do contrato, relatório e faturamento.</div></div>';
+    return {col7, soltos, OB, extra:(src,r)=>objHtml(porLinha[src+":"+r.l])};
   }
   function render(){
-    pes.closest(".filters").hidden = fr==="coord";
-    if(fr==="coord"){ coord(); return; }
-    const R=RT[fr], p=pes.value, src=SRC[fr];
+    const R=RT[fr], p=pes.value, src=SRC[fr], C=coord();
     $("#rt-aviso").textContent = (R.aviso? R.aviso+" " : "") + "O roteiro orienta; quem decide é a equipe. Clique num cartão para editar a linha.";
     const base = src==="clinicas" ? CL : src==="licitacoes" ? LI : QD;
     const lista = p ? base.filter(r=>{ const i=rotInfo(src,r.fase); return i && i.F.resp===p; }) : base;
-    $("#rt-board").style.setProperty("--n", R.etapas.length);
-    $("#rt-board").innerHTML = kbBoard(src, lista);
+    $("#rt-board").style.setProperty("--n", R.etapas.length + (fr==="particulares"?1:0));
+    $("#rt-board").style.setProperty("--w", fr==="particulares" ? "150px" : "190px");
+    $("#rt-res").innerHTML = resumoFluxo(src, base);
+    $("#rt-board").innerHTML = kbBoard(src, lista, {extra:C.extra}) + (fr==="particulares" ? C.col7 : "");
     let ex='<div class="band"><h3>As quatro regras de mesa</h3><ul>'+RT.regras.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
     if(fr==="particulares") ex+='<div class="band"><h3>Cadência de 6 toques da etapa 1 (cerca de 21 dias)</h3><div class="tbl"><table><thead><tr><th>Toque</th><th>Dia</th><th>Canal</th><th>Objetivo</th></tr></thead><tbody>'+
       RT.particulares.cadencia.map(c=>'<tr><td class="mono">'+c.n+'</td><td class="mono">'+c.dia+'</td><td>'+esc(c.canal)+'</td><td>'+esc(c.obj)+'</td></tr>').join("")+'</tbody></table></div><p class="meta" style="margin:0">Se o decisor responder em qualquer toque, a cadência para e a Fase vira Decisor engajado.</p></div>';
     ex+='<div class="band"><h3>Quem faz o quê</h3><ul>'+Object.keys(RT.papeis).map(k=>'<li><b>'+esc(papel(k).replace(/^./,c=>c.toUpperCase()))+':</b> '+esc(RT.papeis[k])+'</li>').join("")+'</ul><p class="meta" style="margin:0">Depois da implantação vêm a gestão do contrato, o faturamento e a distribuição de valores, que entram numa fase futura da Central.</p></div>';
-    $("#rt-extra").innerHTML=resumoFluxo(src, base)+ex;
+    if(fr==="particulares" && C.soltos.length) ex='<div class="band"><h3>Objetivos da semana sem cliente ligado</h3><ul>'+C.soltos.map(o=>'<li>'+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+(o.st!=="aberto"?' · '+esc(o.st):'')+'</li>').join("")+'</ul><p class="meta" style="margin:0">O objetivo aparece no cartão do cliente quando o texto cita o nome dele como está no quadro.</p></div>'+ex;
+    $("#rt-extra").innerHTML=ex;
   }
   $("#rt-fr").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; fr=b.dataset.v; $("#rt-fr").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); render(); });
   pes.addEventListener("input",render);
