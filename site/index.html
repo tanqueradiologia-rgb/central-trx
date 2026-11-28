@@ -901,6 +901,40 @@ footer{border-top:3px solid var(--ciano);padding-top:12px}
 /* atalho para o Audo (28/11/2026): link externo no menu, depois do Kit */
 nav.tabs a.ext{border:1px solid rgba(255,255,255,.35);padding:5px 12px;margin-left:6px;color:#fff}
 nav.tabs a.ext:hover{border-color:var(--ciano)}
+/* ===== Post-its v1 (28/11/2026): o quadro do Roteiro com cara de quadro =====
+   Cada cartão é um papel colado na coluna. A cor do papel diz com quem o item está; a tarja lateral
+   laranja ou vermelha continua sendo só o sinal de prazo (atenção e parado). Dentro da coluna, uma
+   divisória separa cada fase da etapa. Para voltar ao visual anterior, apague este bloco. */
+:root{--p0:#eef1f4;--p1:#fff2a8;--p2:#cde6ff;--p3:#e3d9ff;--p4:#c5f0ea;--p5:#ffd5e3;--p6:#eee3cf;--p7:#f6d9f5;--p8:#dbe4ec}
+.pi-0{--pc:var(--p0)}.pi-1{--pc:var(--p1)}.pi-2{--pc:var(--p2)}.pi-3{--pc:var(--p3)}.pi-4{--pc:var(--p4)}.pi-5{--pc:var(--p5)}.pi-6{--pc:var(--p6)}.pi-7{--pc:var(--p7)}.pi-8{--pc:var(--p8)}
+.rt-col{gap:10px;background:var(--surface2)}
+.rt-col.fecho{background:var(--accent-soft)}
+.rt-it.pi{--ink:#1d2733;--muted:#4b5a69;--line:rgba(29,39,51,.24);--surface:#fff;--surface2:rgba(255,255,255,.7);--warn:#b45309;--bad:#b42318;--turq:#075f7d;
+  position:relative;background:var(--pc);color:var(--ink);border:0;border-left:5px solid transparent;border-radius:2px 2px 12px 2px;padding:9px 10px 11px;
+  box-shadow:0 1px 1px rgba(0,0,0,.14),0 8px 12px -8px rgba(0,0,0,.45);transition:transform .12s ease,box-shadow .12s ease}
+.rt-it.pi:nth-of-type(odd){transform:rotate(-.5deg)} .rt-it.pi:nth-of-type(even){transform:rotate(.4deg)}
+.rt-it.pi:hover,.rt-it.pi:focus-visible{background:var(--pc);transform:rotate(0) translateY(-2px);box-shadow:0 2px 2px rgba(0,0,0,.16),0 14px 18px -10px rgba(0,0,0,.5)}
+.rt-it.pi::after{content:"";position:absolute;right:0;bottom:0;width:13px;height:13px;border-radius:10px 0 12px 0;background:linear-gradient(135deg,rgba(0,0,0,.16),rgba(0,0,0,.04))}
+.rt-it.pi.warn{border-left-color:var(--warn)} .rt-it.pi.bad{border-left-color:var(--bad)}
+.rt-it.pi .t{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25;margin-bottom:2px}
+.rt-it.pi .s{display:block}
+.rt-it.pi .kb-resp{font-weight:700;font-size:11px;color:var(--ink);text-transform:uppercase;letter-spacing:.03em}
+.rt-it.pi .idd{background:rgba(255,255,255,.75)} .rt-it.pi .idd.warn{background:#ffe9cf} .rt-it.pi .idd.bad{background:#ffd9d4}
+.rt-it.pi .al{background:rgba(255,255,255,.6);border-radius:4px;padding:2px 5px;margin-top:4px}
+:root[data-theme="dark"] .rt-it.pi{filter:brightness(.93)}
+.kb-div{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--tit)}
+.kb-div::after{content:"";flex:1;height:0;border-top:2px dotted var(--line)}
+.kb-div b{order:2;font-family:var(--f-mono);font-variant-numeric:tabular-nums;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 7px}
+.rt-col .kb-fila{background:transparent;border:2px dashed var(--line);border-radius:8px;padding:7px 8px;display:flex;flex-direction:column;gap:5px}
+.kb-fila .kb-ft{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.kb-fila a.pi-mini{display:block;text-decoration:none;font-size:12px;font-weight:600;color:#1d2733;background:var(--pc);opacity:.8;border-radius:2px;padding:3px 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 1px 1px rgba(0,0,0,.12)}
+.kb-fila a.pi-mini:hover{opacity:1}
+.rt-fases.pes span,.pi-leg span.pi{background:var(--pc);border-color:rgba(29,39,51,.2);color:#1d2733;font-weight:600}
+.pi-leg{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12px;color:var(--muted);margin-top:8px}
+.pi-leg span.pi{border:1px solid rgba(29,39,51,.2);border-radius:3px;padding:1px 8px}
+.pi-leg i{display:inline-block;width:5px;height:14px;border-radius:2px;vertical-align:-2px;margin:0 4px 0 10px}
+.pi-leg i.warn{background:var(--warn)} .pi-leg i.bad{background:var(--bad)}
+@media (prefers-reduced-motion:reduce){.rt-it.pi,.rt-it.pi:hover{transform:none;transition:none}}
 </style>
 <div class="gate" id="gate" hidden>
   <form id="gateForm" autocomplete="off">
@@ -1107,6 +1141,16 @@ const PAPEL_BASE = {"Gestor Bruno":"Gestor","Gestora Thalyta":"Gestor"};
 const base = x => PAPEL_BASE[x] || x;
 const mesmoPapel = (a,b) => base(a) === base(b);
 const papel = x => NOME_PAPEL[x] || x || "—";
+/* Post-its (28/11/2026): a cor do papel diz com quem o item está. Papéis conhecidos têm cor fixa;
+   nome novo cai na cor 8, e linha sem dono na 0 (cinza). */
+const PI_FIXO = {"Carla":1,"Gestor":2,"Gestor Bruno":2,"Socios medicos":3,"Marcos":4,"Bruno Sato":5,"TI":6,"Gestora Thalyta":7};
+const piCor = x => !x ? 0 : (PI_FIXO[x] || 8);
+function piLegenda(rows){
+  const v={}; rows.forEach(r=>{ const k=r.resp||""; v[k]=(v[k]||0)+1; });
+  const ks=Object.keys(v).sort((a,b)=>v[b]-v[a]); if(!ks.length) return "";
+  return '<div class="pi-leg"><span>Cor do papel, quem está com o item:</span>'+ks.map(k=>'<span class="pi pi-'+piCor(k)+'">'+esc(k?papel(k):"sem dono")+' '+v[k]+'</span>').join("")
+    +'<span><i class="warn"></i>tarja laranja: atenção<i class="bad"></i>tarja vermelha: parado</span></div>';
+}
 const corEt = n => n>=1 && n<=7 ? "var(--e"+n+")" : "var(--c-sem)";
 function rotInfo(src, fase){ const R=RT&&RT[FRT[src]]; if(!R) return null; const F=R.fases[fase]; if(!F) return null; return {R, F, E:R.etapas.find(e=>e.n===F.e)||null}; }
 /* rotulo da fase: o valor gravado na planilha continua sem acento (e a chave de comparacao
@@ -1193,18 +1237,21 @@ function kbBoard(src, rows, o){
     const f=faixaEt(src,E.n);
     let h='<div class="rt-col" style="border-top-color:'+corEt(E.n)+'"><h3><span>'+E.n+'. '+esc(E.nome)+'</span><b title="Em andamento nesta etapa">'+it.length+'</b></h3>'
       +'<div class="dono">Dono: '+esc(papel(E.dono))+(E.preco===undefined?'':'<span class="pz-tag '+(E.preco?'com':'sem')+'">'+(E.preco?'com preço':'sem preço')+'</span>')+'</div>';
-    if(Object.keys(fases).length>1) h+='<div class="rt-fases">'+Object.keys(fases).map(x=>'<span>'+esc(rotFase(src,x))+' '+fases[x]+'</span>').join("")+'</div>';
-    if(Object.keys(pes).length) h+='<div class="rt-fases pes">'+Object.keys(pes).sort((a,b)=>pes[b]-pes[a]).map(x=>'<span>'+esc(papel(x))+' '+pes[x]+'</span>').join("")+'</div>';
+    if(Object.keys(pes).length) h+='<div class="rt-fases pes">'+Object.keys(pes).sort((a,b)=>pes[b]-pes[a]).map(x=>'<span class="pi-'+piCor(x==="sem dono"?"":x)+'">'+esc(papel(x))+' '+pes[x]+'</span>').join("")+'</div>';
     if(fila.length){
       const prox=fila.slice().sort((a,b)=>((FX_ORD[a.fx]??5)-(FX_ORD[b.fx]??5)) || ((b.sc??-1)-(a.sc??-1))).slice(0,3);
-      h+='<div class="kb-fila"><b>'+fila.length+'</b> na fila para puxar. Próximos pela Dor: '+prox.map(r=>'<a href="'+editLink(src,r.l)+'" target="_blank" rel="noopener">'+esc(kbTitulo(src,r))+'</a>').join(", ")+'. <a class="kb-ver" href="#'+src+'" data-src="'+src+'" data-n="'+E.n+'" data-f="1">Ver a fila inteira</a></div>';
+      h+='<div class="kb-fila"><span class="kb-ft">Fila para puxar · '+fila.length+'</span>'+prox.map(r=>'<a class="pi-mini pi-'+piCor(r.resp)+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener" title="Próximo pela Dor">'+esc(kbTitulo(src,r))+'</a>').join("")+'<a class="kb-ver" href="#'+src+'" data-src="'+src+'" data-n="'+E.n+'" data-f="1">Ver a fila inteira</a></div>';
     }
-    h+=it.slice(0,MAX).map(r=>{ const i=rotInfo(src,r.fase), nv=nivel(src,r);
+    // divisória por fase: os cartões visíveis se agrupam na ordem das fases do roteiro
+    const ordF=Object.keys(R.fases), grupos=[];
+    it.slice(0,MAX).forEach(r=>{ let g=grupos.find(x=>x.f===r.fase); if(!g){ g={f:r.fase,l:[]}; grupos.push(g); } g.l.push(r); });
+    grupos.sort((a,b)=>ordF.indexOf(a.f)-ordF.indexOf(b.f));
+    h+=grupos.map(g=>'<div class="kb-div"><span>'+esc(rotFase(src,g.f))+'</span><b title="Itens nesta fase">'+fases[g.f]+'</b></div>'+g.l.map(r=>{ const i=rotInfo(src,r.fase), nv=nivel(src,r);
         const al = src==="clinicas" && r.resp && i && i.F.resp && !mesmoPapel(r.resp,i.F.resp);
-        return '<a class="rt-it '+nv+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener" title="'+esc(i?i.F.faz:"")+'"><span class="t">'+tagIsgh(kbTitulo(src,r),r.org,r.obj)+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span>'
+        return '<a class="rt-it pi pi-'+piCor(r.resp)+' '+nv+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener" title="'+esc(i?i.F.faz:"")+'"><span class="t">'+tagIsgh(kbTitulo(src,r),r.org,r.obj)+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span>'
           +'<span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'
           +(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')
-          +(al?'<span class="al">Na linha: '+esc(papel(r.resp))+' · roteiro: '+esc(papel(i.F.resp))+'</span>':'')+(o.extra?o.extra(src,r):'')+'</a>'; }).join("")
+          +(al?'<span class="al">Na linha: '+esc(papel(r.resp))+' · roteiro: '+esc(papel(i.F.resp))+'</span>':'')+(o.extra?o.extra(src,r):'')+'</a>'; }).join("")).join("")
       || '<div class="ag-vazio">Ninguém nesta etapa.</div>';
     h+='<a class="kb-ver" href="#'+src+'" data-src="'+src+'" data-n="'+E.n+'">'+(it.length>MAX?'e mais '+(it.length-MAX)+'. Ver os '+it.length+' na lista':'Ver esta etapa na lista')+'</a>';
     const tt=((FX.tempos||{})[src]||{})[String(E.n)];
@@ -1786,7 +1833,7 @@ const lRot = (function(){
     const objHtml=l=>(l||[]).map(o=>'<span class="kb-obj'+(o.st==="feito"?' ok':'')+'">Objetivo da semana'+(o.st==="feito"?' (feito)':'')+': '+esc(o.t)+(o.dono?' · '+esc(o.dono):'')+'</span>').join("");
     const col7='<div class="rt-col fecho"><h3><span>7. Coordenação por cliente</span><b title="Clientes em produção">'+fecho.length+'</b></h3>'
       +'<div class="dono">Dono: gestor do contrato<span class="pz-tag com">fechamento do processo</span></div>'
-      +(fecho.map(x=>'<a class="rt-it" href="'+x.href+'"'+(x.src==="contratos"?'':' target="_blank" rel="noopener"')+'><span class="t">'+tagIsgh(x.nome,x.contrato&&x.contrato.parte,x.contrato&&x.contrato.n)+esc(x.nome)+'</span>'
+      +(fecho.map(x=>'<a class="rt-it pi pi-'+piCor(x.resp)+'" href="'+x.href+'"'+(x.src==="contratos"?'':' target="_blank" rel="noopener"')+'><span class="t">'+tagIsgh(x.nome,x.contrato&&x.contrato.parte,x.contrato&&x.contrato.n)+esc(x.nome)+'</span>'
         +'<span class="s">'+esc(x.tipo)+' · '+esc(x.fase)+(x.contrato&&x.src!=="contratos"?' · contrato '+esc(x.contrato.st.toLowerCase()):'')+'</span>'
         +(x.resp?'<span class="kb-pe"><span class="kb-resp">'+esc(papel(x.resp))+'</span></span>':'')+objHtml(x.obj)+'</a>').join("")
         || '<div class="ag-vazio">Nenhum cliente em produção ainda.</div>')
@@ -1801,7 +1848,7 @@ const lRot = (function(){
     const ord={bad:0,warn:1,"":2}, MAXC=3;
     const cel=(titulo,n,corpo,link)=>'<div class="rt-cel"><h4><span>'+titulo+'</span>'+(n===null?'':'<b>'+n+'</b>')+'</h4>'+(corpo||'<div class="rt-nada">—</div>')+(link?'<a class="rt-mais" href="'+link[0]+'">'+link[1]+'</a>':'')+'</div>';
     const mini=(src,rows)=>rows.slice().sort((a,b)=>(ord[nivel(src,a)]-ord[nivel(src,b)])||((idade(b)??-1)-(idade(a)??-1))).slice(0,MAXC)
-      .map(r=>'<a class="rt-it '+nivel(src,r)+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener"><span class="t">'+tagIsgh(kbTitulo(src,r),r.org,r.obj)+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span><span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'+(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')+'</a>').join("")
+      .map(r=>'<a class="rt-it pi pi-'+piCor(r.resp)+' '+nivel(src,r)+'" href="'+editLink(src,r.l)+'" target="_blank" rel="noopener"><span class="t">'+tagIsgh(kbTitulo(src,r),r.org,r.obj)+esc(kbTitulo(src,r))+'</span><span class="s">'+kbSub(src,r)+'</span><span class="kb-pe">'+selo(src,r)+(r.resp?'<span class="kb-resp">'+esc(papel(r.resp))+'</span>':'')+'</span>'+(r.bloq?'<span class="al">Trava: '+esc(r.bloq)+'</span>':'')+'</a>').join("")
       +(rows.length>MAXC?'<div class="meta">e mais '+(rows.length-MAXC)+'</div>':'');
     // faixa do setor público: etapa do roteiro de licitações -> coluna da esteira
     const eRaw=f=>{ const F=RT.licitacoes.fases[f]; return F?F.e:0; };
@@ -1826,7 +1873,7 @@ const lRot = (function(){
     const lista = p ? base.filter(r=>{ const i=rotInfo(src,r.fase); return i && i.F.resp===p; }) : base;
     $("#rt-board").style.setProperty("--n", R.etapas.length + (fr==="particulares"?1:0));
     $("#rt-board").style.setProperty("--w", fr==="particulares" ? "150px" : "190px");
-    $("#rt-res").innerHTML = resumoFluxo(src, base);
+    $("#rt-res").innerHTML = resumoFluxo(src, base) + piLegenda(lista.filter(r=>andando(src,r)));
     $("#rt-board").innerHTML = kbBoard(src, lista, {extra:C.extra, max:fr==="particulares"?5:8}) + (fr==="particulares" ? C.col7 : "");
     let ex='<div class="band"><h3>As quatro regras de mesa</h3><ul>'+RT.regras.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
     if(fr==="particulares") ex+='<div class="band"><h3>Cadência de 6 toques da etapa 1 (cerca de 21 dias)</h3><div class="tbl"><table><thead><tr><th>Toque</th><th>Dia</th><th>Canal</th><th>Objetivo</th></tr></thead><tbody>'+
